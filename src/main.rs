@@ -5,7 +5,7 @@ use execlocus::{collect_report, model::Profile, renderers};
 
 #[derive(Debug, Parser)]
 #[command(name = "execlocus")]
-#[command(version, about = "See where your agent actually executes.")]
+#[command(version, about = "See what your agent context resolves—and why.")]
 struct Cli {
     #[arg(long, value_enum, default_value_t = ProfileArg::Balanced, global = true)]
     profile: ProfileArg,
