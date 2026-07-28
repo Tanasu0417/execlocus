@@ -104,9 +104,17 @@ Every feature must complete one user question across the stack instead of adding
 
 ### Gate B — prove the three questions
 
-1. Observe or safely infer the active Codex/Claude execution layer.
-2. Explain which Git, Node, npm, or agent executable wins and why.
-3. Explain `/mnt/c` according to user intent without treating it as inherently wrong.
+Required outcomes:
+
+- Observe or safely infer the active Codex/Claude execution layer.
+- Explain which Git, Node, npm, or agent executable wins and why.
+- Explain `/mnt/c` according to user intent without treating it as inherently wrong.
+
+Recommended implementation sequence:
+
+1. Complete UC-02 executable resolution first because the prototype already has most of the evidence path and can produce the first honest demo.
+2. Complete UC-03 profile-aware `/mnt/c` behavior by reusing the same fixture and finding contracts.
+3. Implement UC-01 agent adapters after invocation/process evidence and `unknown` behavior are proven by fixtures.
 
 Each question becomes a separate focused pull request when possible.
 
