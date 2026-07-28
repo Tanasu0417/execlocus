@@ -12,14 +12,16 @@
 
 顔の情報を使わず、次の外形でカワウソと判別できるようにする。
 
-- 横向き寄りの3/4姿勢。
-- 小さく低い頭。額から鼻先までは滑らかな一続きの輪郭にし、丸顔にしない。
-- 頭から背中へつながる、長くなだらかな首。
-- 細長く柔らかい胴体。
+- 水平に泳ぐ横向き寄りの3/4姿勢。
+- 小さく丸みのある頭。鼻先だけを長く伸ばさない。
+- 頭は短い接続部で胴体へつなぎ、首を独立した長い部位に見せない。
+- 横長で丸みのある、柔らかい胴体。
 - 肩より腰が少し高く見える、緩やかに丸い背中。
-- 短い前脚と後脚。
-- 根元が太く、先端へ滑らかに細くなる長い尾。
+- 哺乳類と判別できる、短く先端が丸い4本の脚。
+- 根元が太く、先端へ滑らかに細くなる胴体より短い尾。
 - 頭から尾まで連続するS字の泳ぐline。
+- 耳は頭に重なる小さな丸を1–2個だけ使い、アンテナ状の突起、深い首の切れ込み、尖った脚を作らない。
+- 通信markerはsilhouetteの外へ置き、目や体内器官に見える配置を避ける。
 
 目、鼻、口、ひげ、眉、服、neck accessory、既存mascotを想起させる記号は付けない。発話の表現に口パクを使わない。
 
@@ -30,15 +32,17 @@
 | Idle | 4秒loop | 上下5px、回転±1.5度、胴体の小さな呼吸、尾が0.2秒遅れて追従 |
 | Swim／guide | 1.2–3.6秒 | 直線でなく緩いS字軌道。胴、腰、尾の順にfollow-through |
 | Point | 0.8秒 | 前脚を対象へ伸ばし、細いguide lineを表示 |
-| Inspect | 2秒loop | 体を少し丸め、胸の位置markerから探索ring |
+| Inspect | 2秒loop | 体を少し丸め、silhouette外側の位置markerから探索ring |
 | Warning | 0.6–1.2秒 | 小さなsquash and stretch。強い点滅やcamera shakeは使わない |
 | Success | 1.8秒 | 尾を大きく一度振り、対象nodeへ位置markerを残す |
 
 動画masterは30fpsでも成立させ、可能なら60fpsでmotionを調整する。GUIではdisplay refreshに追従し、固定frame rateを前提にしない。
 
+現在のreference SVGは外形確認用として全身のfloatと外部markerのpulseだけを実装する。尾や脚を独立させるproduction rigは、Claude Designで輪郭が確定してから作る。
+
 ## Speech without a face
 
-- 胸の位置markerを音節に合わせて弱くpulseさせる。
+- silhouette外側の位置markerを音節に合わせて弱くpulseさせる。
 - silhouette外側へ2–3本の通信波を出す。
 - 隣接する字幕panelに発話内容を表示する。
 - 小さな音声波形を字幕panel内に表示する。
@@ -70,4 +74,4 @@
 
 ## Source asset
 
-[`assets/otter-guide.svg`](assets/otter-guide.svg)は、silhouetteと基本motionを確認するためにproject内で独自作成したreferenceである。第三者illustrationの輪郭をtraceせず、元画像をrepositoryへ同梱しない。完成logoや商標を意味せず、Claude DesignまたはGUI実装時に調整可能とする。
+[`assets/otter-guide.svg`](assets/otter-guide.svg)は、本project用に生成した独自conceptから外周を簡略化し、project内で再構成したreferenceである。第三者illustrationの輪郭をtraceせず、元画像をrepositoryへ同梱しない。完成logoや商標を意味せず、Claude DesignまたはGUI実装時に調整可能とする。

@@ -20,7 +20,7 @@
 | 3 | 12–17秒 | 製品名と一文だけを表示。カワウソは画面端で静止 | `選ばれる候補と理由を、1画面へ` | ExecLocusは、現在の環境で何が選ばれるかと、その根拠を一画面へまとめます。 | 過去のagent実行と表現しない |
 | 4 | 17–25秒 | 実terminalで`execlocus`を実行。カワウソは結果を隠さず端で待機 | `設定なし。まず1回実行` | 通常実行はread-only。PATHやWSL設定を変更せず、診断内容をuploadしません。 | 実測速度を加工しない |
 | 5 | 25–35秒 | WindowsとWSLのselected path／formatを左右に表示し、尾と前脚でevidence経路を案内 | `Same project · Different context` | 同じprojectでも、Windowsではnode.exe、WSLではLinux版Nodeが選ばれています。 | paired UC-02 scenario test完了 |
-| 6 | 35–43秒 | current-contextとagent-observedを二段表示。胸の位置markerと字幕panelで発話 | `予測と実行済み証拠を混同しない` | 現在の解決結果と、agentが実際に使った証拠は分けて扱います。証拠がなければ断定しません。 | UC-01 evidence state完了 |
+| 6 | 35–43秒 | current-contextとagent-observedを二段表示。silhouette外側の位置markerと字幕panelで発話 | `予測と実行済み証拠を混同しない` | 現在の解決結果と、agentが実際に使った証拠は分けて扱います。証拠がなければ断定しません。 | UC-01 evidence state完了 |
 | 7 | 43–51秒 | `/mnt/c/demo/project`と`balanced`を表示し、カワウソがproject nodeへ移動 | `/mnt/cは目的次第。場所だけでerrorにしない` | Windowsアプリとの共有が目的なら、`/mnt/c`は正しい選択にもなります。 | UC-03 profile test完了 |
 | 8 | 51–60秒 | GitHub URL、pre-alpha、privacy注意。カワウソはCTA横でmotionを止める | `Windows × WSLの境界を、証拠付きで` | ExecLocusは現在pre-alphaです。WindowsとWSLで困った経験や、確認に使うcommandを教えてください。 | release可能とは表現しない |
 
@@ -37,7 +37,7 @@ Frame 1を2秒、Frame 4を2秒、Frame 5を4秒、Frame 8を2秒に再編集す
 
 - terminalとevidenceを主役にし、人物、AI robot、stock image、第三者作品のcharacterは使わない。
 - 完全オリジナルの顔なしカワウソsilhouetteを案内役として使える。通常は画面面積の15%以内とし、terminal、path、evidenceを隠さない。
-- カワウソに目、鼻、口、ひげ、服を付けない。発話は胸の位置marker、通信波、字幕、音声波形で示す。
+- カワウソに目、鼻、口、ひげ、服を付けない。発話はsilhouette外側の位置marker、通信波、字幕、音声波形で示す。
 - motionは泳ぐS字軌道、胴から尾へのfollow-through、滑らかな加減速を使う。`prefers-reduced-motion`版も作る。
 - WindowsとWSLの違いはlabelと位置で示し、色だけへ依存しない。
 - subtitleは1画面2行以内、1行24全角文字程度を目安にする。
