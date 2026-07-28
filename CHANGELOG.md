@@ -22,11 +22,13 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - OS-backed current-user observation and process-ancestry shell detection on Windows and Linux/WSL
 - Provenance fields for distribution, user, and shell values in terminal and JSON reports
 - JSON schema version `0.2.0` for runtime identity provenance fields
+- Automatically redacted Markdown reports and explicit redacted JSON output
 
 ### Security
 
 - Normal execution is designed to remain local-only and read-only
 - Public examples, fixtures, and reports must exclude credentials and personal identity
+- Shareable rendering removes usernames, home directories, machine names, and absolute paths
 - CSV cells that begin with formula-significant characters are escaped for spreadsheet import
 
 [Unreleased]: https://github.com/Tanasu0417/execlocus/commits/main

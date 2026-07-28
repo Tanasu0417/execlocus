@@ -1,4 +1,5 @@
 pub mod model;
+pub mod privacy;
 pub mod probes;
 pub mod renderers;
 pub mod rules;

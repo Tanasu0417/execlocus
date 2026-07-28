@@ -152,14 +152,15 @@ Agent detection is best-effort. Absence of evidence must produce `Unknown`, not 
 execlocus
 execlocus check
 execlocus report --format json
+execlocus report --format json --redact
 execlocus report --format markdown
-execlocus report --format markdown --redact
 execlocus explain ENV002
 execlocus --version
 execlocus --help
 ```
 
 `execlocus` with no arguments is the primary path. It must complete without configuration and print the topology plus the highest-priority findings.
+Markdown is always redacted before rendering. Raw JSON remains a local diagnostic format; `--redact` produces its share-safe form.
 
 ### Example terminal output
 

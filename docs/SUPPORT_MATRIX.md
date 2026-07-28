@@ -42,8 +42,8 @@ This is the source of truth for current capability claims. “Planned” means d
 | Codex CLI adapter | Planned | Installation presence alone will not prove runtime |
 | Claude Code adapter | Planned | Must use invocation/process evidence where available |
 | Codex Desktop detection | Planned, evidence-limited | Will report unknown when the OS does not expose sufficient evidence |
-| Markdown report | Planned | Required before shareable field reports become a product feature |
-| Redaction-before-rendering | Planned | Required before v0.1.0; manual sanitization is currently mandatory |
+| Markdown report | Implemented | Shareable Markdown is always redacted before rendering |
+| Redaction-before-rendering | Verified | Synthetic golden tests plus sanitized Windows and WSL executions cover username, home, machine, and absolute-path removal |
 | `explain <RULE_ID>` | Planned | Suggestions will remain read-only |
 | Release binaries and checksums | Planned | Required for Windows x86_64 and Linux x86_64 |
 | Automatic fixes | Out of scope | ExecLocus does not rewrite PATH or configuration |
@@ -58,3 +58,4 @@ This is the source of truth for current capability claims. “Planned” means d
 - When implementation changes, this matrix is updated in the same pull request.
 
 The sanitized Windows/WSL evidence is recorded in [`validation/RUNTIME_IDENTITY_2026-07-29.md`](validation/RUNTIME_IDENTITY_2026-07-29.md).
+Shareable output validation is recorded in [`validation/SHAREABLE_REDACTION_2026-07-29.md`](validation/SHAREABLE_REDACTION_2026-07-29.md).

@@ -33,7 +33,7 @@ Today, users often combine `which`, `where.exe`, `Get-Command`, PATH inspection,
 - Read-only: never rewrites PATH, WSL, shell, agent, or project configuration.
 - Local-only during normal execution: no diagnostic upload or telemetry.
 - Secret-avoiding: no tokens or unrestricted environment-variable collection.
-- Public reports: command output must not be posted until redaction-before-rendering is implemented and tested.
+- Public reports: Markdown is automatically redacted and JSON requires `--redact`; raw terminal and raw JSON output remain local-only.
 
 ## Current and planned
 
