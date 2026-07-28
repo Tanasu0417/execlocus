@@ -100,7 +100,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 
 表示中のターミナルだけでエージェントの実行場所を断定しません。証拠がなければ`Unknown`と表示します。
 
-現在のuserはローカルOSのprocess snapshotから取得します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
+現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
 
 ## 安全性とプライバシー
 

@@ -31,7 +31,7 @@ This is the source of truth for current capability claims. “Planned” means d
 
 | Capability | Status | Notes |
 |---|---|---|
-| Current Windows, WSL, or Linux runtime | Verified | Windows and WSL are exercised in the sanitized validation record; Linux-native remains CI-verified |
+| Current Windows, WSL, or Linux runtime | Verified | Target-platform and kernel-release provenance are explicit; a WSL environment-only fallback is labeled inferred |
 | Distribution, current user, and launching shell | Verified | WSL registration/OS release, OS account, and bounded process ancestry carry explicit provenance; environment values are labeled as hints |
 | Project filesystem classification | Implemented | Windows-native, Windows-mounted, WSL-native, WSL UNC, and Linux-native shapes are represented |
 | Git, Node, and npm resolution | Implemented | Selected executable and observed candidates are collected |

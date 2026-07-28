@@ -1,6 +1,8 @@
 use std::fmt::Write;
 
-use crate::model::{ExecutableOrigin, PathClass, Report, RuntimeValueSource, Severity};
+use crate::model::{
+    ExecutableOrigin, ObservationStatus, PathClass, Report, RuntimeValueSource, Severity,
+};
 
 #[must_use]
 pub fn render(report: &Report) -> String {
@@ -10,7 +12,12 @@ pub fn render(report: &Report) -> String {
         .expect("writing to String cannot fail");
 
     writeln!(output, "CURRENT EXECUTION").expect("writing to String cannot fail");
-    line(&mut output, "Runtime", &runtime_label(report), "observed");
+    line(
+        &mut output,
+        "Runtime",
+        &runtime_label(report),
+        &observation_note(report.runtime.status, report.runtime.kind_source),
+    );
     line(
         &mut output,
         "User",
@@ -107,8 +114,23 @@ fn runtime_label(report: &Report) -> String {
     )
 }
 
+fn observation_note(status: ObservationStatus, source: Option<RuntimeValueSource>) -> String {
+    let status = match status {
+        ObservationStatus::Observed => "observed",
+        ObservationStatus::Inferred => "inferred",
+        ObservationStatus::Unavailable => "unavailable",
+        ObservationStatus::Failed => "failed",
+    };
+    source.map_or_else(
+        || status.to_owned(),
+        |source| format!("{status} · {}", source_label(source)),
+    )
+}
+
 const fn source_label(source: RuntimeValueSource) -> &'static str {
     match source {
+        RuntimeValueSource::TargetPlatform => "target platform",
+        RuntimeValueSource::KernelRelease => "kernel release",
         RuntimeValueSource::ProcessAncestry => "process ancestry",
         RuntimeValueSource::OsAccount => "OS account",
         RuntimeValueSource::Environment => "environment hint",
@@ -168,6 +190,7 @@ mod tests {
             profile: Profile::Balanced,
             runtime: RuntimeInfo {
                 kind: RuntimeKind::Wsl,
+                kind_source: Some(RuntimeValueSource::KernelRelease),
                 os_name: "WSL".to_owned(),
                 distribution: Some("Ubuntu-Test".to_owned()),
                 distribution_source: Some(RuntimeValueSource::Environment),
@@ -194,6 +217,7 @@ mod tests {
         let output = render(&report);
         assert!(output.contains("ExecLocus"));
         assert!(output.contains("CURRENT EXECUTION"));
+        assert!(output.contains("observed · kernel release"));
         assert!(output.contains("TOOLCHAIN"));
     }
 }

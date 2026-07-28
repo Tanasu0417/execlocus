@@ -54,6 +54,8 @@ pub enum ObservationStatus {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RuntimeValueSource {
+    TargetPlatform,
+    KernelRelease,
     ProcessAncestry,
     OsAccount,
     Environment,
@@ -63,6 +65,7 @@ pub enum RuntimeValueSource {
 #[derive(Clone, Debug, Serialize)]
 pub struct RuntimeInfo {
     pub kind: RuntimeKind,
+    pub kind_source: Option<RuntimeValueSource>,
     pub os_name: String,
     pub distribution: Option<String>,
     pub distribution_source: Option<RuntimeValueSource>,

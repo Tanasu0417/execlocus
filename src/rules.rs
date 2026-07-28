@@ -147,6 +147,7 @@ mod tests {
             profile: Profile::Balanced,
             runtime: RuntimeInfo {
                 kind: runtime_kind,
+                kind_source: None,
                 os_name: "test".to_owned(),
                 distribution: None,
                 distribution_source: None,

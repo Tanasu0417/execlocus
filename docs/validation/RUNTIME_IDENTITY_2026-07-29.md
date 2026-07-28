@@ -8,13 +8,13 @@ This record validates the current-process runtime, distribution, OS account, lau
 - Rust MSRV: 1.85.0
 - Network use by the runtime probe: none
 - Shell commands started by the runtime probe: none
-- Process inspection: local OS snapshot through a pinned Rust dependency; requests only process names, parent IDs, and user IDs
+- Process inspection: local OS snapshot through a pinned Rust dependency; requests only process names, parent IDs, and user IDs, then resolves the current ID through the local account catalog
 
 ## Windows 11
 
 | Field | Sanitized result | Provenance |
 |---|---|---|
-| Runtime | `windows_native` | current process target |
+| Runtime | `windows_native` | target platform |
 | User | present; value withheld | `os_account` |
 | Shell | `PowerShell 7` | `process_ancestry` |
 | Distribution | unavailable, as expected | not applicable |
@@ -27,14 +27,14 @@ One warmed local invocation of `report --format json`, with output discarded, co
 
 | Field | Sanitized result | Provenance |
 |---|---|---|
-| Runtime | `wsl` | current process plus WSL evidence |
+| Runtime | `wsl` | kernel release |
 | Distribution | `Ubuntu-24.04` | WSL registration environment |
 | User | present; value withheld | `os_account` |
 | Shell | `bash` | `process_ancestry` |
 | Project filesystem | `windows_mounted` | path classification; absolute path withheld |
 | Probe failures | 0 | report summary |
 
-The complete MSRV 1.85 test suite passed inside Ubuntu-24.04 WSL: 17 unit tests, 6 shell-resolution contract tests, and 4 synthetic-resolution tests.
+The complete MSRV 1.85 test suite passed inside Ubuntu-24.04 WSL: 18 unit tests, 6 shell-resolution contract tests, and 4 synthetic-resolution tests.
 One warmed `/mnt/c` invocation of `report --format json`, with output discarded, completed in approximately 0.69 seconds. This is a smoke measurement, not a benchmark claim.
 
 ## Evidence boundary

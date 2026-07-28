@@ -19,6 +19,14 @@ struct DetectedValue {
     source: RuntimeValueSource,
 }
 
+#[derive(Clone, Copy)]
+struct DetectedRuntime {
+    kind: RuntimeKind,
+    source: Option<RuntimeValueSource>,
+    status: ObservationStatus,
+    confidence: Confidence,
+}
+
 #[must_use]
 pub fn probe() -> ProbeResult<RuntimeInfo> {
     probe_with_inspector(&SystemProbeContext, &SystemRuntimeIdentityInspector)
@@ -54,14 +62,14 @@ fn probe_internal<C>(
 where
     C: ProbeContext + ?Sized,
 {
-    let kind = detect_runtime_kind(context);
-    let os_name = match kind {
+    let runtime = detect_runtime(context);
+    let os_name = match runtime.kind {
         RuntimeKind::WindowsNative => "Windows".to_owned(),
         RuntimeKind::Wsl => "WSL".to_owned(),
         RuntimeKind::LinuxNative => "Linux".to_owned(),
         RuntimeKind::Unknown => context.os_name(),
     };
-    let distribution = detect_distribution(context, kind);
+    let distribution = detect_distribution(context, runtime.kind);
     let mut failures = Vec::new();
     let identity = inspector.and_then(|inspector| match inspector.inspect(MAX_PROCESS_ANCESTRY) {
         Ok(snapshot) => Some(snapshot),
@@ -75,27 +83,17 @@ where
     let terminal = detect_terminal(context);
 
     let evidence = build_runtime_evidence(
-        kind,
+        runtime,
         distribution.as_ref(),
         user.as_ref(),
         shell.as_ref(),
         terminal.as_deref(),
     );
 
-    let status = if kind == RuntimeKind::Unknown {
-        ObservationStatus::Unavailable
-    } else {
-        ObservationStatus::Observed
-    };
-    let confidence = if kind == RuntimeKind::Unknown {
-        Confidence::None
-    } else {
-        Confidence::Certain
-    };
-
     ProbeResult {
         value: RuntimeInfo {
-            kind,
+            kind: runtime.kind,
+            kind_source: runtime.source,
             os_name,
             distribution: distribution.as_ref().map(|observed| observed.value.clone()),
             distribution_source: distribution.as_ref().map(|observed| observed.source),
@@ -104,8 +102,8 @@ where
             shell: shell.as_ref().map(|observed| observed.value.clone()),
             shell_source: shell.as_ref().map(|observed| observed.source),
             terminal,
-            status,
-            confidence,
+            status: runtime.status,
+            confidence: runtime.confidence,
         },
         evidence,
         failures,
@@ -113,7 +111,7 @@ where
 }
 
 fn build_runtime_evidence(
-    kind: RuntimeKind,
+    runtime: DetectedRuntime,
     distribution: Option<&DetectedValue>,
     user: Option<&DetectedValue>,
     shell: Option<&DetectedValue>,
@@ -122,9 +120,9 @@ fn build_runtime_evidence(
     let mut evidence = vec![Evidence {
         id: "runtime.kind".to_owned(),
         probe: "runtime/v2".to_owned(),
-        kind: "process".to_owned(),
+        kind: runtime.source.map_or("unavailable", source_kind).to_owned(),
         claim: "current ExecLocus process runtime".to_owned(),
-        value: Some(format!("{kind:?}")),
+        value: (runtime.kind != RuntimeKind::Unknown).then(|| format!("{:?}", runtime.kind)),
         sensitive: false,
     }];
     if let Some(observed) = distribution {
@@ -184,34 +182,70 @@ fn build_runtime_evidence(
     evidence
 }
 
-fn detect_runtime_kind<C>(context: &C) -> RuntimeKind
+fn detect_runtime<C>(context: &C) -> DetectedRuntime
 where
     C: ProbeContext + ?Sized,
 {
     match context.host_platform() {
-        HostPlatform::Windows => RuntimeKind::WindowsNative,
-        HostPlatform::Linux => {
-            if nonempty_env(context, "WSL_DISTRO_NAME").is_some()
-                || nonempty_env(context, "WSL_INTEROP").is_some()
-                || file_contains_microsoft(context, "/proc/sys/kernel/osrelease")
-                || file_contains_microsoft(context, "/proc/version")
+        HostPlatform::Windows => DetectedRuntime {
+            kind: RuntimeKind::WindowsNative,
+            source: Some(RuntimeValueSource::TargetPlatform),
+            status: ObservationStatus::Observed,
+            confidence: Confidence::Certain,
+        },
+        HostPlatform::Linux => match kernel_mentions_microsoft(context) {
+            Some(true) => DetectedRuntime {
+                kind: RuntimeKind::Wsl,
+                source: Some(RuntimeValueSource::KernelRelease),
+                status: ObservationStatus::Observed,
+                confidence: Confidence::Certain,
+            },
+            Some(false) => DetectedRuntime {
+                kind: RuntimeKind::LinuxNative,
+                source: Some(RuntimeValueSource::KernelRelease),
+                status: ObservationStatus::Observed,
+                confidence: Confidence::Certain,
+            },
+            None if nonempty_env(context, "WSL_DISTRO_NAME").is_some()
+                || nonempty_env(context, "WSL_INTEROP").is_some() =>
             {
-                RuntimeKind::Wsl
-            } else {
-                RuntimeKind::LinuxNative
+                DetectedRuntime {
+                    kind: RuntimeKind::Wsl,
+                    source: Some(RuntimeValueSource::Environment),
+                    status: ObservationStatus::Inferred,
+                    confidence: Confidence::High,
+                }
             }
-        }
-        HostPlatform::Other => RuntimeKind::Unknown,
+            None => DetectedRuntime {
+                kind: RuntimeKind::Unknown,
+                source: None,
+                status: ObservationStatus::Unavailable,
+                confidence: Confidence::None,
+            },
+        },
+        HostPlatform::Other => DetectedRuntime {
+            kind: RuntimeKind::Unknown,
+            source: None,
+            status: ObservationStatus::Unavailable,
+            confidence: Confidence::None,
+        },
     }
 }
 
-fn file_contains_microsoft<C>(context: &C, path: &str) -> bool
+fn kernel_mentions_microsoft<C>(context: &C) -> Option<bool>
 where
     C: ProbeContext + ?Sized,
 {
-    context
-        .read_text(Path::new(path), 64 * 1024)
-        .is_ok_and(|value| value.to_ascii_lowercase().contains("microsoft"))
+    let mut observed = false;
+    for path in ["/proc/sys/kernel/osrelease", "/proc/version"] {
+        if let Ok(value) = context.read_text(Path::new(path), 64 * 1024) {
+            observed = true;
+            if value.to_ascii_lowercase().contains("microsoft") {
+                return Some(true);
+            }
+        }
+    }
+    observed.then_some(false)
 }
 
 fn detect_distribution<C>(context: &C, kind: RuntimeKind) -> Option<DetectedValue>
@@ -331,6 +365,8 @@ where
 
 const fn source_kind(source: RuntimeValueSource) -> &'static str {
     match source {
+        RuntimeValueSource::TargetPlatform => "target-platform",
+        RuntimeValueSource::KernelRelease => "kernel",
         RuntimeValueSource::ProcessAncestry => "process",
         RuntimeValueSource::OsAccount => "os-account",
         RuntimeValueSource::Environment => "environment",
@@ -348,9 +384,9 @@ fn identity_failure(code: &str, error: &io::Error) -> ProbeFailure {
 
 #[cfg(test)]
 mod tests {
-    use super::{file_contains_microsoft, known_shell, probe_with_inspector};
+    use super::{detect_runtime, kernel_mentions_microsoft, known_shell, probe_with_inspector};
     use crate::{
-        model::{RuntimeKind, RuntimeValueSource},
+        model::{Confidence, ObservationStatus, RuntimeKind, RuntimeValueSource},
         probes::{
             context::{CandidateSnapshot, HostPlatform, ProbeContext},
             process::{ProcessRecord, RuntimeIdentityInspector, RuntimeIdentitySnapshot},
@@ -435,17 +471,14 @@ mod tests {
 
     #[test]
     fn missing_kernel_file_is_not_microsoft() {
-        assert!(!file_contains_microsoft(
-            &MissingFileContext,
-            "definitely-not-a-real-proc-file"
-        ));
+        assert_eq!(kernel_mentions_microsoft(&MissingFileContext), None);
     }
 
     #[test]
     fn process_and_os_identity_override_environment_hints() {
         let result = probe_with_inspector(&MissingFileContext, &StaticIdentityInspector);
 
-        assert_eq!(result.value.kind, RuntimeKind::LinuxNative);
+        assert_eq!(result.value.kind, RuntimeKind::Unknown);
         assert_eq!(result.value.user.as_deref(), Some("os-user"));
         assert_eq!(
             result.value.user_source,
@@ -500,5 +533,59 @@ mod tests {
         };
 
         assert_eq!(known_shell(&record).as_deref(), Some("PowerShell 7"));
+    }
+
+    struct SpoofedWslEnvironmentContext;
+
+    impl ProbeContext for SpoofedWslEnvironmentContext {
+        fn host_platform(&self) -> HostPlatform {
+            HostPlatform::Linux
+        }
+
+        fn os_name(&self) -> String {
+            "linux".to_owned()
+        }
+
+        fn env_var(&self, key: &str) -> Option<String> {
+            (key == "WSL_DISTRO_NAME").then(|| "spoofed".to_owned())
+        }
+
+        fn path_entries(&self) -> Vec<PathBuf> {
+            Vec::new()
+        }
+
+        fn current_dir(&self) -> io::Result<PathBuf> {
+            Ok(PathBuf::from("/demo"))
+        }
+
+        fn inspect_candidate(
+            &self,
+            _directory: &Path,
+            _name: &str,
+            _prefix_limit: usize,
+        ) -> io::Result<Option<CandidateSnapshot>> {
+            Ok(None)
+        }
+
+        fn read_text(&self, path: &Path, _max_bytes: usize) -> io::Result<String> {
+            match path.to_string_lossy().as_ref() {
+                "/proc/sys/kernel/osrelease" => Ok("6.8.0-generic".to_owned()),
+                _ => Err(io::Error::new(io::ErrorKind::NotFound, "missing fixture")),
+            }
+        }
+
+        fn now_unix_ms(&self) -> u128 {
+            0
+        }
+    }
+
+    #[test]
+    fn kernel_evidence_wins_over_a_spoofed_wsl_environment_hint() {
+        let runtime = detect_runtime(&SpoofedWslEnvironmentContext);
+
+        assert_eq!(runtime.kind, RuntimeKind::LinuxNative);
+        assert_eq!(runtime.source, Some(RuntimeValueSource::KernelRelease));
+        assert_eq!(runtime.status, ObservationStatus::Observed);
+        assert_eq!(runtime.confidence, Confidence::Certain);
     }
 }
