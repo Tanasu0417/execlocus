@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a focused improvement to ExecLocus
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which runtime-topology question is difficult to answer today?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Minimum evidence
+      description: What read-only evidence would support the proposed result?
+    validations:
+      required: true
+  - type: textarea
+    id: legitimate_setup
+    attributes:
+      label: Legitimate non-triggering setup
+      description: Describe a similar setup that must not produce a warning.
+    validations:
+      required: true
