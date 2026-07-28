@@ -1,4 +1,4 @@
-use std::env;
+use std::{cmp::Reverse, env};
 
 use crate::{
     model::{ExecutableOrigin, PathClass, Report, Topology},
@@ -176,7 +176,7 @@ fn collect_secrets(report: &Report, context: &dyn RedactionContext) -> Vec<Secre
     {
         push_secret(&mut secrets, value, REDACTED_PATH);
     }
-    secrets.sort_by(|left, right| right.value.len().cmp(&left.value.len()));
+    secrets.sort_by_key(|secret| Reverse(secret.value.len()));
     secrets
 }
 
