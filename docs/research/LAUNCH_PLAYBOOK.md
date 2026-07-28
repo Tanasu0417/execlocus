@@ -16,11 +16,11 @@
 
 推奨:
 
-> Your AI coding agent says it ran `git`. ExecLocus shows whether that was Windows Git or Linux Git, which PATH entry won, and the evidence behind the answer.
+> In your AI coding agent's current context, will `git` resolve to Windows Git or Linux Git? ExecLocus shows which candidate would win and the evidence behind the answer.
 
 日本語:
 
-> AIコーディングエージェントが実行した`git`はWindows版かLinux版か。ExecLocusは、どのPATHが選ばれ、なぜそう判定したかまで表示します。
+> AIコーディングエージェントの現在のコンテキストで、`git`はWindows版とLinux版のどちらに解決されるか。ExecLocusは、どの候補が選ばれるかと判定根拠を表示します。
 
 ### AIを主語にしすぎない
 
@@ -36,13 +36,15 @@ Windows側のCowork系ツールとWSL側のCLIから同じプロジェクトを�
 
 対象: 開発者本人と協力者
 
-- 10件のWindows／WSL実環境を診断する
-- 意外な差異、誤検知、判定不能を記録する
+- 10人以上・10件以上のWindows／WSL実環境を診断する
+- 検証済み、誤検知、判定不能を分けて記録する
+- 従来の手作業とExecLocusのtime-to-conclusionを比較する
+- 再利用意向と後日の実利用を別々に記録する
 - terminal出力とJSONを固定する
 - 共有出力のredactionをテストする
 - 10秒デモに使う実例を1件選ぶ
 
-終了条件: 3件以上で、利用者が事前に把握していなかった実行環境または実行ファイル差を発見する。
+終了条件: 3件以上で、確認可能な結論または判断につながり、従来の手作業より役に立ったと確認する。差異が存在しただけでは完了に数えない。
 
 ### Stage 1: `v0.1.0-alpha.1`
 
@@ -51,6 +53,7 @@ Windows側のCowork系ツールとWSL側のCLIから同じプロジェクトを�
 - GitHub prereleaseとして公開
 - Windows x86_64とLinux x86_64のバイナリ
 - 各ファイルのSHA-256 checksum
+- 第三者ライセンスnoticeとSBOM
 - 既知の制約とNon-goals
 - コピー可能な3シナリオ
 - 変更履歴
@@ -64,7 +67,7 @@ GitHub Releasesは、リリースノートとバイナリを同じ場所で配�
 対象: 一般のWindows／WSL利用者
 
 - alpha利用者の重大問題を解消
-- CI、CodeQL、checksum生成を自動化
+- CI、CodeQL、checksum、第三者ライセンスnotice、SBOM生成を自動化
 - `cargo package --list`と`cargo publish --dry-run`を確認
 - crates.ioへ公開する場合は、公開物に秘密・不要なassetがないか再監査
 - WinGetまたはScoopの少なくとも1経路を追加
@@ -149,12 +152,12 @@ ExecLocusはWindowsが主役なので、一般的なRust CLIよりWindows導入�
 
 ```text
 I use AI coding agents across Windows and WSL, and I kept losing time to a simple question:
-which runtime and executable actually handled the command?
+which runtime and executable would this context select?
 
 ExecLocus is a local, read-only Rust CLI that shows the runtime, distro, user, shell,
 filesystem boundary, executable resolution, and the evidence behind each conclusion.
 
-It does not upload diagnostics or rewrite PATH. Shared output is redacted by default.
+It does not upload diagnostics or rewrite PATH. Shareable output will be available only after redaction-before-rendering is implemented and tested.
 
 Try: <release URL>
 Source: https://github.com/Tanasu0417/execlocus
@@ -164,12 +167,12 @@ Source: https://github.com/Tanasu0417/execlocus
 
 ```text
 WindowsとWSLをまたいでAIコーディングエージェントを使っていると、
-「このコマンドは結局どちらで、どの実行ファイルを使ったのか」が分からなくなることがあります。
+「このコンテキストでは、どちらの実行ファイルが選ばれるのか」が分からなくなることがあります。
 
 ExecLocusは、runtime、distro、user、shell、ファイルシステム境界、
 実行ファイルの解決結果と根拠をローカルで表示する読み取り専用Rust CLIです。
 
-診断情報はアップロードせず、共有用出力は既定で匿名化します。
+診断情報はアップロードしません。共有用出力は、serialization前の秘匿化を実装・検証してから提供します。
 ```
 
 ## 計測
@@ -178,10 +181,12 @@ ExecLocusは、runtime、distro、user、shell、ファイルシステム境界�
 
 | 指標 | 初期目標 | 理由 |
 |---|---:|---|
-| 実環境での診断 | 30 | 市場仮説より利用事実を得る |
-| 意外な差異の発見 | 10 | 中核価値を検証する |
+| unique collaborator／環境 | 30／30 | 同一人物の複数実行を需要として過大計上しない |
+| 確認済みで役立った結論 | 10 | 差異でなく判断価値を検証する |
+| 誤検知／判定不能 | 全件分類 | 精度と限界を確認する |
+| 手作業比のtime-to-conclusion | 全件記録 | 時間価値を確認する |
 | 再現可能なIssue | 5 | 診断情報の品質を見る |
-| 2回目以降の利用者 | 10 | 一度きりの好奇心と区別する |
+| 再利用意向／後日の実利用 | 分けて記録 | 意向とretentionを混同しない |
 | 外部contributor | 2 | ルール拡張可能性を見る |
 | privacyに関する事故 | 0 | 最優先の安全指標 |
 
@@ -197,13 +202,6 @@ ExecLocusは、runtime、distro、user、shell、ファイルシステム境界�
 - crates.io tokenや署名鍵をGitHub Actionsのログへ出す
 - v0.1.0で全パッケージマネージャーへ同時対応する
 
-## 次の実装順
+## 実装順と需要検証
 
-1. JSON schemaとredaction contractを固定
-2. Windows／WSLの実例fixtureを追加
-3. 10秒デモ用の再現シナリオを作成
-4. Release workflowとchecksum生成
-5. `v0.1.0-alpha.1`をDraft releaseで検証
-6. 10人の利用テスト
-7. READMEを実測結果で更新
-8. `v0.1.0`と最初の記事を公開
+実装順の正本は[OSS adoption blueprint](../ADOPTION_BLUEPRINT.md)のGate A〜Dとし、この文書には重複して定義しない。紹介資料・デモ・Xでの需要検証は[デモ制作計画](../DEMO_PLAN.md)と[需要検証計画](DEMAND_VALIDATION.md)に従う。

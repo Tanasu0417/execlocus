@@ -18,8 +18,8 @@ This is the source of truth for current capability claims. “Planned” means d
 
 | Environment | Status | Current evidence | Limitation |
 |---|---|---|---|
-| Windows 11, x86_64 MSVC | Verified | GitHub Actions and local development test | Public binary is not released |
-| WSL2, Ubuntu 24.04 | Verified | Local WSL test and Ubuntu CI coverage | Other distributions are not yet verified |
+| Windows 11, x86_64 MSVC | Partial | Windows CI exercises the code path | No published real-environment validation record or public binary |
+| WSL2, Ubuntu 24.04 | Partial | Maintainer smoke test plus generic Ubuntu CI | CI is Linux-native, not WSL; a sanitized WSL validation record is still required |
 | Linux native, x86_64 | Partial | Ubuntu CI exercises the Linux code path | Product positioning and real-world testing focus on Windows/WSL |
 | PowerShell and cmd | Partial | Runtime/shell hints and Windows test path exist | Shell-specific agent invocation evidence is incomplete |
 | bash | Partial | WSL/Linux execution path exists | Agent adapter evidence is incomplete |

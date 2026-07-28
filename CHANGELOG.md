@@ -15,11 +15,13 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - English and Japanese project documentation
 - Thirty-project OSS benchmark and adoption/launch planning documents
 - Public use-case contracts and an explicit support matrix
-- Privacy-first real-environment field-report template
+- One-page product overviews, staged demo plan, alternatives analysis, and demand-validation plan
+- Privacy-first structured field-report template without a raw-output field
 
 ### Security
 
 - Normal execution is designed to remain local-only and read-only
 - Public examples, fixtures, and reports must exclude credentials and personal identity
+- CSV cells that begin with formula-significant characters are escaped for spreadsheet import
 
 [Unreleased]: https://github.com/Tanasu0417/execlocus/commits/main

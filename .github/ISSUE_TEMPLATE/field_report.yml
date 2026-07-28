@@ -1,16 +1,15 @@
-name: Sanitized field report
-description: Help validate ExecLocus on a real Windows or WSL setup without sharing private data
+name: Structured field report
+description: Help validate ExecLocus without posting command output or private data
 title: "[Field report]: "
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for testing a pre-alpha project. Do not paste raw environment
-        dumps. Remove usernames, machine names, home directories, personal paths,
-        tokens, credentials, private repository names, and other identifying data.
-
-        Until automatic redaction is implemented, every report must be reviewed
-        and sanitized manually before submission.
+        Thank you for testing a pre-alpha project. Automatic redaction is not
+        implemented, so this form intentionally asks only for categories and a
+        short conclusion. Do not paste command output, environment dumps,
+        usernames, machine names, home directories, personal paths, tokens,
+        credentials, private repository names, or other identifying data.
   - type: dropdown
     id: environment
     attributes:
@@ -35,7 +34,7 @@ body:
       label: Question tested
       options:
         - Where is the coding agent executing?
-        - Which executable wins, and why?
+        - Which executable would win in the current context, and why?
         - Is /mnt/c intentional sharing or a mismatch?
         - General first-run feedback
     validations:
@@ -50,26 +49,64 @@ body:
         - Uncertain
     validations:
       required: true
-  - type: textarea
-    id: outcome
+  - type: dropdown
+    id: verification
     attributes:
-      label: Sanitized outcome
-      description: Describe the conclusion and why it was or was not useful. Prefer normalized facts over raw output.
-      placeholder: WSL selected Windows Node even though a Linux Node candidate was available.
+      label: Could you verify the conclusion independently?
+      options:
+        - Verified as correct
+        - False positive or incorrect
+        - Still unresolved
+        - Not applicable
+    validations:
+      required: true
+  - type: dropdown
+    id: manual_effort
+    attributes:
+      label: How long would your previous manual investigation usually take?
+      options:
+        - Less than 2 minutes
+        - 2 to 10 minutes
+        - More than 10 minutes
+        - I did not know how to investigate it
+        - Not applicable
+    validations:
+      required: true
+  - type: dropdown
+    id: tool_effort
+    attributes:
+      label: How long did ExecLocus take you to reach a conclusion?
+      options:
+        - Less than 1 minute
+        - 1 to 2 minutes
+        - More than 2 minutes
+        - No conclusion reached
+    validations:
+      required: true
+  - type: dropdown
+    id: reuse_intent
+    attributes:
+      label: Would you use this again for a similar uncertainty?
+      options:
+        - "Yes"
+        - Maybe
+        - "No"
     validations:
       required: true
   - type: textarea
-    id: sanitized_output
+    id: outcome
     attributes:
-      label: Optional sanitized output
-      description: Paste only the minimum output you have manually reviewed.
-      render: shell
+      label: Outcome in your own words
+      description: Describe only the conclusion, decision, and usefulness. Do not paste output, commands containing personal paths, or private identifiers.
+      placeholder: The current WSL context would select Windows Node; I verified it separately and chose to change the project setup.
+    validations:
+      required: true
   - type: checkboxes
     id: privacy
     attributes:
       label: Privacy confirmation
       options:
-        - label: I removed credentials, tokens, usernames, machine names, personal paths, and private project information.
+        - label: I did not include command output, credentials, tokens, usernames, machine names, personal paths, or private project information.
           required: true
         - label: I understand this report will be public.
           required: true

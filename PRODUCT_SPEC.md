@@ -3,18 +3,18 @@
 - Status: Draft for v0.1
 - Product name: ExecLocus
 - CLI command: `execlocus`
-- Tagline: `See where your agent actually executes.`
+- Tagline: `See what your agent context resolves—and why.`
 - Last updated: 2026-07-28
 
 ## 1. Product definition
 
-ExecLocus is a read-only CLI that shows where an AI coding agent and its commands actually execute across Windows, WSL, filesystems, shells, and toolchains.
+ExecLocus is a read-only CLI that shows how the current AI coding-agent context resolves across Windows, WSL, filesystems, shells, and toolchains. It identifies an agent's observed runtime only when invocation or process evidence supports that claim.
 
 It does not merely print environment variables. It builds an evidence-backed execution topology, distinguishes observed facts from inference, and explains important cross-layer conflicts.
 
 ### One-sentence promise
 
-> ExecLocus tells Windows and WSL users where their coding agent actually runs, which toolchain it resolves, and which filesystem boundary it crosses—within one screen.
+> ExecLocus tells Windows and WSL users what the current context would resolve, which filesystem boundary it crosses, and—when evidence exists—where the agent was observed running.
 
 ### Three-second outcome
 
@@ -67,6 +67,14 @@ The OS layer in which the current `execlocus` process is executing. Examples: Wi
 
 The OS layer in which a detected Codex or Claude process executes. It may only be reported as observed when process, parent-process, adapter, or invocation evidence supports it.
 
+### Current-context resolution
+
+The executable that the current ExecLocus process would select under a modeled shell-resolution contract. This is a present-context prediction supported by PATH, shell, and filesystem evidence. It is not retrospective proof that an agent already executed that file.
+
+### Agent-observed execution
+
+An executable or runtime tied to an agent invocation through process, parent-process, wrapper, adapter, or equivalent evidence. Output and documentation must never relabel current-context resolution as agent-observed execution.
+
 ### Project location
 
 The filesystem class of the current project:
@@ -95,7 +103,7 @@ A conclusion derived from one or more facts. Inference must include a confidence
 
 - Windows 11
 - WSL2
-- Ubuntu on WSL2 as the primary verified distribution
+- Ubuntu 24.04 on WSL2 as the primary validation target
 - PowerShell, cmd, bash, and zsh
 - Windows-native project paths
 - `/mnt/c` project paths
@@ -157,7 +165,7 @@ execlocus --help
 
 ```text
 ExecLocus
-See where your agent actually executes.
+See what your agent context resolves—and why.
 
 CURRENT EXECUTION
   Runtime       WSL2 / Ubuntu 24.04            observed
@@ -322,10 +330,13 @@ The v0.1 milestone is complete when:
 
 Pre-release validation gate:
 
-- 10 sanitized real-world environment reports
-- Reports from Windows-native, WSL2 `/mnt/c`, and WSL-native projects
-- At least three previously unclear runtime or executable differences discovered
-- At least 90% of submitted outcomes reproducible from the supplied evidence
+- At least 10 unique collaborators across at least 10 Windows/WSL environments
+- Coverage of Windows-native, WSL2 `/mnt/c`, and WSL-native projects
+- At least three confirmed useful cases: a verified conclusion or decision that was difficult to obtain manually
+- Track whether each result was verified, a false positive, or unresolved
+- Record time-to-conclusion versus the user's previous manual approach
+- At least 90% of submitted conclusions reproducible from the supplied structured evidence
+- Record stated reuse intent and later confirm actual reuse separately
 - Zero confirmed privacy leaks from shared reports
 
 Post-release adoption signals:

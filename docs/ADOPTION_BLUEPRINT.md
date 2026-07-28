@@ -12,13 +12,13 @@ This document turns recurring patterns from successful individually owned OSS pr
 
 | Observed pattern | ExecLocus adaptation | Repository evidence | Gate |
 |---|---|---|---|
-| Connect to a familiar problem in one sentence | Lead with “which runtime and executable actually handled the command?” | README and product specification | Keep the first screen understandable without learning a new category |
+| Connect to a familiar problem in one sentence | Lead with “which runtime and executable would this context select?” | README and product specification | Keep the first screen understandable without learning a new category |
 | Show value in about ten seconds | Record one real Windows/WSL executable-resolution case | Real terminal capture, never a staged result presented as real | Capture only after the scenario passes on both platforms |
 | Support humans and automation | Keep terminal and versioned JSON as equal contracts | Terminal renderer, JSON renderer, schema tests | Both outputs describe the same report |
 | Explain evidence and limitations | Attach provenance and confidence; make `unknown` legitimate | Evidence model, rule contract, Non-goals | No warning from missing evidence alone |
 | Treat platforms and shells as first-class | Publish an honest capability matrix | [Support matrix](SUPPORT_MATRIX.md) and CI | “Planned” is never presented as supported |
 | Treat distribution as a product feature | Start with signed/checksummed binaries, then add package managers selectively | Release checklist and package allowlist | No release until artifacts are reproducible |
-| Make output safe to share | Redact before rendering and collect sanitized field reports | Privacy tests and field-report Issue form | Zero personal paths, credentials, or machine identity in shared output |
+| Make output safe to share | Redact before rendering; collect only categorical feedback until then | Privacy tests and field-report Issue form | Zero personal paths, credentials, or machine identity in shared output |
 
 ## Current repository audit
 
@@ -31,7 +31,7 @@ This document turns recurring patterns from successful individually owned OSS pr
 | Public claims | Implemented and planned items appear in several documents | Use one support matrix as the current truth |
 | Release history | No public release and no changelog | Start an Unreleased changelog now |
 | Package contents | Cargo package contents were implicit | Allowlist only source, manifest, lockfile, README, and license |
-| Growth evidence | Launch plan exists | Tie outreach to three proven use cases and measurable field reports |
+| Growth evidence | Launch plan exists | Tie outreach to three proven use cases, useful decisions, and measurable field reports |
 
 ## Target repository structure
 
@@ -100,15 +100,22 @@ Every feature must complete one user question across the stack instead of adding
 
 - Publish the benchmark, blueprint, use cases, and support matrix.
 - Add MSRV and package-content checks.
-- Collect field reports using only sanitized data.
+- Collect categorical field feedback without command output until automatic redaction is implemented.
 
 ### Gate B — prove the three questions
 
 Required outcomes:
 
 - Observe or safely infer the active Codex/Claude execution layer.
-- Explain which Git, Node, npm, or agent executable wins and why.
+- Explain which Git, Node, npm, or agent executable would win in the current context and why.
 - Explain `/mnt/c` according to user intent without treating it as inherently wrong.
+
+Engineering prerequisites before expanding UC-02:
+
+- Introduce an injectable probe context or resolver so tests do not depend on the maintainer's live environment, PATH, or filesystem.
+- Define shell-specific resolution contracts for PowerShell aliases/functions/scripts, cmd current-directory and `PATHEXT`, and bash/zsh behavior.
+- Add scenario and golden tests spanning probe → normalized model → rule → terminal/JSON output.
+- Bound script-header reads and escape untrusted control characters before terminal rendering.
 
 Recommended implementation sequence:
 
@@ -123,12 +130,12 @@ Each question becomes a separate focused pull request when possible.
 - Freeze the JSON schema version.
 - Implement Markdown output and redaction-before-rendering.
 - Add golden tests for usernames, home paths, machine names, and absolute paths.
-- Validate ten real Windows/WSL environments and record only sanitized outcomes.
+- Validate at least ten environments from at least ten unique collaborators and record only redacted or categorical outcomes.
 
 ### Gate D — release and distribution
 
 - Produce Windows x86_64 and Linux x86_64 binaries and SHA-256 checksums.
-- Verify package contents and release notes.
+- Verify package contents, third-party license notices, SBOM, and release notes.
 - Publish a prerelease before crates.io or a Windows package manager.
 - Promote only after the three scenarios are reproducible from the README.
 
@@ -136,12 +143,14 @@ Each question becomes a separate focused pull request when possible.
 
 ### Message hierarchy
 
-1. Problem: a terminal appearance does not prove which runtime or executable an agent used.
-2. Proof: show the selected executable, alternatives, filesystem boundary, and evidence.
+1. Problem: a terminal appearance does not prove which runtime or executable the current context would select.
+2. Proof: show the modeled selected executable, alternatives, filesystem boundary, and evidence; label agent-observed execution separately.
 3. Safety: local-only, read-only, and redacted before sharing.
 4. Scope: Windows and WSL first; no automatic repair and no generic system monitoring.
 
 Avoid leading with “written in Rust,” “AI-powered,” or a long feature list. Those describe implementation or category, not the user's outcome.
+
+Until redaction-before-rendering passes golden tests, “redacted before sharing” is a design requirement rather than an available feature and must be labeled as planned.
 
 ### Proof assets
 
@@ -165,11 +174,13 @@ Create these from real, repeatable fixtures:
 
 | Measure | Gate | What it validates |
 |---|---:|---|
-| Sanitized real-environment reports | 10 | The setup exists outside the maintainer's machine |
-| Previously unknown runtime/tool differences found | 3 or more | The core diagnosis creates new information |
-| Reports that can be reproduced from supplied evidence | 90% | The evidence contract is useful |
+| Unique collaborators / environments | 10 / 10 | The setup exists outside the maintainer's machine and one person is not overcounted |
+| Confirmed useful conclusions or decisions | 3 or more | The core diagnosis creates verified action value, not merely a difference |
+| Verified / false-positive / unresolved results | Track all | Accuracy and ambiguity remain visible |
+| Time-to-conclusion versus manual investigation | Record both | The workflow saves effort rather than only repackaging commands |
+| Conclusions reproducible from structured evidence | 90% | The evidence contract is useful |
 | Confirmed privacy leaks | 0 | Sharing is safe enough to continue |
-| Repeat users after the first run | Track before setting a target | The tool is more than a novelty |
+| Reuse intent / confirmed later reuse | Track separately | Intent is not mistaken for actual retention |
 
 Stars and downloads are secondary signals. They do not replace evidence that the product found a real, previously unclear boundary.
 

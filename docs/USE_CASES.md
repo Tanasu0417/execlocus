@@ -43,11 +43,13 @@ Do not read agent tokens or unrestricted private state. Redacted output must not
 - Agent installation present without runtime evidence returns `unknown`
 - Missing optional process evidence produces a partial report, not a panic
 
-## UC-02 — Which executable wins, and why?
+## UC-02 — Which executable would win in the current context, and why?
 
 ### User question
 
-> When the agent runs Git, Node, npm, or its own command, which executable is selected and which alternatives lost?
+> If Git, Node, npm, or an agent command were resolved in the current ExecLocus context, which executable would be selected and which alternatives would lose?
+
+This use case models current-context resolution. It must not claim that the agent already executed the selected file unless separate invocation or process evidence establishes agent-observed execution.
 
 ### Minimum evidence
 
@@ -59,9 +61,9 @@ Do not read agent tokens or unrestricted private state. Redacted output must not
 
 ### Expected result
 
-- Show the selected executable and its Windows/Linux/script origin.
+- Show the executable that would be selected and its Windows/Linux/script origin.
 - Show that selection order, not filename alone, determined the result.
-- Emit `ENV002` when WSL selects a Windows core tool.
+- Emit `ENV002` when the modeled WSL context selects a Windows core tool.
 - Emit `PATH001` only when a native candidate was actually observed and lost precedence.
 - Keep actionable suggestions read-only.
 
