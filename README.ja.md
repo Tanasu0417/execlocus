@@ -108,6 +108,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [製品仕様](PRODUCT_SPEC.md)
 - [診断ルール仕様](RULES.md)
 - [MVPスコープ](docs/MVP_SCOPE.md)
+- [OSSベンチマーク・公開戦略](docs/research/README.md)
 - [コントリビューションガイド](CONTRIBUTING.md)
 - [セキュリティポリシー](SECURITY.md)
 

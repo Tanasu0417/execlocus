@@ -156,6 +156,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Product specification](PRODUCT_SPEC.md)
 - [Diagnostic rule specification](RULES.md)
 - [MVP scope](docs/MVP_SCOPE.md)
+- [OSS benchmark and launch research](docs/research/README.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
