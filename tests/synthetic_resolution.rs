@@ -8,7 +8,7 @@ use execlocus::{
     collect_report_with, collect_report_with_resolver,
     model::{
         Evidence, ExecutableCandidate, ExecutableFormat, ExecutableOrigin, ObservationStatus,
-        PathClass, ProbeResult, Profile, RuntimeKind,
+        PathClass, ProbeResult, Profile, RuntimeKind, RuntimeValueSource,
     },
     probes::context::{CandidateSnapshot, HostPlatform, ProbeContext},
     probes::executable::ExecutableResolver,
@@ -185,9 +185,22 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
 
     assert_eq!(report.generated_at_unix_ms, 1_234_567);
     assert_eq!(report.runtime.kind, RuntimeKind::Wsl);
+    assert_eq!(
+        report.runtime.kind_source,
+        Some(RuntimeValueSource::Environment)
+    );
+    assert_eq!(report.runtime.status, ObservationStatus::Inferred);
     assert_eq!(report.runtime.distribution.as_deref(), Some("Ubuntu-24.04"));
     assert_eq!(report.runtime.user.as_deref(), Some("demo"));
+    assert_eq!(
+        report.runtime.user_source,
+        Some(RuntimeValueSource::Environment)
+    );
     assert_eq!(report.runtime.shell.as_deref(), Some("/bin/bash"));
+    assert_eq!(
+        report.runtime.shell_source,
+        Some(RuntimeValueSource::Environment)
+    );
     assert_eq!(report.project.class, PathClass::WindowsMounted);
     assert_eq!(
         report.project.path.as_deref(),
@@ -227,6 +240,10 @@ fn applies_windows_pathext_with_injected_platform_semantics() {
 
     assert_eq!(report.generated_at_unix_ms, 7_654_321);
     assert_eq!(report.runtime.kind, RuntimeKind::WindowsNative);
+    assert_eq!(
+        report.runtime.kind_source,
+        Some(RuntimeValueSource::TargetPlatform)
+    );
     assert_eq!(report.project.class, PathClass::WindowsNative);
 
     let node = report

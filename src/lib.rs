@@ -6,15 +6,21 @@ pub mod rules;
 use model::{Profile, Report};
 use probes::context::{ProbeContext, SystemProbeContext};
 use probes::executable::{ExecutableResolver, PathExecutableResolver};
+use probes::process::{RuntimeIdentityInspector, SystemRuntimeIdentityInspector};
 
 #[must_use]
 pub fn collect_report(profile: Profile) -> Report {
-    collect_report_with(&SystemProbeContext, profile)
+    collect_report_with_components(
+        &SystemProbeContext,
+        &PathExecutableResolver,
+        Some(&SystemRuntimeIdentityInspector),
+        profile,
+    )
 }
 
 #[must_use]
 pub fn collect_report_with(context: &dyn ProbeContext, profile: Profile) -> Report {
-    collect_report_with_resolver(context, &PathExecutableResolver, profile)
+    collect_report_with_components(context, &PathExecutableResolver, None, profile)
 }
 
 #[must_use]
@@ -23,7 +29,19 @@ pub fn collect_report_with_resolver(
     resolver: &dyn ExecutableResolver,
     profile: Profile,
 ) -> Report {
-    let runtime_result = probes::runtime::probe_with(context);
+    collect_report_with_components(context, resolver, None, profile)
+}
+
+fn collect_report_with_components(
+    context: &dyn ProbeContext,
+    resolver: &dyn ExecutableResolver,
+    identity_inspector: Option<&dyn RuntimeIdentityInspector>,
+    profile: Profile,
+) -> Report {
+    let runtime_result = identity_inspector.map_or_else(
+        || probes::runtime::probe_with(context),
+        |inspector| probes::runtime::probe_with_inspector(context, inspector),
+    );
     let runtime = runtime_result.value;
     let project_result = probes::path::probe_project_with(context, &runtime.kind);
 
@@ -48,7 +66,7 @@ pub fn collect_report_with_resolver(
     }
 
     let mut report = Report {
-        schema_version: "0.1.0".to_owned(),
+        schema_version: "0.2.0".to_owned(),
         generated_at_unix_ms: context.now_unix_ms(),
         profile,
         runtime,
