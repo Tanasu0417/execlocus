@@ -156,7 +156,11 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Product specification](PRODUCT_SPEC.md)
 - [Diagnostic rule specification](RULES.md)
 - [MVP scope](docs/MVP_SCOPE.md)
+- [Initial use-case contracts](docs/USE_CASES.md)
+- [Current support matrix](docs/SUPPORT_MATRIX.md)
+- [OSS pattern adoption blueprint](docs/ADOPTION_BLUEPRINT.md)
 - [OSS benchmark and launch research](docs/research/README.md)
+- [Changelog](CHANGELOG.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 
@@ -172,6 +176,12 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [ ] Redacted Markdown reports
 - [x] Windows and Linux CI workflow
 - [ ] v0.1.0 release artifacts
+
+## Help validate the product hypothesis
+
+Before v0.1.0, the project is seeking ten sanitized Windows/WSL field reports and at least three cases where the result reveals a previously unclear runtime or executable boundary.
+
+Use the [sanitized field-report form](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml) if you test the prototype. Automatic redaction is not implemented yet, so do not paste raw output: manually remove credentials, usernames, machine names, personal paths, and private project information first.
 
 ## Contributing
 

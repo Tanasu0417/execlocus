@@ -320,13 +320,20 @@ The v0.1 milestone is complete when:
 
 ## 16. Success measures
 
-Initial 30-day product signals:
+Pre-release validation gate:
 
-- 100 GitHub stars
-- 20 real-world environment reports
+- 10 sanitized real-world environment reports
 - Reports from Windows-native, WSL2 `/mnt/c`, and WSL-native projects
-- Five confirmed conflicts not made clear by existing doctor tools
-- Setup success rate of at least 90%
+- At least three previously unclear runtime or executable differences discovered
+- At least 90% of submitted outcomes reproducible from the supplied evidence
+- Zero confirmed privacy leaks from shared reports
+
+Post-release adoption signals:
+
+- Repeat use after the first diagnostic run
+- Reproducible issues from external users
+- External documentation or rule contributions
+- Downloads and stars, treated as awareness signals rather than release gates
 
 Quality signals:
 

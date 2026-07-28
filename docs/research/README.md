@@ -4,6 +4,7 @@ This directory contains reproducible research used to shape the product and rele
 
 - [30-project OSS benchmark](OSS_BENCHMARK_30.md)
 - [Launch and communication playbook](LAUNCH_PLAYBOOK.md)
+- [ExecLocus adoption blueprint](../ADOPTION_BLUEPRINT.md)
 - [Raw comparison data (CSV)](oss_benchmark_30.csv)
 - [Formatted comparison workbook (XLSX)](oss_benchmark_30.xlsx)
 

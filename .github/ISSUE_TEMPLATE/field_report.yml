@@ -1,0 +1,75 @@
+name: Sanitized field report
+description: Help validate ExecLocus on a real Windows or WSL setup without sharing private data
+title: "[Field report]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing a pre-alpha project. Do not paste raw environment
+        dumps. Remove usernames, machine names, home directories, personal paths,
+        tokens, credentials, private repository names, and other identifying data.
+
+        Until automatic redaction is implemented, every report must be reviewed
+        and sanitized manually before submission.
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Windows 11
+        - WSL2 with a project under /mnt/c
+        - WSL2 with a WSL-native project
+        - Other Linux environment
+        - Mixed or uncertain
+    validations:
+      required: true
+  - type: input
+    id: distribution
+    attributes:
+      label: WSL distribution, if relevant
+      description: Distribution name and version only; do not include user or machine identity.
+      placeholder: Ubuntu 24.04
+  - type: dropdown
+    id: use_case
+    attributes:
+      label: Question tested
+      options:
+        - Where is the coding agent executing?
+        - Which executable wins, and why?
+        - Is /mnt/c intentional sharing or a mismatch?
+        - General first-run feedback
+    validations:
+      required: true
+  - type: dropdown
+    id: discovery
+    attributes:
+      label: Did the result reveal something you did not already know?
+      options:
+        - "Yes"
+        - "No"
+        - Uncertain
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Sanitized outcome
+      description: Describe the conclusion and why it was or was not useful. Prefer normalized facts over raw output.
+      placeholder: WSL selected Windows Node even though a Linux Node candidate was available.
+    validations:
+      required: true
+  - type: textarea
+    id: sanitized_output
+    attributes:
+      label: Optional sanitized output
+      description: Paste only the minimum output you have manually reviewed.
+      render: shell
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I removed credentials, tokens, usernames, machine names, personal paths, and private project information.
+          required: true
+        - label: I understand this report will be public.
+          required: true

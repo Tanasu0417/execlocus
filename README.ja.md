@@ -108,7 +108,11 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [製品仕様](PRODUCT_SPEC.md)
 - [診断ルール仕様](RULES.md)
 - [MVPスコープ](docs/MVP_SCOPE.md)
+- [初期ユースケース仕様](docs/USE_CASES.md)
+- [現在の対応状況](docs/SUPPORT_MATRIX.md)
+- [OSS成功パターンの採用設計](docs/ADOPTION_BLUEPRINT.md)
 - [OSSベンチマーク・公開戦略](docs/research/README.md)
+- [変更履歴](CHANGELOG.md)
 - [コントリビューションガイド](CONTRIBUTING.md)
 - [セキュリティポリシー](SECURITY.md)
 
@@ -121,6 +125,12 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
 - [ ] Codex/Claude adapter
 - [ ] 秘匿化Markdownレポート
+
+## 実環境での仮説検証にご協力ください
+
+v0.1.0までに、匿名化済みのWindows／WSL実環境レポート10件と、利用者が把握していなかった実行環境または実行ファイル差を3件以上確認することを目標にしています。
+
+プロトタイプを試した場合は、[匿名化フィールドレポート](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml)を利用できます。自動秘匿化はまだ未実装です。生の出力は貼らず、credential、username、machine名、個人パス、非公開プロジェクト情報を手動で削除してください。
 
 ## ライセンス
 

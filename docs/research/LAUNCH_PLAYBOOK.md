@@ -4,6 +4,8 @@
 
 この文書は、[30件の個人所有OSS分析](OSS_BENCHMARK_30.md)から得た発信・配布パターンを、ExecLocusの初回リリースへ変換する実行計画である。
 
+リポジトリ構成、開発単位、受入ゲートへの反映は[OSS adoption blueprint](../ADOPTION_BLUEPRINT.md)を正本とする。
+
 ## 発信の原則
 
 ### 製品ではなく問題から始める
