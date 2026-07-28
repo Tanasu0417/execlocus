@@ -1,4 +1,7 @@
-use std::{collections::HashSet, path::Path};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     model::{
@@ -119,12 +122,22 @@ fn resolve_from_path(
     runtime: RuntimeKind,
 ) -> ProbeResult<Vec<ExecutableCandidate>> {
     let names = candidate_names(context, command, runtime);
+    resolve_from_search_plan(context, command, runtime, context.path_entries(), &names)
+}
+
+pub(super) fn resolve_from_search_plan(
+    context: &dyn ProbeContext,
+    command: &str,
+    runtime: RuntimeKind,
+    directories: Vec<PathBuf>,
+    names: &[String],
+) -> ProbeResult<Vec<ExecutableCandidate>> {
     let mut seen = HashSet::new();
     let mut candidates = Vec::new();
     let mut failures = Vec::new();
 
-    for directory in context.path_entries() {
-        for name in &names {
+    for directory in directories {
+        for name in names {
             let snapshot =
                 match context.inspect_candidate(&directory, name, EXECUTABLE_PREFIX_LIMIT) {
                     Ok(Some(snapshot)) => snapshot,
@@ -168,9 +181,10 @@ fn candidate_names(context: &dyn ProbeContext, command: &str, runtime: RuntimeKi
         return vec![command.to_owned()];
     }
 
-    let extensions = context
+    let pathext = context
         .env_var("PATHEXT")
-        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".to_owned())
+        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".to_owned());
+    let extensions = pathext
         .split(';')
         .filter(|value| !value.is_empty())
         .map(str::to_ascii_lowercase)
@@ -182,6 +196,31 @@ fn candidate_names(context: &dyn ProbeContext, command: &str, runtime: RuntimeKi
             .into_iter()
             .map(|extension| format!("{command}{extension}")),
     );
+    names
+}
+
+pub(super) fn windows_pathext_candidate_names(
+    context: &dyn ProbeContext,
+    command: &str,
+    include_bare_name: bool,
+) -> Vec<String> {
+    if command_has_extension(command, RuntimeKind::WindowsNative) {
+        return vec![command.to_owned()];
+    }
+
+    let pathext = context
+        .env_var("PATHEXT")
+        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".to_owned());
+    let extensions = pathext
+        .split(';')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_ascii_lowercase);
+    let mut names = Vec::new();
+    if include_bare_name {
+        names.push(command.to_owned());
+    }
+    names.extend(extensions.map(|extension| format!("{command}{extension}")));
     names
 }
 

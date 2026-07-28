@@ -103,7 +103,7 @@ pub enum ExecutableOrigin {
     Unknown,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct ExecutableCandidate {
     pub path: String,
     pub format: ExecutableFormat,
