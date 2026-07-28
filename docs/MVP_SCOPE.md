@@ -241,8 +241,5 @@ Decided:
 - Repository name: `execlocus`
 - Copyright notice: `Copyright (c) 2026 ExecLocus contributors`
 - Declared minimum Rust version: 1.85 (the minimum for Rust 2024 edition)
-
-Still required before publication:
-
-- Initial GitHub owner or organization
-- Verify the declared Rust 1.85 minimum in CI
+- Public GitHub repository with protected `main`
+- Rust 1.85 compatibility check in CI

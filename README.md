@@ -1,20 +1,22 @@
 # ExecLocus
 
-> See where your agent actually executes.
+> See what your agent context resolves—and why.
 
-ExecLocus is a read-only CLI that maps the runtime behind AI coding agents across Windows, WSL, shells, filesystems, and toolchains.
+ExecLocus is a read-only CLI that maps the current Windows/WSL execution context, command resolution, filesystems, and supporting evidence. When invocation or process evidence is available, it can also identify the agent runtime.
 
 It answers a deceptively simple question:
 
-> Is the agent using Windows, WSL, or a mixture of both—and what evidence proves it?
+> In this context, would the command resolve to Windows, WSL, or a mixture of both—and what evidence supports that result?
 
 > **Project status:** pre-alpha prototype. Runtime, path, executable-origin, terminal, JSON, and initial rule foundations are implemented; no release is available yet.
 
 ## What the first screen will show
 
+The following is an illustrative target for v0.1, not captured output from the current prototype:
+
 ```text
 ExecLocus
-See where your agent actually executes.
+See what your agent context resolves—and why.
 
 CURRENT EXECUTION
   Runtime       WSL2 / Ubuntu 24.04            observed
@@ -122,7 +124,7 @@ Rules are read-only. Suggestions explain options but never modify the machine.
 | Area | Initial support |
 |---|---|
 | Host | Windows 11 |
-| Linux layer | WSL2, with Ubuntu as the primary verified distribution |
+| Linux layer | WSL2, with Ubuntu 24.04 as the primary validation target |
 | Shells | PowerShell, cmd, bash, zsh |
 | Agents | Codex CLI, Claude Code; evidence-limited Codex Desktop detection |
 | Tools | Agent executable, Git, Node.js, npm, shell |
@@ -135,7 +137,7 @@ ExecLocus v0.1 is designed to be:
 - **Read-only** — no PATH, profile, WSL, agent, or project changes
 - **Local-only** — no network calls during normal execution
 - **Secret-avoiding** — no token or unrestricted environment-variable collection
-- **Shareable** — usernames, home paths, machine names, and personal absolute paths are removed from redacted reports
+- **Shareable by design** — planned redacted reports remove usernames, home paths, machine names, and personal absolute paths before serialization
 
 ## How it differs from a doctor CLI
 
@@ -153,11 +155,21 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 
 ## Project documents
 
-- [Product specification](PRODUCT_SPEC.md)
-- [Diagnostic rule specification](RULES.md)
-- [MVP scope](docs/MVP_SCOPE.md)
-- [Contributing guide](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
+- [Product specification](https://github.com/Tanasu0417/execlocus/blob/main/PRODUCT_SPEC.md)
+- [Diagnostic rule specification](https://github.com/Tanasu0417/execlocus/blob/main/RULES.md)
+- [MVP scope](https://github.com/Tanasu0417/execlocus/blob/main/docs/MVP_SCOPE.md)
+- [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
+- [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
+- [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
+- [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
+- [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)
+- [OSS pattern adoption blueprint](https://github.com/Tanasu0417/execlocus/blob/main/docs/ADOPTION_BLUEPRINT.md)
+- [Alternatives and current workarounds](https://github.com/Tanasu0417/execlocus/blob/main/docs/research/ALTERNATIVES.md)
+- [OSS benchmark and launch research](https://github.com/Tanasu0417/execlocus/blob/main/docs/research/README.md)
+- [X demand-research post strategy](https://github.com/Tanasu0417/execlocus/blob/main/docs/research/X_POST_STRATEGY.md)
+- [Changelog](https://github.com/Tanasu0417/execlocus/blob/main/CHANGELOG.md)
+- [Contributing guide](https://github.com/Tanasu0417/execlocus/blob/main/CONTRIBUTING.md)
+- [Security policy](https://github.com/Tanasu0417/execlocus/blob/main/SECURITY.md)
 
 ## Roadmap
 
@@ -172,12 +184,18 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Windows and Linux CI workflow
 - [ ] v0.1.0 release artifacts
 
+## Help validate the product hypothesis
+
+Before v0.1.0, the project is seeking categorical feedback from at least ten unique collaborators across ten Windows/WSL environments and at least three confirmed useful cases. A useful case must produce a verified conclusion or decision that was difficult to obtain manually; a difference alone does not count.
+
+Use the [field-report form](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml) if you test the prototype. Automatic redaction is not implemented yet, so the form does not request command output. Do not paste raw diagnostics, credentials, usernames, machine names, personal paths, or private project information into any public Issue.
+
 ## Contributing
 
 The project is still defining its first implementation. A new diagnostic rule must include a reproducible failure or material tradeoff, minimum evidence, a legitimate non-triggering setup, and fixtures.
 
-See [RULES.md](RULES.md) for the contribution requirements that will govern rule additions.
+See [RULES.md](https://github.com/Tanasu0417/execlocus/blob/main/RULES.md) for the contribution requirements that will govern rule additions.
 
 ## License
 
-ExecLocus is licensed under the [MIT License](LICENSE).
+ExecLocus is licensed under the [MIT License](https://github.com/Tanasu0417/execlocus/blob/main/LICENSE).

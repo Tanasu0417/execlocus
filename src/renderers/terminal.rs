@@ -6,7 +6,7 @@ use crate::model::{ExecutableOrigin, PathClass, Report, Severity};
 pub fn render(report: &Report) -> String {
     let mut output = String::new();
     writeln!(output, "ExecLocus").expect("writing to String cannot fail");
-    writeln!(output, "See where your agent actually executes.\n")
+    writeln!(output, "See what your agent context resolves—and why.\n")
         .expect("writing to String cannot fail");
 
     writeln!(output, "CURRENT EXECUTION").expect("writing to String cannot fail");
