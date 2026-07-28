@@ -75,6 +75,8 @@ execlocus explain <RULE_ID>
 execlocus report --format <json|markdown> [--redact]
 ```
 
+Markdown is always redacted. `--redact` applies the same share-safe transformation to JSON; it is not needed for Markdown and there is no opt-out for Markdown.
+
 Global behavior:
 
 - `--help` and `--version` use conventional exit code 0

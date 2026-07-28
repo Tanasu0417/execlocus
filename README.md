@@ -60,7 +60,8 @@ execlocus
 execlocus check
 execlocus explain ENV002
 execlocus report --format json
-execlocus report --format markdown --redact
+execlocus report --format markdown
+execlocus report --format json --redact
 ```
 
 The zero-argument command is the primary workflow. No configuration should be required for the first useful result.
@@ -71,6 +72,8 @@ The zero-argument command is the primary workflow. No configuration should be re
 cargo run --
 cargo run -- check
 cargo run -- report --format json
+cargo run -- report --format markdown
+cargo run -- report --format json --redact
 ```
 
 Development checks:
@@ -141,7 +144,7 @@ ExecLocus v0.1 is designed to be:
 - **Read-only** — no PATH, profile, WSL, agent, or project changes
 - **Local-only** — no network calls during normal execution
 - **Secret-avoiding** — no token or unrestricted environment-variable collection
-- **Shareable by design** — planned redacted reports remove usernames, home paths, machine names, and personal absolute paths before serialization
+- **Shareable by design** — Markdown reports are always redacted; `report --format json --redact` applies the same transformation before JSON serialization
 
 ## How it differs from a doctor CLI
 
@@ -165,6 +168,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
+- [Shareable redaction validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)
@@ -193,7 +197,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 
 Before v0.1.0, the project is seeking categorical feedback from at least ten unique collaborators across ten Windows/WSL environments and at least three confirmed useful cases. A useful case must produce a verified conclusion or decision that was difficult to obtain manually; a difference alone does not count.
 
-Use the [field-report form](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml) if you test the prototype. Automatic redaction is not implemented yet, so the form does not request command output. Do not paste raw diagnostics, credentials, usernames, machine names, personal paths, or private project information into any public Issue.
+Use the [field-report form](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml) if you test the prototype. The form does not request command output yet. If output is needed for a maintainer-reviewed test, generate Markdown or use JSON with `--redact`; never paste raw terminal or raw JSON diagnostics, credentials, or private project information into a public Issue.
 
 ## Contributing
 

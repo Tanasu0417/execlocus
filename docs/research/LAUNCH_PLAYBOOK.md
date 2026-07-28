@@ -157,7 +157,7 @@ which runtime and executable would this context select?
 ExecLocus is a local, read-only Rust CLI that shows the runtime, distro, user, shell,
 filesystem boundary, executable resolution, and the evidence behind each conclusion.
 
-It does not upload diagnostics or rewrite PATH. Shareable output will be available only after redaction-before-rendering is implemented and tested.
+It does not upload diagnostics or rewrite PATH. The source prototype now provides automatically redacted Markdown and opt-in redacted JSON; raw terminal and raw JSON output remain local-only.
 
 Try: <release URL>
 Source: https://github.com/Tanasu0417/execlocus

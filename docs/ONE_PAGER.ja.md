@@ -35,7 +35,7 @@ WindowsとWSLをまたいでCodex／Claude Codeを使うと、GitやNodeがど�
 - 読み取り専用で、PATH、WSL、shell、agent、project設定を変更しない。
 - 通常実行はlocal-onlyで、診断uploadやtelemetryを行わない。
 - tokenや無制限の環境変数値を収集しない。
-- redaction-before-renderingを実装・検証するまで、公開Issueへcommand outputを貼らない。
+- Markdownは自動匿名化し、JSON共有時は`--redact`を必須とする。raw terminal／raw JSON出力は公開Issueへ貼らない。
 
 ## 現在とv0.1までの予定
 

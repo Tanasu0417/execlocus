@@ -58,7 +58,8 @@ execlocus
 execlocus check
 execlocus explain ENV002
 execlocus report --format json
-execlocus report --format markdown --redact
+execlocus report --format markdown
+execlocus report --format json --redact
 ```
 
 ゼロ引数の`execlocus`が主な利用方法です。最初の価値を得るための設定は不要にします。
@@ -69,6 +70,8 @@ execlocus report --format markdown --redact
 cargo run --
 cargo run -- check
 cargo run -- report --format json
+cargo run -- report --format markdown
+cargo run -- report --format json --redact
 ```
 
 開発時の確認コマンド:
@@ -107,7 +110,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - 読み取り専用で、PATHや設定を変更しない
 - 通常実行時にネットワークへ接続しない
 - tokenや秘密の環境変数値を収集しない
-- 共有用レポートはserialization前にusername、home、machine名、個人の絶対パスを秘匿化する（実装予定）
+- Markdown共有レポートは常に自動匿名化し、`report --format json --redact`でもserialization前にusername、home、machine名、絶対pathを匿名化する
 
 ## 関連資料
 
@@ -117,6 +120,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [初期ユースケース仕様](docs/USE_CASES.md)
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
+- [共有用匿名化の検証記録](docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [1ページ製品紹介](docs/ONE_PAGER.ja.md)
 - [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
 - [絵コンテ・撮影scenario](docs/demo/README.md)
@@ -136,13 +140,13 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] terminal/JSON renderer
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
 - [ ] Codex/Claude adapter
-- [ ] 秘匿化Markdownレポート
+- [x] 自動匿名化Markdownレポートと`--redact` JSON
 
 ## 実環境での仮説検証にご協力ください
 
 v0.1.0までに、10人以上の協力者から10環境以上のカテゴリ情報を集め、3件以上の「確認済みで役に立った事例」を得ることを目標にしています。単に差異が見つかっただけでは数えず、手作業より明確な結論または判断につながったことを確認します。
 
-プロトタイプを試した場合は、[フィールドレポート](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml)を利用できます。自動秘匿化はまだ未実装のため、フォームはコマンド出力を要求しません。公開Issueへ生の診断出力、credential、username、machine名、個人パス、非公開プロジェクト情報を貼らないでください。
+プロトタイプを試した場合は、[フィールドレポート](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml)を利用できます。フォームはまだコマンド出力を要求しません。メンテナー確認済みの検証で出力が必要な場合だけ、自動匿名化Markdownまたは`--redact` JSONを使用してください。raw terminal／raw JSON、credential、非公開プロジェクト情報は公開Issueへ貼らないでください。
 
 ## ライセンス
 
