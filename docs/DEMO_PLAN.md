@@ -8,7 +8,7 @@
 
 | 時期 | 作るもの | 公開上の扱い |
 |---|---|---|
-| 今 | 1ページ紹介、絵コンテ、再現scenario、必要画面一覧 | mockupは必ずConcept／Plannedと表示 |
+| 今 | 1ページ紹介、絵コンテ、ナレーション、顔なしカワウソmotion、Claude Design handoff、再現scenario | mockupは必ずConcept／Plannedと表示 |
 | UC-02・UC-03完了後 | current-context resolutionの10秒GIF、30秒technical demo | 実fixtureを使った実測だけを表示 |
 | UC-01・自動秘匿化完了後 | 60秒hero MV、共有reportのbefore／after | agent-observedとcurrent-contextを画面上で区別 |
 | alpha artifact検証後 | installから結果までの90秒walkthrough | download URL、version、checksumを固定 |
@@ -20,6 +20,9 @@
 制作に使う正本:
 
 - [60秒紹介MVの絵コンテ](demo/STORYBOARD.ja.md)
+- [60秒ナレーション原稿](demo/NARRATION.ja.md)
+- [顔なしカワウソ案内役の仕様](demo/OTTER_GUIDE_SPEC.md)
+- [Claude Design handoff](demo/CLAUDE_DESIGN_HANDOFF.ja.md)
 - [撮影scenario contract](demo/RECORDING_SCENARIO.md)
 
 デモが証明する内容:
@@ -56,6 +59,8 @@
 | 43–51秒 | `/mnt/c` profile判定 | 共有を一律否定しないことを提示 |
 | 51–57秒 | redacted report | 共有可能性を提示（実装後のみ） |
 | 57–60秒 | GitHub URLとalpha version | 次の行動を1つに限定 |
+
+顔なしカワウソsilhouetteはevidence経路を示す補助役としてのみ重ねる。画面面積の15%以内とし、口パクや表情を使わず、位置marker、通信波、字幕で発話を示す。CLIとJSONはcharacterなしで全機能が成立しなければならない。
 
 ## 収録ゲート
 

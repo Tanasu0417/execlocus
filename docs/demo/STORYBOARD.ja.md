@@ -15,14 +15,14 @@
 
 | # | 時間 | 画面・動き | 画面上の言葉 | ナレーション | 公開gate |
 |---:|---:|---|---|---|---|
-| 1 | 0–5秒 | 同じprojectをWindowsとWSLで開き、両側に`node`を表示 | `同じproject。選ばれるNodeも同じ？` | 同じsourceでも、実行するcontextで選ばれるtoolは変わります。 | `Concept`表示 |
-| 2 | 5–12秒 | PowerShellとbashの確認commandを並べる | `確認結果はterminalごとに分かれる` | 今は両方のterminalでcommand、PATH、file formatを突き合わせます。 | synthetic環境のみ |
-| 3 | 12–17秒 | 製品名と一文だけを表示 | `選ばれる候補と理由を、1画面へ` | ExecLocusは、現在の環境で何が選ばれるかと根拠をまとめます。 | 過去のagent実行と表現しない |
-| 4 | 17–25秒 | 実terminalで`execlocus`を実行 | `設定なし。まず1回実行` | 通常実行は読み取り専用で、設定変更やuploadを行いません。 | 実測速度を加工しない |
-| 5 | 25–35秒 | WindowsとWSLのselected path／formatを左右に表示 | `Same project · Different context` | Windowsでは`node.exe`、WSLでは`/usr/bin/node`が選ばれています。 | paired UC-02 scenario test完了 |
-| 6 | 35–43秒 | current-contextとagent-observedを二段表示 | `予測と実行済み証拠を混同しない` | 過去に実行した証拠がなければ、agentの実行対象は断定しません。 | UC-01 evidence state完了 |
-| 7 | 43–51秒 | `/mnt/c/demo/project`と`balanced`を表示 | `/mnt/cは目的次第。場所だけでerrorにしない` | Windowsアプリとの共有が目的なら、`/mnt/c`は正しい選択にもなります。 | UC-03 profile test完了 |
-| 8 | 51–60秒 | GitHub URL、pre-alpha、privacy注意 | `Windows × WSLの境界を、証拠付きで` | 現在はpre-alphaです。まず困った経験と回避策を教えてください。 | release可能とは表現しない |
+| 1 | 0–5秒 | 顔なしカワウソsilhouetteが同じprojectを示すnodeへ泳ぎ、WindowsとWSLの両側に`node`を表示 | `同じproject。選ばれるNodeも同じ？` | 同じsourceでも、実行するcontextで選ばれるtoolは変わります。 | `Concept`表示 |
+| 2 | 5–12秒 | PowerShellとbashの確認commandを並べ、カワウソが両terminal間の経路を移動 | `確認結果はterminalごとに分かれる` | 今はterminalごとにcommand、PATH、file formatを突き合わせる必要があります。 | synthetic環境のみ |
+| 3 | 12–17秒 | 製品名と一文だけを表示。カワウソは画面端で静止 | `選ばれる候補と理由を、1画面へ` | ExecLocusは、現在の環境で何が選ばれるかと、その根拠を一画面へまとめます。 | 過去のagent実行と表現しない |
+| 4 | 17–25秒 | 実terminalで`execlocus`を実行。カワウソは結果を隠さず端で待機 | `設定なし。まず1回実行` | 通常実行はread-only。PATHやWSL設定を変更せず、診断内容をuploadしません。 | 実測速度を加工しない |
+| 5 | 25–35秒 | WindowsとWSLのselected path／formatを左右に表示し、尾と前脚でevidence経路を案内 | `Same project · Different context` | 同じprojectでも、Windowsではnode.exe、WSLではLinux版Nodeが選ばれています。 | paired UC-02 scenario test完了 |
+| 6 | 35–43秒 | current-contextとagent-observedを二段表示。胸の位置markerと字幕panelで発話 | `予測と実行済み証拠を混同しない` | 現在の解決結果と、agentが実際に使った証拠は分けて扱います。証拠がなければ断定しません。 | UC-01 evidence state完了 |
+| 7 | 43–51秒 | `/mnt/c/demo/project`と`balanced`を表示し、カワウソがproject nodeへ移動 | `/mnt/cは目的次第。場所だけでerrorにしない` | Windowsアプリとの共有が目的なら、`/mnt/c`は正しい選択にもなります。 | UC-03 profile test完了 |
+| 8 | 51–60秒 | GitHub URL、pre-alpha、privacy注意。カワウソはCTA横でmotionを止める | `Windows × WSLの境界を、証拠付きで` | ExecLocusは現在pre-alphaです。WindowsとWSLで困った経験や、確認に使うcommandを教えてください。 | release可能とは表現しない |
 
 ## 10秒版への切り出し
 
@@ -35,7 +35,10 @@ Frame 1を2秒、Frame 4を2秒、Frame 5を4秒、Frame 8を2秒に再編集す
 
 ## Visual direction
 
-- terminalを主役にし、装飾的な人物・AI robot・stock imageは使わない。
+- terminalとevidenceを主役にし、人物、AI robot、stock image、第三者作品のcharacterは使わない。
+- 完全オリジナルの顔なしカワウソsilhouetteを案内役として使える。通常は画面面積の15%以内とし、terminal、path、evidenceを隠さない。
+- カワウソに目、鼻、口、ひげ、服を付けない。発話は胸の位置marker、通信波、字幕、音声波形で示す。
+- motionは泳ぐS字軌道、胴から尾へのfollow-through、滑らかな加減速を使う。`prefers-reduced-motion`版も作る。
 - WindowsとWSLの違いはlabelと位置で示し、色だけへ依存しない。
 - subtitleは1画面2行以内、1行24全角文字程度を目安にする。
 - 16:9をmasterとし、中央の安全領域だけで1:1へ切り出せる構図にする。
@@ -52,5 +55,7 @@ Frame 1を2秒、Frame 4を2秒、Frame 5を4秒、Frame 8を2秒に再編集す
 | X square | 1:1、中央crop、30秒 | UC-02／03待ち |
 | Still | selected／alternative／reasonが読める1枚 | UC-02待ち |
 | Alt text | 結論、候補、境界、privacy状態を文章化 | capture時作成 |
+| Otter SVG | 顔なしsilhouette、基本motion、reduced-motion | Concept source作成済み |
+| HTML animatic | 8 frame、timeline、REAL FOOTAGE SLOT | Claude Designへhandoff可能 |
 
-実際のfixtureとexpected outputは[撮影scenario contract](RECORDING_SCENARIO.md)に固定する。
+実際のfixtureとexpected outputは[撮影scenario contract](RECORDING_SCENARIO.md)に固定する。読み上げは[ナレーション原稿](NARRATION.ja.md)、characterは[カワウソ仕様](OTTER_GUIDE_SPEC.md)、Claude Designへの受け渡しは[handoff資料](CLAUDE_DESIGN_HANDOFF.ja.md)を正本とする。

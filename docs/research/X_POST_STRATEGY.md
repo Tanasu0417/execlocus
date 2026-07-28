@@ -4,6 +4,10 @@
 - Updated: 2026-07-29
 - Goal: Windows／WSL利用者の具体的な困りごと、現在の回避策、伝わる言葉を確認する
 
+## Public repository policy
+
+このfileは公開repositoryへ置ける調査方針と投稿templateである。Xのcredential、API token、account recovery情報、回答者handle、個人別の回答、未公開の生集計はcommitしない。具体的な実施日時と未公開集計は運用中に公開版へ追記せず、調査終了後にaggregateと判断根拠だけを公開する。
+
 ## Strategy
 
 最初の2週間は、製品linkを拡散するよりも「直近の経験」と「実際の確認手順」を集める。poll、自由回答、message testを1回ずつ行い、同じ文章を繰り返さない。
@@ -86,6 +90,8 @@ WSLのprojectを`/mnt/c`に置く最大の理由は何ですか？
 
 添付link: `https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.ja.md`
 
+このpostは`ONE_PAGER.ja.md`が`main`へmergeされ、linkを未ログインbrowserで確認してから実施する。
+
 次の誤解が1件でも出たらone-pagerを修正する。
 
 - agentが過去に実行したfileを必ず特定できる。
@@ -124,7 +130,7 @@ Test: <release or source instructions>
 | Field | Example |
 |---|---|
 | Post ID | A |
-| Posted at | 2026-08-01 |
+| Posted at | YYYY-MM-DD |
 | Duration | 3 days |
 | Votes / replies | aggregate count |
 | Unique workaround categories | 5 |

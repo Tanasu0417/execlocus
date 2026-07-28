@@ -17,6 +17,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Public use-case contracts and an explicit support matrix
 - One-page product overviews, staged demo plan, alternatives analysis, and demand-validation plan
 - Production-ready storyboard, synthetic recording scenario contract, and staged X research copy
+- Claude Design handoff, timed narration, and original faceless otter motion specification for the Concept MV
 - Privacy-first structured field-report template without a raw-output field
 
 ### Security

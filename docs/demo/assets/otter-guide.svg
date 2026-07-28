@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">ExecLocus original faceless otter guide</title>
+  <desc id="desc">A long-bodied faceless otter silhouette with short limbs and a tapered tail, floating beside a pulsing location marker.</desc>
+  <style>
+    :root {
+      --otter-fill: #0b1722;
+      --otter-signal: #2dd4bf;
+      --otter-background: #dffcf7;
+    }
+    .guide {
+      transform-origin: 350px 180px;
+      animation: breathe 4s cubic-bezier(.37, 0, .63, 1) infinite;
+    }
+    .silhouette { fill: var(--otter-fill); }
+    .tail {
+      transform-origin: 294px 188px;
+      animation: tail 3.1s cubic-bezier(.45, .05, .55, .95) infinite;
+    }
+    .forepaw {
+      transform-origin: 376px 184px;
+      animation: paw 4s cubic-bezier(.45, .05, .55, .95) infinite;
+    }
+    .ring {
+      fill: none;
+      stroke: var(--otter-signal);
+      stroke-width: 3;
+      transform-origin: 360px 170px;
+      animation: signal 2.4s ease-out infinite;
+    }
+    .marker { fill: var(--otter-background); }
+    @keyframes breathe {
+      0%, 100% { transform: translateY(3px) rotate(-1deg) scale(1); }
+      50% { transform: translateY(-7px) rotate(1deg) scale(1.015); }
+    }
+    @keyframes tail {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(7deg); }
+    }
+    @keyframes paw {
+      0%, 72%, 100% { transform: rotate(0); }
+      84% { transform: rotate(-12deg); }
+    }
+    @keyframes signal {
+      0% { transform: scale(.68); opacity: .8; }
+      100% { transform: scale(1.75); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .guide, .tail, .forepaw, .ring { animation: none; }
+    }
+  </style>
+  <g class="guide">
+    <path class="silhouette tail" d="M298 180 C258 169 230 181 198 207 C169 231 141 237 120 222 C146 217 159 198 179 177 C210 144 254 140 302 154 Z" />
+    <path class="silhouette" d="M287 151 C306 118 347 103 391 111 C433 118 463 146 456 176 C449 208 408 228 360 224 C317 220 284 194 281 169 C280 162 282 156 287 151 Z" />
+    <circle class="silhouette" cx="432" cy="130" r="34" />
+    <circle class="silhouette" cx="416" cy="103" r="10" />
+    <circle class="silhouette" cx="447" cy="102" r="9" />
+    <path class="silhouette" d="M323 207 C312 233 314 251 334 261 C339 239 350 226 362 216 Z" />
+    <path class="silhouette" d="M396 213 C401 240 415 252 437 251 C428 231 429 217 432 201 Z" />
+    <path class="silhouette" d="M343 136 C354 153 368 162 387 164 C379 176 363 184 347 181 C330 177 323 159 327 145 Z" />
+    <path class="silhouette forepaw" d="M378 149 C397 158 411 170 414 185 C401 181 388 176 375 166 Z" />
+    <circle class="ring" cx="360" cy="172" r="17" />
+    <path class="marker" fill-rule="evenodd" d="M360 158 C352 158 346 164 346 172 C346 182 360 194 360 194 C360 194 374 182 374 172 C374 164 368 158 360 158 Z M360 167 A5 5 0 1 1 359.9 167" />
+  </g>
+</svg>
