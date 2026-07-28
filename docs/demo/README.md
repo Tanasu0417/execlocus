@@ -9,6 +9,7 @@
 - [撮影scenario contract](RECORDING_SCENARIO.md)
 - [顔なしカワウソ案内役の仕様](OTTER_GUIDE_SPEC.md)
 - [Claude Design handoffと完成prompt](CLAUDE_DESIGN_HANDOFF.ja.md)
+- [Claude Designへ貼るpromptだけを開く](CLAUDE_DESIGN_PROMPTS.ja.md)
 - [オリジナルカワウソSVG](assets/otter-guide.svg)
 - [段階別の制作・公開gate](../DEMO_PLAN.md)
 - [日本語1ページ紹介](../ONE_PAGER.ja.md)

@@ -13,8 +13,10 @@
 顔の情報を使わず、次の外形でカワウソと判別できるようにする。
 
 - 横向き寄りの3/4姿勢。
-- 小さく丸い頭と低い首。
+- 小さく低い頭。額から鼻先までは滑らかな一続きの輪郭にし、丸顔にしない。
+- 頭から背中へつながる、長くなだらかな首。
 - 細長く柔らかい胴体。
+- 肩より腰が少し高く見える、緩やかに丸い背中。
 - 短い前脚と後脚。
 - 根元が太く、先端へ滑らかに細くなる長い尾。
 - 頭から尾まで連続するS字の泳ぐline。
@@ -68,4 +70,4 @@
 
 ## Source asset
 
-[`assets/otter-guide.svg`](assets/otter-guide.svg)は、silhouetteと基本motionを確認するためのproject-owned referenceである。完成logoや商標を意味せず、Claude DesignまたはGUI実装時に調整可能とする。
+[`assets/otter-guide.svg`](assets/otter-guide.svg)は、silhouetteと基本motionを確認するためにproject内で独自作成したreferenceである。第三者illustrationの輪郭をtraceせず、元画像をrepositoryへ同梱しない。完成logoや商標を意味せず、Claude DesignまたはGUI実装時に調整可能とする。
