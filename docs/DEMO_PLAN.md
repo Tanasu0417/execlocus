@@ -1,6 +1,6 @@
 # ExecLocus デモ／紹介MV制作計画
 
-更新日: 2026-07-28
+更新日: 2026-07-29
 
 ## 結論
 
@@ -15,27 +15,32 @@
 
 ## Hero scenario
 
-WSL2上のprojectで、current contextの`node`候補にLinux版とWindows版が存在し、Windows版が先に解決されるscenarioを使う。
+同じWindows filesystem上のsynthetic projectを、Windows PowerShellとWSL2 bashの両方から開く。Windows contextではWindows版Node、WSL contextではLinux版Nodeが選ばれるpaired scenarioを使う。
+
+制作に使う正本:
+
+- [60秒紹介MVの絵コンテ](demo/STORYBOARD.ja.md)
+- [撮影scenario contract](demo/RECORDING_SCENARIO.md)
 
 デモが証明する内容:
 
-- ExecLocus自身はWSLで動作している。
-- current contextではWindows版Nodeが選ばれる。
-- Linux版候補も存在するが優先順位で負けた。
-- projectは`/mnt/c`にあり、`balanced`または`share-first`なら場所だけでerrorにしない。
+- Windows版とWSL版のExecLocusが、それぞれのcurrent contextを観測する。
+- 同じprojectでも、Windows contextはWindows版Node、WSL contextはLinux版Nodeを選ぶ。
+- Windows側のproject pathとWSL側の`/mnt/c` pathが同じsource treeを指す。
+- `balanced`または`share-first`なら、`/mnt/c`という場所だけでerrorにしない。
 - 判定はread-onlyで、変更は利用者が選ぶ。
 
 デモが証明しない内容:
 
-- AI agentが過去にそのNodeを実行したこと。
+- AI agentが過去にいずれかのNodeを実行したこと。
 - `/mnt/c`が常に遅い、危険、または誤りであること。
 - すべてのshellで同じresolutionになること。
 
 ## 10秒GIF
 
-1. 0–2秒: `WSLなのにWindows Node？`という問題を1行表示。
-2. 2–4秒: `execlocus`を実行。
-3. 4–8秒: `Current context → node.exe (Windows)`、負けたLinux候補、evidenceを強調。
+1. 0–2秒: `同じproject、Nodeは同じ？`という問題を1行表示。
+2. 2–4秒: WindowsとWSLで`execlocus`を実行。
+3. 4–8秒: Windows `node.exe`とWSL `/usr/bin/node`の違いとevidenceを強調。
 4. 8–10秒: `Local only · Read only · Evidence-backed`とrepository URL。
 
 音声は付けず、READMEで自動再生しなくても意味が分かるcaptionを焼き込む。点滅を避け、色だけに意味を持たせない。
@@ -47,7 +52,7 @@ WSL2上のprojectで、current contextの`node`候補にLinux版とWindows版が
 | 0–7秒 | Windows／WSLの二層と同名command | 問題を提示 |
 | 7–17秒 | 手動で複数commandを確認する画面 | 現在の手間を提示 |
 | 17–32秒 | `execlocus`の実測実行 | 1commandの価値を提示 |
-| 32–43秒 | selected／alternatives／evidence | 結論の理由を提示 |
+| 32–43秒 | Windows／WSLのselected path・format・evidence | context差を提示 |
 | 43–51秒 | `/mnt/c` profile判定 | 共有を一律否定しないことを提示 |
 | 51–57秒 | redacted report | 共有可能性を提示（実装後のみ） |
 | 57–60秒 | GitHub URLとalpha version | 次の行動を1つに限定 |
@@ -71,4 +76,4 @@ WSL2上のprojectで、current contextの`node`候補にLinux版とWindows版が
 - 同じscenarioの静止画1枚とalt text。
 - 撮影command、fixture、version、commit SHAを記録した再現メモ。
 
-需要検証と投稿文は[DEMAND_VALIDATION.md](research/DEMAND_VALIDATION.md)、実装順は[ADOPTION_BLUEPRINT.md](ADOPTION_BLUEPRINT.md)を正本とする。
+需要検証の判定基準は[DEMAND_VALIDATION.md](research/DEMAND_VALIDATION.md)、実際の投稿順とcopyは[X_POST_STRATEGY.md](research/X_POST_STRATEGY.md)、実装順は[ADOPTION_BLUEPRINT.md](ADOPTION_BLUEPRINT.md)を正本とする。

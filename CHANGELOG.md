@@ -16,6 +16,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Thirty-project OSS benchmark and adoption/launch planning documents
 - Public use-case contracts and an explicit support matrix
 - One-page product overviews, staged demo plan, alternatives analysis, and demand-validation plan
+- Production-ready storyboard, synthetic recording scenario contract, and staged X research copy
 - Privacy-first structured field-report template without a raw-output field
 
 ### Security

@@ -1,8 +1,10 @@
 # ExecLocus 1ページ紹介
 
-> AIコーディングエージェントの実行コンテキストで、何が選ばれるかを根拠付きで表示します。
+> 同じprojectでも、WindowsとWSLでは選ばれる実行ファイルが違う。ExecLocusは、それぞれの現在の環境で何が選ばれるかを根拠付きで表示します。
 
-ExecLocusは、WindowsとWSLをまたいでAIコーディングエージェントを使う開発者向けの、ローカル・読み取り専用CLIです。現在の実行コンテキスト、選ばれる実行ファイル、プロジェクトの保存場所、判定根拠を1つの結果へまとめます。
+## 15秒で説明
+
+WindowsとWSLをまたいでCodex／Claude Codeを使うと、GitやNodeがどちら側の実行ファイルへ解決されるか分かりにくくなります。ExecLocusは、selected candidate、alternative、projectのfilesystem境界と判定根拠を、local・read-onlyの1画面へまとめるCLIです。
 
 **現在の状態:** pre-alphaのsource prototypeで、公開binaryはまだありません。「現在のコンテキストなら選ばれる実行ファイル」と「エージェントが過去に実行した実行ファイル」は別物です。後者はprocessまたはinvocationの証拠がある場合だけ表示します。
 
@@ -45,3 +47,7 @@ ExecLocusは、WindowsとWSLをまたいでAIコーディングエージェン�
 | 初期の決定論的rule | checksum付きWindows／Linux release artifact |
 
 正確な実装状況は[対応表](SUPPORT_MATRIX.md)、手作業との違いは[代替手段の比較](research/ALTERNATIVES.md)を参照してください。
+
+## 現在お願いしたいこと
+
+公開binaryの利用募集ではなく、Windows／WSLで最近困った経験と、現在使っている確認方法を調査しています。[需要検証計画](research/X_POST_STRATEGY.md)を参照してください。自動秘匿化が完成するまで、公開Issueやreplyへ生の診断出力を貼らないでください。

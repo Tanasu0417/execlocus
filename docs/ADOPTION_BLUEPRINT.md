@@ -2,7 +2,7 @@
 
 - Status: approved direction before the next feature slice
 - Based on: [30-project OSS benchmark](research/OSS_BENCHMARK_30.md)
-- Updated: 2026-07-28
+- Updated: 2026-07-29
 
 ## Purpose
 
@@ -96,6 +96,19 @@ Every feature must complete one user question across the stack instead of adding
 
 ## Development order
 
+### Immediate next action — injectable probe context
+
+After this foundation PR is reviewed and merged, the next focused PR introduces an injectable probe context／resolver without expanding user-facing scope.
+
+Exit criteria:
+
+- PATH, environment, filesystem lookup, executable-header read, and runtime facts can be supplied by synthetic fixtures.
+- Production uses the real OS-backed implementation; tests do not mutate the maintainer's global environment.
+- Existing 13 tests continue to pass and at least one end-to-end synthetic resolution scenario is added.
+- No new capability is advertised in README or demo assets until its scenario gate passes.
+
+This seam is a prerequisite for shell-specific UC-02 behavior; it is not a separate product feature.
+
 ### Gate A — repository and evidence contracts
 
 - Publish the benchmark, blueprint, use cases, and support matrix.
@@ -156,7 +169,7 @@ Until redaction-before-rendering passes golden tests, “redacted before sharing
 
 Create these from real, repeatable fixtures:
 
-- one ten-second terminal capture showing Windows Node selected from WSL;
+- one ten-second paired terminal capture showing the same project resolving Node differently in Windows and WSL contexts;
 - one before/after comparison against manual `which`/`where` investigation;
 - one sanitized Markdown report suitable for an Issue or agent conversation;
 - one platform support matrix with explicit limitations;

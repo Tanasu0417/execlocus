@@ -1,6 +1,8 @@
 # ExecLocus 需要検証計画
 
-更新日: 2026-07-28
+更新日: 2026-07-29
+
+実際の投稿順、投稿copy、reply運用は[X post strategy](X_POST_STRATEGY.md)を使う。
 
 ## 結論
 
