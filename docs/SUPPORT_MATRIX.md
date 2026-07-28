@@ -1,6 +1,6 @@
 # ExecLocus support matrix
 
-- Snapshot: 2026-07-28
+- Snapshot: 2026-07-29
 - Project status: pre-alpha; no public release is available
 
 This is the source of truth for current capability claims. “Planned” means design intent, not working support.
@@ -18,12 +18,12 @@ This is the source of truth for current capability claims. “Planned” means d
 
 | Environment | Status | Current evidence | Limitation |
 |---|---|---|---|
-| Windows 11, x86_64 MSVC | Partial | Windows CI exercises the code path | No published real-environment validation record or public binary |
-| WSL2, Ubuntu 24.04 | Partial | Maintainer smoke test plus generic Ubuntu CI | CI is Linux-native, not WSL; a sanitized WSL validation record is still required |
+| Windows 11, x86_64 MSVC | Verified | Windows CI plus sanitized local runtime-identity validation | No public binary is available |
+| WSL2, Ubuntu 24.04 | Verified | MSRV 1.85 test suite plus sanitized WSL runtime-identity validation | Validation covers one WSL distribution and no public binary |
 | Linux native, x86_64 | Partial | Ubuntu CI exercises the Linux code path | Product positioning and real-world testing focus on Windows/WSL |
-| PowerShell and cmd | Partial | Runtime/shell hints and Windows test path exist | Shell-specific agent invocation evidence is incomplete |
-| bash | Partial | WSL/Linux execution path exists | Agent adapter evidence is incomplete |
-| zsh | Planned | Included in the v0.1 design | No dedicated verification yet |
+| PowerShell and cmd | Partial | PowerShell 7 ancestry is verified; cmd resolution has synthetic contract tests | Real cmd ancestry and shell-specific agent invocation remain unverified |
+| bash | Verified | bash ancestry is observed in Ubuntu-24.04 WSL | Agent adapter evidence is incomplete |
+| zsh | Partial | Identity recognition and resolution contract tests exist | No real zsh validation yet |
 | macOS | Planned beyond v0.1 | Generic code may compile | No support guarantee or CI |
 | ARM | Planned beyond v0.1 | None | No release or verification target |
 
@@ -31,8 +31,8 @@ This is the source of truth for current capability claims. “Planned” means d
 
 | Capability | Status | Notes |
 |---|---|---|
-| Current Windows, WSL, or Linux runtime | Implemented | WSL detection uses OS evidence rather than terminal appearance alone |
-| WSL distribution, user, and shell hints | Partial | Available evidence is reported; provenance granularity will improve |
+| Current Windows, WSL, or Linux runtime | Verified | Windows and WSL are exercised in the sanitized validation record; Linux-native remains CI-verified |
+| Distribution, current user, and launching shell | Verified | WSL registration/OS release, OS account, and bounded process ancestry carry explicit provenance; environment values are labeled as hints |
 | Project filesystem classification | Implemented | Windows-native, Windows-mounted, WSL-native, WSL UNC, and Linux-native shapes are represented |
 | Git, Node, and npm resolution | Implemented | Selected executable and observed candidates are collected |
 | PE, ELF, and script classification | Implemented | Unknown remains a valid outcome |
@@ -56,3 +56,5 @@ This is the source of truth for current capability claims. “Planned” means d
 - A shareable-report claim requires redaction golden tests before publication.
 - Performance is not claimed without a documented measurement on the relevant filesystem and workload.
 - When implementation changes, this matrix is updated in the same pull request.
+
+The sanitized Windows/WSL evidence is recorded in [`validation/RUNTIME_IDENTITY_2026-07-29.md`](validation/RUNTIME_IDENTITY_2026-07-29.md).

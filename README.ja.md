@@ -20,7 +20,9 @@ See what your agent context resolves—and why.
 
 CURRENT EXECUTION
   Runtime       WSL2 / Ubuntu 24.04            observed
-  Shell         /usr/bin/bash                  environment hint
+  User          dev                            OS account
+  Shell         bash                           process ancestry
+  Terminal      Windows Terminal               environment hint
   Project       /mnt/c/Users/dev/project       observed · Windows-mounted
 
 AGENT
@@ -98,6 +100,8 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 
 表示中のターミナルだけでエージェントの実行場所を断定しません。証拠がなければ`Unknown`と表示します。
 
+現在のuserはローカルOSのprocess snapshotから取得します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
+
 ## 安全性とプライバシー
 
 - 読み取り専用で、PATHや設定を変更しない
@@ -112,6 +116,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [MVPスコープ](docs/MVP_SCOPE.md)
 - [初期ユースケース仕様](docs/USE_CASES.md)
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
+- [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [1ページ製品紹介](docs/ONE_PAGER.ja.md)
 - [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
 - [絵コンテ・撮影scenario](docs/demo/README.md)

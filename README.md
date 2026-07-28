@@ -20,7 +20,9 @@ See what your agent context resolves—and why.
 
 CURRENT EXECUTION
   Runtime       WSL2 / Ubuntu 24.04            observed
-  Shell         /usr/bin/bash                  environment hint
+  User          dev                            OS account
+  Shell         bash                           process ancestry
+  Terminal      Windows Terminal               environment hint
   Project       /mnt/c/Users/dev/project       observed · Windows-mounted
 
 AGENT
@@ -104,6 +106,8 @@ Every reported value has a state:
 
 Missing evidence never becomes a passed check, and a visible terminal is never treated as proof of the agent runtime.
 
+Current user identity is read from the local OS process snapshot. The launching shell is selected only when a supported shell appears in the bounded parent-process chain; otherwise the report labels the allowlisted `SHELL` or `ComSpec` value as an environment hint. The process snapshot requests only process names, parent IDs, and user IDs: command lines, process environments, working directories, roots, and executable paths are not requested. Distribution detection uses the WSL registration name first and `/etc/os-release` as the Linux fallback. Normal execution does not invoke a command shell or access the network for these observations.
+
 ## Initial diagnostic rules
 
 | Rule | Detects |
@@ -160,6 +164,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [MVP scope](https://github.com/Tanasu0417/execlocus/blob/main/docs/MVP_SCOPE.md)
 - [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
+- [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)

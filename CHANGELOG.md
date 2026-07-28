@@ -19,6 +19,9 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Production-ready storyboard, synthetic recording scenario contract, and staged X research copy
 - Claude Design handoff, timed narration, and original faceless otter motion specification for the Concept MV
 - Privacy-first structured field-report template without a raw-output field
+- OS-backed current-user observation and process-ancestry shell detection on Windows and Linux/WSL
+- Provenance fields for distribution, user, and shell values in terminal and JSON reports
+- JSON schema version `0.2.0` for runtime identity provenance fields
 
 ### Security
 

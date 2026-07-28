@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use crate::model::{ExecutableOrigin, PathClass, Report, Severity};
+use crate::model::{ExecutableOrigin, PathClass, Report, RuntimeValueSource, Severity};
 
 #[must_use]
 pub fn render(report: &Report) -> String {
@@ -15,13 +15,25 @@ pub fn render(report: &Report) -> String {
         &mut output,
         "User",
         report.runtime.user.as_deref().unwrap_or("Unknown"),
-        status_label(report.runtime.user.is_some()),
+        report
+            .runtime
+            .user_source
+            .map_or("unavailable", source_label),
     );
     line(
         &mut output,
         "Shell",
         report.runtime.shell.as_deref().unwrap_or("Unknown"),
-        if report.runtime.shell.is_some() {
+        report
+            .runtime
+            .shell_source
+            .map_or("unavailable", source_label),
+    );
+    line(
+        &mut output,
+        "Terminal",
+        report.runtime.terminal.as_deref().unwrap_or("Unknown"),
+        if report.runtime.terminal.is_some() {
             "environment hint"
         } else {
             "unavailable"
@@ -95,8 +107,13 @@ fn runtime_label(report: &Report) -> String {
     )
 }
 
-const fn status_label(available: bool) -> &'static str {
-    if available { "observed" } else { "unavailable" }
+const fn source_label(source: RuntimeValueSource) -> &'static str {
+    match source {
+        RuntimeValueSource::ProcessAncestry => "process ancestry",
+        RuntimeValueSource::OsAccount => "OS account",
+        RuntimeValueSource::Environment => "environment hint",
+        RuntimeValueSource::OsRelease => "OS release",
+    }
 }
 
 const fn path_label(class: PathClass) -> &'static str {
@@ -138,7 +155,7 @@ fn capitalize(value: &str) -> String {
 mod tests {
     use crate::model::{
         Confidence, ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo,
-        RuntimeKind, Topology,
+        RuntimeKind, RuntimeValueSource, Topology,
     };
 
     use super::render;
@@ -153,8 +170,11 @@ mod tests {
                 kind: RuntimeKind::Wsl,
                 os_name: "WSL".to_owned(),
                 distribution: Some("Ubuntu-Test".to_owned()),
+                distribution_source: Some(RuntimeValueSource::Environment),
                 user: Some("demo".to_owned()),
+                user_source: Some(RuntimeValueSource::OsAccount),
                 shell: Some("/bin/bash".to_owned()),
+                shell_source: Some(RuntimeValueSource::ProcessAncestry),
                 terminal: None,
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
