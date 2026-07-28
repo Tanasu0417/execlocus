@@ -163,11 +163,15 @@ fn detect_format(path: &Path) -> ExecutableFormat {
         return ExecutableFormat::Unknown;
     };
 
-    if read >= 2 && bytes.starts_with(b"MZ") {
+    detect_format_from_prefix(&bytes[..read])
+}
+
+fn detect_format_from_prefix(bytes: &[u8]) -> ExecutableFormat {
+    if bytes.starts_with(b"MZ") {
         ExecutableFormat::Pe
-    } else if read == 4 && bytes == [0x7f, b'E', b'L', b'F'] {
+    } else if bytes == b"\x7fELF" {
         ExecutableFormat::Elf
-    } else if read >= 2 && bytes.starts_with(b"#!") {
+    } else if bytes.starts_with(b"#!") {
         ExecutableFormat::Script
     } else {
         ExecutableFormat::Unknown
@@ -212,29 +216,21 @@ fn is_executable(_path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs, time::SystemTime};
-
-    use super::{detect_format, display_path};
+    use super::{detect_format_from_prefix, display_path};
     use crate::model::ExecutableFormat;
 
     #[test]
-    fn identifies_pe_and_elf_headers() {
-        let suffix = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .expect("system clock should be after epoch")
-            .as_nanos();
-        let base = env::temp_dir();
-        let pe = base.join(format!("execlocus-{suffix}-pe.bin"));
-        let elf = base.join(format!("execlocus-{suffix}-elf.bin"));
-
-        fs::write(&pe, b"MZ\0\0").expect("write PE fixture");
-        fs::write(&elf, [0x7f, b'E', b'L', b'F']).expect("write ELF fixture");
-
-        assert_eq!(detect_format(&pe), ExecutableFormat::Pe);
-        assert_eq!(detect_format(&elf), ExecutableFormat::Elf);
-
-        fs::remove_file(pe).expect("remove PE fixture");
-        fs::remove_file(elf).expect("remove ELF fixture");
+    fn identifies_executable_headers() {
+        assert_eq!(detect_format_from_prefix(b"MZ\0\0"), ExecutableFormat::Pe);
+        assert_eq!(detect_format_from_prefix(b"\x7fELF"), ExecutableFormat::Elf);
+        assert_eq!(
+            detect_format_from_prefix(b"#!/bin/sh"),
+            ExecutableFormat::Script
+        );
+        assert_eq!(
+            detect_format_from_prefix(b"text"),
+            ExecutableFormat::Unknown
+        );
     }
 
     #[test]
