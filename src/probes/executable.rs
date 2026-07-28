@@ -1,43 +1,89 @@
-use std::{
-    collections::HashSet,
-    env, fs,
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashSet, path::Path};
 
 use crate::{
     model::{
         Confidence, Evidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, ObservationStatus, ProbeResult, RuntimeKind,
+        ExecutableOrigin, ObservationStatus, ProbeFailure, ProbeResult, RuntimeKind,
     },
+    probes::context::{CandidateSnapshot, ProbeContext, SystemProbeContext},
     probes::path::classify_path,
 };
 
+const EXECUTABLE_PREFIX_LIMIT: usize = 512;
+
+pub trait ExecutableResolver {
+    fn resolve(
+        &self,
+        context: &dyn ProbeContext,
+        command: &str,
+        runtime: RuntimeKind,
+    ) -> ProbeResult<Vec<ExecutableCandidate>>;
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PathExecutableResolver;
+
+impl ExecutableResolver for PathExecutableResolver {
+    fn resolve(
+        &self,
+        context: &dyn ProbeContext,
+        command: &str,
+        runtime: RuntimeKind,
+    ) -> ProbeResult<Vec<ExecutableCandidate>> {
+        resolve_from_path(context, command, runtime)
+    }
+}
+
 #[must_use]
 pub fn probe(role: &str, command: &str, runtime: &RuntimeKind) -> ProbeResult<ExecutableInfo> {
-    let candidates = resolve_candidates(command, *runtime);
+    probe_with(&SystemProbeContext, role, command, runtime)
+}
+
+#[must_use]
+pub fn probe_with(
+    context: &dyn ProbeContext,
+    role: &str,
+    command: &str,
+    runtime: &RuntimeKind,
+) -> ProbeResult<ExecutableInfo> {
+    probe_with_resolver(context, &PathExecutableResolver, role, command, runtime)
+}
+
+#[must_use]
+pub fn probe_with_resolver(
+    context: &dyn ProbeContext,
+    resolver: &dyn ExecutableResolver,
+    role: &str,
+    command: &str,
+    runtime: &RuntimeKind,
+) -> ProbeResult<ExecutableInfo> {
+    let ProbeResult {
+        value: candidates,
+        mut evidence,
+        failures,
+    } = resolver.resolve(context, command, *runtime);
     let selected = candidates.first().cloned();
-    let status = if selected.is_some() {
-        ObservationStatus::Observed
-    } else {
-        ObservationStatus::Unavailable
+    let status = match (selected.is_some(), failures.is_empty()) {
+        (true, _) => ObservationStatus::Observed,
+        (false, true) => ObservationStatus::Unavailable,
+        (false, false) => ObservationStatus::Failed,
     };
-    let confidence = if selected.is_some() {
-        Confidence::Certain
-    } else {
-        Confidence::None
+    let confidence = match (selected.is_some(), failures.is_empty()) {
+        (true, true) => Confidence::Certain,
+        (true, false) => Confidence::High,
+        (false, _) => Confidence::None,
     };
 
-    let evidence = selected.as_ref().map_or_else(Vec::new, |candidate| {
-        vec![Evidence {
+    if let Some(candidate) = &selected {
+        evidence.push(Evidence {
             id: format!("executable.{role}"),
             probe: "executable/v1".to_owned(),
             kind: "executable".to_owned(),
             claim: format!("{role} resolves to {:?} executable", candidate.origin),
             value: Some(candidate.path.clone()),
             sensitive: true,
-        }]
-    });
+        });
+    }
 
     ProbeResult {
         value: ExecutableInfo {
@@ -49,28 +95,54 @@ pub fn probe(role: &str, command: &str, runtime: &RuntimeKind) -> ProbeResult<Ex
             confidence,
         },
         evidence,
-        failures: Vec::new(),
+        failures,
     }
 }
 
 #[must_use]
 pub fn resolve_candidates(command: &str, runtime: RuntimeKind) -> Vec<ExecutableCandidate> {
-    let Some(path_value) = env::var_os("PATH") else {
-        return Vec::new();
-    };
+    resolve_candidates_with(&SystemProbeContext, command, runtime).value
+}
 
-    let names = candidate_names(command, runtime);
+#[must_use]
+pub fn resolve_candidates_with(
+    context: &dyn ProbeContext,
+    command: &str,
+    runtime: RuntimeKind,
+) -> ProbeResult<Vec<ExecutableCandidate>> {
+    PathExecutableResolver.resolve(context, command, runtime)
+}
+
+fn resolve_from_path(
+    context: &dyn ProbeContext,
+    command: &str,
+    runtime: RuntimeKind,
+) -> ProbeResult<Vec<ExecutableCandidate>> {
+    let names = candidate_names(context, command, runtime);
     let mut seen = HashSet::new();
     let mut candidates = Vec::new();
+    let mut failures = Vec::new();
 
-    for directory in env::split_paths(&path_value) {
+    for directory in context.path_entries() {
         for name in &names {
-            let candidate_path = directory.join(name);
-            if !candidate_path.is_file() || !is_executable(&candidate_path) {
+            let snapshot =
+                match context.inspect_candidate(&directory, name, EXECUTABLE_PREFIX_LIMIT) {
+                    Ok(Some(snapshot)) => snapshot,
+                    Ok(None) => continue,
+                    Err(error) => {
+                        failures.push(ProbeFailure {
+                            probe: "executable/v1".to_owned(),
+                            code: "CANDIDATE_INSPECTION_FAILED".to_owned(),
+                            message: format!("failed to inspect a {command} candidate: {error}"),
+                        });
+                        continue;
+                    }
+                };
+            if !snapshot.executable {
                 continue;
             }
 
-            let inspected = inspect_candidate(&candidate_path, runtime);
+            let inspected = inspect_candidate(&snapshot, runtime);
             let key = if runtime == RuntimeKind::WindowsNative {
                 inspected.path.to_ascii_lowercase()
             } else {
@@ -84,16 +156,21 @@ pub fn resolve_candidates(command: &str, runtime: RuntimeKind) -> Vec<Executable
         }
     }
 
-    candidates
+    ProbeResult {
+        value: candidates,
+        evidence: Vec::new(),
+        failures,
+    }
 }
 
-fn candidate_names(command: &str, runtime: RuntimeKind) -> Vec<String> {
-    if runtime != RuntimeKind::WindowsNative || Path::new(command).extension().is_some() {
+fn candidate_names(context: &dyn ProbeContext, command: &str, runtime: RuntimeKind) -> Vec<String> {
+    if runtime != RuntimeKind::WindowsNative || command_has_extension(command, runtime) {
         return vec![command.to_owned()];
     }
 
-    let extensions = env::var("PATHEXT")
-        .unwrap_or_else(|_| ".COM;.EXE;.BAT;.CMD".to_owned())
+    let extensions = context
+        .env_var("PATHEXT")
+        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".to_owned())
         .split(';')
         .filter(|value| !value.is_empty())
         .map(str::to_ascii_lowercase)
@@ -108,21 +185,32 @@ fn candidate_names(command: &str, runtime: RuntimeKind) -> Vec<String> {
     names
 }
 
-fn inspect_candidate(path: &Path, runtime: RuntimeKind) -> ExecutableCandidate {
-    let resolved = fs::canonicalize(path).unwrap_or_else(|_| PathBuf::from(path));
-    let format = detect_format(&resolved);
-    let path_text = display_path(&resolved);
+fn command_has_extension(command: &str, runtime: RuntimeKind) -> bool {
+    if runtime == RuntimeKind::WindowsNative {
+        let file_name = command.rsplit(['\\', '/']).next().unwrap_or(command);
+        file_name
+            .rsplit_once('.')
+            .is_some_and(|(stem, extension)| !stem.is_empty() && !extension.is_empty())
+    } else {
+        Path::new(command).extension().is_some()
+    }
+}
+
+fn inspect_candidate(snapshot: &CandidateSnapshot, runtime: RuntimeKind) -> ExecutableCandidate {
+    let format = detect_format_from_prefix(&snapshot.prefix);
+    let path_text = display_path(&snapshot.resolved_path);
     let origin = match format {
         ExecutableFormat::Pe => ExecutableOrigin::Windows,
         ExecutableFormat::Elf => ExecutableOrigin::Linux,
-        ExecutableFormat::Script => script_origin(&resolved),
+        ExecutableFormat::Script => script_origin(&snapshot.prefix),
         ExecutableFormat::Unknown => {
             let class = classify_path(&path_text, runtime);
             if matches!(
                 class,
                 crate::model::PathClass::WindowsNative | crate::model::PathClass::WindowsMounted
             ) && matches!(
-                resolved
+                snapshot
+                    .resolved_path
                     .extension()
                     .and_then(|value| value.to_str())
                     .map(str::to_ascii_lowercase)
@@ -154,22 +242,10 @@ fn display_path(path: &Path) -> String {
     }
 }
 
-fn detect_format(path: &Path) -> ExecutableFormat {
-    let Ok(mut file) = fs::File::open(path) else {
-        return ExecutableFormat::Unknown;
-    };
-    let mut bytes = [0_u8; 4];
-    let Ok(read) = file.read(&mut bytes) else {
-        return ExecutableFormat::Unknown;
-    };
-
-    detect_format_from_prefix(&bytes[..read])
-}
-
 fn detect_format_from_prefix(bytes: &[u8]) -> ExecutableFormat {
     if bytes.starts_with(b"MZ") {
         ExecutableFormat::Pe
-    } else if bytes == b"\x7fELF" {
+    } else if bytes.starts_with(b"\x7fELF") {
         ExecutableFormat::Elf
     } else if bytes.starts_with(b"#!") {
         ExecutableFormat::Script
@@ -178,15 +254,12 @@ fn detect_format_from_prefix(bytes: &[u8]) -> ExecutableFormat {
     }
 }
 
-fn script_origin(path: &Path) -> ExecutableOrigin {
-    let Ok(contents) = fs::read_to_string(path) else {
-        return ExecutableOrigin::Script;
-    };
-    let first_line = contents
-        .lines()
-        .next()
-        .unwrap_or_default()
-        .to_ascii_lowercase();
+fn script_origin(prefix: &[u8]) -> ExecutableOrigin {
+    let line_end = prefix
+        .iter()
+        .position(|byte| *byte == b'\n')
+        .unwrap_or(prefix.len());
+    let first_line = String::from_utf8_lossy(&prefix[..line_end]).to_ascii_lowercase();
     if first_line.contains("/bin/") || first_line.contains("/usr/bin/") {
         ExecutableOrigin::Linux
     } else if first_line.contains("powershell") || first_line.contains("cmd.exe") {
@@ -196,28 +269,10 @@ fn script_origin(path: &Path) -> ExecutableOrigin {
     }
 }
 
-#[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-
-    path.metadata()
-        .is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
-}
-
-#[cfg(windows)]
-fn is_executable(_path: &Path) -> bool {
-    true
-}
-
-#[cfg(not(any(unix, windows)))]
-fn is_executable(_path: &Path) -> bool {
-    true
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{detect_format_from_prefix, display_path};
-    use crate::model::ExecutableFormat;
+    use super::{detect_format_from_prefix, display_path, script_origin};
+    use crate::model::{ExecutableFormat, ExecutableOrigin};
 
     #[test]
     fn identifies_executable_headers() {
@@ -243,5 +298,13 @@ mod tests {
             display_path(std::path::Path::new(r"\\?\UNC\server\share\tool.exe")),
             r"\\server\share\tool.exe"
         );
+    }
+
+    #[test]
+    fn classifies_shebang_without_decoding_the_script_body() {
+        let mut prefix = b"#!/usr/bin/env node\n".to_vec();
+        prefix.extend([0xff, 0xfe]);
+
+        assert_eq!(script_origin(&prefix), ExecutableOrigin::Linux);
     }
 }

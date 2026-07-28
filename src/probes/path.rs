@@ -1,13 +1,20 @@
-use std::env;
-
 use crate::model::{
     Confidence, Evidence, ObservationStatus, PathClass, ProbeFailure, ProbeResult, ProjectInfo,
     RuntimeKind,
 };
+use crate::probes::context::{ProbeContext, SystemProbeContext};
 
 #[must_use]
 pub fn probe_project(runtime: &RuntimeKind) -> ProbeResult<ProjectInfo> {
-    match env::current_dir() {
+    probe_project_with(&SystemProbeContext, runtime)
+}
+
+#[must_use]
+pub fn probe_project_with<C>(context: &C, runtime: &RuntimeKind) -> ProbeResult<ProjectInfo>
+where
+    C: ProbeContext + ?Sized,
+{
+    match context.current_dir() {
         Ok(path) => {
             let path_text = path.to_string_lossy().into_owned();
             let class = classify_path(&path_text, *runtime);

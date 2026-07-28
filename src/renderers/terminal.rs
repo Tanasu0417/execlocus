@@ -136,13 +136,42 @@ fn capitalize(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::{collect_report, model::Profile};
+    use crate::model::{
+        Confidence, ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo,
+        RuntimeKind, Topology,
+    };
 
     use super::render;
 
     #[test]
     fn terminal_output_has_product_and_sections() {
-        let output = render(&collect_report(Profile::Balanced));
+        let report = Report {
+            schema_version: "test".to_owned(),
+            generated_at_unix_ms: 0,
+            profile: Profile::Balanced,
+            runtime: RuntimeInfo {
+                kind: RuntimeKind::Wsl,
+                os_name: "WSL".to_owned(),
+                distribution: Some("Ubuntu-Test".to_owned()),
+                user: Some("demo".to_owned()),
+                shell: Some("/bin/bash".to_owned()),
+                terminal: None,
+                status: ObservationStatus::Observed,
+                confidence: Confidence::Certain,
+            },
+            project: ProjectInfo {
+                path: Some("/mnt/c/demo/project".to_owned()),
+                class: PathClass::WindowsMounted,
+                status: ObservationStatus::Observed,
+                confidence: Confidence::Certain,
+            },
+            executables: Vec::new(),
+            topology: Topology::default(),
+            evidence: Vec::new(),
+            findings: Vec::new(),
+            probe_failures: Vec::new(),
+        };
+        let output = render(&report);
         assert!(output.contains("ExecLocus"));
         assert!(output.contains("CURRENT EXECUTION"));
         assert!(output.contains("TOOLCHAIN"));
