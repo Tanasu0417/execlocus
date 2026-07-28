@@ -1,20 +1,22 @@
 # ExecLocus
 
-> AIコーディングエージェントが、実際にどこで実行されているかを表示します。
+> AIコーディングエージェントの実行コンテキストで、何が選ばれるかを根拠付きで表示します。
 
-ExecLocusは、Windows、WSL、シェル、ファイルシステム、ツールチェーンにまたがるAIコーディングエージェントの実行トポロジーを表示する、読み取り専用CLIです。
+ExecLocusは、現在のWindows／WSL実行コンテキスト、コマンド解決、ファイルシステム境界と根拠を表示する読み取り専用CLIです。invocationまたはprocessの証拠が得られる場合に限り、エージェント自身のruntimeも識別します。
 
 次の疑問に、観測根拠付きで答えます。
 
-> エージェントはWindows版、WSL版、それとも両方が混在した状態で動いているのか？
+> このコンテキストではWindows版とWSL版のどちらが選ばれ、どんな境界をまたぐのか？
 
 > **現在の状態:** pre-alphaプロトタイプです。実行環境、パス、実行ファイル由来、terminal/JSON出力、初期ルールの基盤まで実装済みですが、公開リリースはまだありません。
 
 ## 最初の画面
 
+次はv0.1の目標を示す説明用サンプルであり、現行プロトタイプの実測画面ではありません。
+
 ```text
 ExecLocus
-See where your agent actually executes.
+See what your agent context resolves—and why.
 
 CURRENT EXECUTION
   Runtime       WSL2 / Ubuntu 24.04            observed
@@ -101,13 +103,23 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - 読み取り専用で、PATHや設定を変更しない
 - 通常実行時にネットワークへ接続しない
 - tokenや秘密の環境変数値を収集しない
-- 共有用レポートではusername、home、machine名、個人の絶対パスを秘匿化する
+- 共有用レポートはserialization前にusername、home、machine名、個人の絶対パスを秘匿化する（実装予定）
 
 ## 関連資料
 
 - [製品仕様](PRODUCT_SPEC.md)
 - [診断ルール仕様](RULES.md)
 - [MVPスコープ](docs/MVP_SCOPE.md)
+- [初期ユースケース仕様](docs/USE_CASES.md)
+- [現在の対応状況](docs/SUPPORT_MATRIX.md)
+- [1ページ製品紹介](docs/ONE_PAGER.ja.md)
+- [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
+- [絵コンテ・撮影scenario](docs/demo/README.md)
+- [OSS成功パターンの採用設計](docs/ADOPTION_BLUEPRINT.md)
+- [代替手段・現在の回避策との比較](docs/research/ALTERNATIVES.md)
+- [OSSベンチマーク・公開戦略](docs/research/README.md)
+- [X需要調査の投稿戦略](docs/research/X_POST_STRATEGY.md)
+- [変更履歴](CHANGELOG.md)
 - [コントリビューションガイド](CONTRIBUTING.md)
 - [セキュリティポリシー](SECURITY.md)
 
@@ -120,6 +132,12 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
 - [ ] Codex/Claude adapter
 - [ ] 秘匿化Markdownレポート
+
+## 実環境での仮説検証にご協力ください
+
+v0.1.0までに、10人以上の協力者から10環境以上のカテゴリ情報を集め、3件以上の「確認済みで役に立った事例」を得ることを目標にしています。単に差異が見つかっただけでは数えず、手作業より明確な結論または判断につながったことを確認します。
+
+プロトタイプを試した場合は、[フィールドレポート](https://github.com/Tanasu0417/execlocus/issues/new?template=field_report.yml)を利用できます。自動秘匿化はまだ未実装のため、フォームはコマンド出力を要求しません。公開Issueへ生の診断出力、credential、username、machine名、個人パス、非公開プロジェクト情報を貼らないでください。
 
 ## ライセンス
 

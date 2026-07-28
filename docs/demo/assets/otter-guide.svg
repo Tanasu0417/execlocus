@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">ExecLocus original faceless river otter guide</title>
+  <desc id="desc">A friendly faceless river otter pictogram with a compact round head, small ears, a long soft body, four rounded paws, and a thick tapered tail.</desc>
+  <style>
+    :root {
+      --otter-fill: #0b1722;
+      --otter-signal: #2dd4bf;
+      --otter-background: #dffcf7;
+    }
+    .guide {
+      transform-origin: 320px 174px;
+      animation: float 4s cubic-bezier(.37, 0, .63, 1) infinite;
+    }
+    .silhouette { fill: var(--otter-fill); }
+    .ring {
+      fill: none;
+      stroke: var(--otter-signal);
+      stroke-width: 3;
+      transform-origin: 320px 315px;
+      animation: signal 2.4s ease-out infinite;
+    }
+    .marker {
+      fill: var(--otter-signal);
+      stroke: var(--otter-background);
+      stroke-width: 3;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(3px) rotate(-1deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+    }
+    @keyframes signal {
+      0% { transform: scale(.68); opacity: .8; }
+      100% { transform: scale(1.75); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .guide, .ring { animation: none; }
+    }
+  </style>
+  <g class="guide">
+    <path class="silhouette" d="M98.1 67.9 Q106.3 65.2 120.6 65.2 Q134.9 65.2 141.7 67.3 Q148.5 69.3 153.2 72.7 Q158 76.1 166.2 76.1 Q174.3 76.1 176.4 78.2 Q178.4 80.2 177.7 86.3 Q177.1 92.5 178.4 93.8 Q179.8 95.2 188 101.3 Q196.1 107.4 204.3 110.1 Q212.5 112.9 226.8 112.9 Q241 112.9 268.3 108.8 Q295.5 104.7 313.2 104.7 Q330.9 104.7 344.5 106.7 Q358.1 108.8 371 112.9 Q384 117 409.8 131.2 Q435.7 145.5 469.1 156.4 Q502.4 167.3 521.5 177.5 Q540.5 187.7 552.1 198.6 Q563.7 209.5 567.7 215.6 Q571.8 221.8 575.9 232.7 Q580 243.5 580 252.4 Q580 261.2 576.6 264.6 Q573.2 268.1 568.4 267.4 Q563.7 266.7 558.2 258.5 Q552.8 250.4 543.9 242.2 Q535.1 234 518.1 224.5 Q501 215 485.4 210.9 Q469.7 206.8 456.1 206.1 Q442.5 205.4 438.4 206.8 Q434.3 208.2 437.7 210.2 Q441.2 212.2 446.6 224.5 Q452 236.7 454.8 239.5 Q457.5 242.2 457.5 248.3 Q457.5 254.4 455.4 255.1 Q453.4 255.8 452 259.2 Q450.7 262.6 447.3 262.6 Q443.9 262.6 441.8 264.6 Q439.8 266.7 432.3 264.6 Q424.8 262.6 421.4 259.2 Q418 255.8 416 250.4 Q413.9 244.9 411.2 251.7 Q408.5 258.5 399.6 258.5 Q390.8 258.5 389.4 256.5 Q388.1 254.4 383.3 252.4 Q378.5 250.4 377.2 240.8 Q375.8 231.3 366.3 227.9 Q356.8 224.5 352.7 224.5 Q348.6 224.5 343.1 226.5 Q337.7 228.6 319.3 231.3 Q300.9 234 279.2 234 Q257.4 234 244.5 232 Q231.5 229.9 227.4 235.4 Q223.4 240.8 211.8 248.3 Q200.2 255.8 196.8 262.6 Q193.4 269.4 183.9 270.1 Q174.3 270.8 174.3 269.4 Q174.3 268.1 170.3 268.1 Q166.2 268.1 165.5 264.6 Q164.8 261.2 162.1 259.9 Q159.4 258.5 159.4 253.1 Q159.4 247.6 163.5 240.1 Q167.5 232.7 175 225.9 Q182.5 219 171.6 215 Q160.7 210.9 148.5 215.6 Q136.2 220.4 129.4 229.3 Q122.6 238.1 114.5 238.1 Q106.3 238.1 104.9 236.1 Q103.6 234 100.8 234 Q98.1 234 96.8 229.9 Q95.4 225.9 93.4 224.5 Q91.3 223.1 92 217 Q92.7 210.9 96.1 205.4 Q99.5 200 107 194.5 Q114.5 189.1 117.9 184.3 Q121.3 179.6 109.7 165.3 Q98.1 151 84.5 144.2 Q70.9 137.4 65.4 131.2 Q60 125.1 60 116.3 Q60 107.4 64.8 98.6 Q69.5 89.7 69.5 83.6 Q69.5 77.5 71.6 75.4 Q73.6 73.4 79.7 74.1 Q85.9 74.8 87.9 72.7 Q89.9 70.7 98.1 67.9 Z" />
+    <circle class="ring" cx="320" cy="315" r="15" />
+    <rect class="marker" x="315" y="310" width="10" height="10" rx="2" transform="rotate(45 320 315)" />
+  </g>
+</svg>
