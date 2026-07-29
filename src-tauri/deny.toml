@@ -1,0 +1,42 @@
+[graph]
+targets = [
+    "x86_64-pc-windows-msvc",
+]
+all-features = true
+
+[advisories]
+unmaintained = "workspace"
+unsound = "all"
+yanked = "deny"
+ignore = []
+
+[licenses]
+confidence-threshold = 0.93
+allow = [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "CC0-1.0",
+    "MIT",
+    "MIT-0",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unlicense",
+    "Zlib",
+]
+unused-allowed-license = "warn"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = [
+    "https://github.com/rust-lang/crates.io-index",
+]

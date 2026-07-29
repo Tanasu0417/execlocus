@@ -99,12 +99,23 @@ Use the validation wrappers when the GUI should receive bounded alias, function,
 source ./scripts/try-execlocus.sh balanced gui en
 ```
 
+To try the screen as a Windows application rather than a browser tab, read the [GUI guide](docs/GUI_MANUAL.md) and follow the [unsigned desktop development-build guide](docs/DESKTOP_TRY_IT.md). For automatic same-directory Windows/WSL observation, run `bash scripts/install-wsl-companion.sh` once inside WSL.
+
+```powershell
+& .\scripts\build-desktop.ps1 -Configuration Debug
+& .\src-tauri\target\debug\execlocus-desktop.exe
+```
+
+This is a locally source-built trial, not a signed installer or public release. WebView navigation is restricted to the assigned loopback origin, and normal diagnostics make no external request.
+
 Development checks:
 
 ```console
 cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets --all-features
+cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets --all-features -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml --locked --all-targets --all-features
 ```
 
 Windows uses the `x86_64-pc-windows-msvc` toolchain and therefore also requires the Microsoft C++ linker and Windows SDK. WSL/Linux requires a C linker such as `cc`.

@@ -1,0 +1,24 @@
+[package]
+name = "execlocus-desktop"
+version = "0.1.0-alpha.1"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+execlocus = { path = "..", version = "=0.1.0-alpha.1" }
+tauri = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+winsafe = { version = "0.0.28", features = ["dwm"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"

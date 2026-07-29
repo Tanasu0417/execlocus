@@ -6,6 +6,11 @@ use std::{
     time::Duration,
 };
 
+#[cfg(target_os = "windows")]
+use std::process::{Output, Stdio};
+
+use serde::Serialize;
+
 use crate::{
     collect_report, collect_report_with_shell_snapshot,
     i18n::{self, Language},
@@ -22,6 +27,129 @@ const STYLES_CSS: &str = include_str!("../docs/demo/prototype/styles.css");
 const OTTER_LAND: &str = include_str!("../docs/demo/assets/otter-guide.svg");
 const OTTER_SWIM: &str = include_str!("../docs/demo/assets/otter-swim.svg");
 
+/// A loopback-only GUI server that can be hosted by the CLI or a native shell.
+pub struct LocalGuiServer {
+    listener: TcpListener,
+    profile: Profile,
+    language: Language,
+    shell_snapshot: Option<(ShellKind, ShellSessionSnapshot)>,
+}
+
+impl LocalGuiServer {
+    /// Creates a server bound only to `127.0.0.1`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the loopback listener cannot be created.
+    pub fn bind(
+        profile: Profile,
+        language: Language,
+        shell_snapshot: Option<&(ShellKind, ShellSessionSnapshot)>,
+        port: u16,
+    ) -> Result<Self, String> {
+        let listener = TcpListener::bind(("127.0.0.1", port))
+            .map_err(|error| format!("could not bind the local GUI server: {error}"))?;
+        Ok(Self {
+            listener,
+            profile,
+            language,
+            shell_snapshot: shell_snapshot.cloned(),
+        })
+    }
+
+    /// Returns the local URL that the browser or native `WebView` should load.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the assigned listener address cannot be inspected.
+    pub fn url(&self) -> Result<String, String> {
+        let address = self
+            .listener
+            .local_addr()
+            .map_err(|error| format!("could not read the local GUI address: {error}"))?;
+        Ok(format!(
+            "http://127.0.0.1:{}/?mode=live&lang={}&profile={}",
+            address.port(),
+            self.language.code(),
+            self.profile.label()
+        ))
+    }
+
+    /// Serves the embedded read-only interface until the host process exits.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the listener address cannot be inspected.
+    pub fn run(self, open_browser: bool) -> Result<(), String> {
+        self.run_internal(open_browser, true)
+    }
+
+    /// Serves the read-only interface for a native host without writing normal
+    /// lifecycle messages to an attached terminal.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the listener address cannot be inspected.
+    pub fn run_embedded(self) -> Result<(), String> {
+        self.run_internal(false, false)
+    }
+
+    fn run_internal(self, open_browser: bool, announce: bool) -> Result<(), String> {
+        let address = self
+            .listener
+            .local_addr()
+            .map_err(|error| format!("could not read the local GUI address: {error}"))?;
+        let url = self.url()?;
+
+        if announce {
+            println!(
+                "{}\n  {url}\n{}",
+                self.language.text(
+                    "ExecLocus local GUI is ready:",
+                    "ExecLocusローカルGUIを起動しました:"
+                ),
+                self.language.text(
+                    "Keep this terminal open. Press Ctrl+C to stop the local server.",
+                    "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
+                )
+            );
+        }
+
+        if open_browser {
+            if let Err(error) = launch_browser(&url) {
+                eprintln!(
+                    "{}: {error}",
+                    self.language.text(
+                        "The browser could not be opened automatically; open the URL above",
+                        "ブラウザを自動で開けませんでした。上記URLを手動で開いてください"
+                    )
+                );
+            }
+        }
+
+        let expected_origin = format!("http://127.0.0.1:{}", address.port());
+        let expected_host = format!("127.0.0.1:{}", address.port());
+        for connection in self.listener.incoming() {
+            match connection {
+                Ok(mut stream) => {
+                    if let Err(error) = handle_connection(
+                        &mut stream,
+                        self.profile,
+                        self.language,
+                        self.shell_snapshot.as_ref(),
+                        &expected_origin,
+                        &expected_host,
+                    ) {
+                        eprintln!("local GUI request failed: {error}");
+                    }
+                }
+                Err(error) => eprintln!("local GUI connection failed: {error}"),
+            }
+        }
+        Ok(())
+    }
+}
+
 /// # Errors
 ///
 /// Returns an error when the loopback listener cannot be created or inspected.
@@ -32,62 +160,7 @@ pub fn serve(
     port: u16,
     open_browser: bool,
 ) -> Result<(), String> {
-    let listener = TcpListener::bind(("127.0.0.1", port))
-        .map_err(|error| format!("could not bind the local GUI server: {error}"))?;
-    let address = listener
-        .local_addr()
-        .map_err(|error| format!("could not read the local GUI address: {error}"))?;
-    let url = format!(
-        "http://127.0.0.1:{}/?mode=live&lang={}&profile={}",
-        address.port(),
-        language.code(),
-        profile.label()
-    );
-
-    println!(
-        "{}\n  {url}\n{}",
-        language.text(
-            "ExecLocus local GUI is ready:",
-            "ExecLocusローカルGUIを起動しました:"
-        ),
-        language.text(
-            "Keep this terminal open. Press Ctrl+C to stop the local server.",
-            "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
-        )
-    );
-
-    if open_browser {
-        if let Err(error) = launch_browser(&url) {
-            eprintln!(
-                "{}: {error}",
-                language.text(
-                    "The browser could not be opened automatically; open the URL above",
-                    "ブラウザを自動で開けませんでした。上記URLを手動で開いてください"
-                )
-            );
-        }
-    }
-
-    let expected_origin = format!("http://127.0.0.1:{}", address.port());
-    let expected_host = format!("127.0.0.1:{}", address.port());
-    for connection in listener.incoming() {
-        match connection {
-            Ok(mut stream) => {
-                if let Err(error) = handle_connection(
-                    &mut stream,
-                    profile,
-                    language,
-                    shell_snapshot,
-                    &expected_origin,
-                    &expected_host,
-                ) {
-                    eprintln!("local GUI request failed: {error}");
-                }
-            }
-            Err(error) => eprintln!("local GUI connection failed: {error}"),
-        }
-    }
-    Ok(())
+    LocalGuiServer::bind(profile, language, shell_snapshot, port)?.run(open_browser)
 }
 
 fn handle_connection(
@@ -164,6 +237,31 @@ fn handle_connection(
                 body.as_bytes(),
             )
         }
+        ("POST", "/api/diagnose-pair") => {
+            if !authorized_api_request(&request, expected_origin, expected_host) {
+                return write_response(
+                    stream,
+                    403,
+                    "application/json; charset=utf-8",
+                    br#"{"error":"request origin or diagnostic header was rejected"}"#,
+                );
+            }
+            let profile = query_value(&request.path, "profile")
+                .and_then(parse_profile)
+                .unwrap_or(default_profile);
+            let language = query_value(&request.path, "lang")
+                .and_then(parse_language)
+                .unwrap_or(default_language);
+            let report = collect(profile, shell_snapshot);
+            let body = paired_diagnostic_payload(&report, language)
+                .map_err(|error| format!("could not serialize paired GUI report: {error}"))?;
+            write_response(
+                stream,
+                200,
+                "application/json; charset=utf-8",
+                body.as_bytes(),
+            )
+        }
         _ => write_response(
             stream,
             404,
@@ -194,6 +292,222 @@ fn diagnostic_payload(report: &Report, language: Language) -> serde_json::Result
         "shareable_report": shareable,
         "shareable_markdown": markdown,
     }))
+}
+
+#[derive(Serialize)]
+struct WslPeerPayload {
+    status: &'static str,
+    report: Option<serde_json::Value>,
+    shareable_report: Option<serde_json::Value>,
+    shareable_markdown: Option<String>,
+    message: String,
+    setup_command: Option<&'static str>,
+}
+
+fn paired_diagnostic_payload(report: &Report, language: Language) -> serde_json::Result<String> {
+    let local = i18n::localize_report(report, language);
+    let shareable = privacy::redact_for_sharing(report);
+    let shareable = i18n::localize_report(&shareable, language);
+    let markdown = renderers::markdown::render_with_language(report, language);
+    let peer = collect_wsl_peer(report.profile, language);
+    let paired_markdown = render_paired_markdown(&markdown, &peer, language);
+    serde_json::to_string(&serde_json::json!({
+        "mode": "paired",
+        "language": language.code(),
+        "network": "loopback-only",
+        "mutations": false,
+        "report": local,
+        "shareable_report": shareable,
+        "shareable_markdown": markdown,
+        "peer": peer,
+        "paired_shareable_markdown": paired_markdown,
+    }))
+}
+
+fn render_paired_markdown(
+    local_markdown: &str,
+    peer: &WslPeerPayload,
+    language: Language,
+) -> String {
+    let mut output = String::new();
+    output.push_str(language.text(
+        "# ExecLocus Windows / WSL comparison\n\n",
+        "# ExecLocus Windows／WSL比較レポート\n\n",
+    ));
+    output.push_str(language.text(
+        "> Both sections were redacted before this comparison was rendered.\n\n",
+        "> 2つの診断結果は、比較レポートの生成前に識別情報を置換しています。\n\n",
+    ));
+    output.push_str(language.text("## Windows observation\n\n", "## Windows側の観測\n\n"));
+    output.push_str(local_markdown);
+    output.push_str(language.text("\n\n## WSL observation\n\n", "\n\n## WSL側の観測\n\n"));
+    if let Some(markdown) = &peer.shareable_markdown {
+        output.push_str(markdown);
+    } else {
+        output.push_str(language.text(
+            "WSL observation was unavailable. Install the free local companion and rerun the comparison.\n",
+            "WSL側の観測を取得できませんでした。無料のローカル補助バイナリを導入してから再比較してください。\n",
+        ));
+    }
+    output
+}
+
+#[cfg(target_os = "windows")]
+fn collect_wsl_peer(profile: Profile, language: Language) -> WslPeerPayload {
+    let raw = run_wsl_companion(profile, language, WslReportFormat::Json, false);
+    let redacted = run_wsl_companion(profile, language, WslReportFormat::Json, true);
+    let markdown = run_wsl_companion(profile, language, WslReportFormat::Markdown, false);
+
+    match (raw, redacted, markdown) {
+        (Ok(raw), Ok(redacted), Ok(markdown)) => {
+            let report = serde_json::from_slice(&raw.stdout);
+            let shareable_report = serde_json::from_slice(&redacted.stdout);
+            let shareable_markdown = String::from_utf8(markdown.stdout);
+            match (report, shareable_report, shareable_markdown) {
+                (Ok(report), Ok(shareable_report), Ok(shareable_markdown)) => WslPeerPayload {
+                    status: "available",
+                    report: Some(report),
+                    shareable_report: Some(shareable_report),
+                    shareable_markdown: Some(shareable_markdown.trim().to_owned()),
+                    message: language
+                        .text(
+                            "Windows and WSL were observed locally for the same launch directory.",
+                            "同じ起動ディレクトリをWindows側とWSL側からローカル観測しました。",
+                        )
+                        .to_owned(),
+                    setup_command: None,
+                },
+                _ => peer_failure("probe_failed", language),
+            }
+        }
+        (Err(WslPeerError::CompanionUnavailable), _, _)
+        | (_, Err(WslPeerError::CompanionUnavailable), _)
+        | (_, _, Err(WslPeerError::CompanionUnavailable)) => {
+            peer_failure("companion_unavailable", language)
+        }
+        (Err(WslPeerError::WslUnavailable), _, _)
+        | (_, Err(WslPeerError::WslUnavailable), _)
+        | (_, _, Err(WslPeerError::WslUnavailable)) => peer_failure("wsl_unavailable", language),
+        _ => peer_failure("probe_failed", language),
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn collect_wsl_peer(_profile: Profile, language: Language) -> WslPeerPayload {
+    peer_failure("windows_app_required", language)
+}
+
+fn peer_failure(status: &'static str, language: Language) -> WslPeerPayload {
+    let (message, setup_command) = match status {
+        "companion_unavailable" => (
+            language.text(
+                "WSL is available, but the ExecLocus WSL companion was not found.",
+                "WSLは利用できますが、WSL側のExecLocus補助バイナリが見つかりません。",
+            ),
+            Some("bash scripts/install-wsl-companion.sh"),
+        ),
+        "wsl_unavailable" => (
+            language.text(
+                "WSL could not be started from this Windows session.",
+                "このWindowsセッションからWSLを起動できませんでした。",
+            ),
+            None,
+        ),
+        "windows_app_required" => (
+            language.text(
+                "Automatic paired diagnosis starts from the Windows desktop app.",
+                "自動ペア診断はWindowsデスクトップアプリから開始します。",
+            ),
+            None,
+        ),
+        _ => (
+            language.text(
+                "The WSL companion ran, but its report could not be read.",
+                "WSL側の補助診断は起動しましたが、結果を読み取れませんでした。",
+            ),
+            Some("bash scripts/install-wsl-companion.sh"),
+        ),
+    };
+    WslPeerPayload {
+        status,
+        report: None,
+        shareable_report: None,
+        shareable_markdown: None,
+        message: message.to_owned(),
+        setup_command,
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Clone, Copy)]
+enum WslPeerError {
+    WslUnavailable,
+    CompanionUnavailable,
+    ProbeFailed,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Clone, Copy)]
+enum WslReportFormat {
+    Json,
+    Markdown,
+}
+
+#[cfg(target_os = "windows")]
+impl WslReportFormat {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Json => "json",
+            Self::Markdown => "markdown",
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn run_wsl_companion(
+    profile: Profile,
+    language: Language,
+    format: WslReportFormat,
+    redact: bool,
+) -> Result<Output, WslPeerError> {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let current_dir = std::env::current_dir().map_err(|_| WslPeerError::ProbeFailed)?;
+    let mut command = Command::new("wsl.exe");
+    command.arg("--cd").arg(current_dir).args([
+        "--exec",
+        "bash",
+        "-lc",
+        "exec execlocus \"$@\"",
+        "execlocus",
+        "--profile",
+        profile.label(),
+        "--lang",
+        language.code(),
+        "report",
+        "--format",
+        format.label(),
+    ]);
+    if redact {
+        command.arg("--redact");
+    }
+    let output = command
+        .stdin(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map_err(|error| {
+            if error.kind() == std::io::ErrorKind::NotFound {
+                WslPeerError::WslUnavailable
+            } else {
+                WslPeerError::ProbeFailed
+            }
+        })?;
+    match output.status.code() {
+        Some(0 | 1) => Ok(output),
+        Some(126 | 127) => Err(WslPeerError::CompanionUnavailable),
+        _ => Err(WslPeerError::ProbeFailed),
+    }
 }
 
 struct HttpRequest {
@@ -359,7 +673,19 @@ mod tests {
 
     use crate::{i18n::Language, model::Profile};
 
-    use super::{HttpRequest, authorized_api_request, parse_language, parse_profile, query_value};
+    use super::{
+        HttpRequest, LocalGuiServer, authorized_api_request, parse_language, parse_profile,
+        peer_failure, query_value, render_paired_markdown,
+    };
+
+    #[test]
+    fn local_gui_server_uses_an_assigned_loopback_port() {
+        let server = LocalGuiServer::bind(Profile::Balanced, Language::English, None, 0)
+            .expect("loopback bind should succeed");
+        let url = server.url().expect("assigned URL should be readable");
+        assert!(url.starts_with("http://127.0.0.1:"));
+        assert!(url.ends_with("/?mode=live&lang=en&profile=balanced"));
+    }
 
     #[test]
     fn query_values_are_bounded_to_known_profiles_and_languages() {
@@ -398,5 +724,18 @@ mod tests {
             "http://127.0.0.1:43117",
             "127.0.0.1:43117"
         ));
+    }
+
+    #[test]
+    fn unavailable_peer_report_uses_a_generic_setup_command() {
+        let peer = peer_failure("companion_unavailable", Language::Japanese);
+        let markdown = render_paired_markdown("# local", &peer, Language::Japanese);
+        assert!(markdown.contains("WSL側の観測を取得できませんでした"));
+        assert_eq!(
+            peer.setup_command,
+            Some("bash scripts/install-wsl-companion.sh")
+        );
+        assert!(!markdown.contains("C:\\Users"));
+        assert!(!markdown.contains("/home/"));
     }
 }

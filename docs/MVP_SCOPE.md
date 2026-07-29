@@ -42,12 +42,13 @@ Agent-specific detection enriches the topology but must not block the base repor
 - Release binaries and checksums for Windows x86_64 and Linux x86_64
 - English and Japanese README verified against the real CLI
 - Local loopback GUI for the user-value validation gate
+- Source-built unsigned Windows desktop shell for the same user-value validation gate
 - English and Japanese human-readable terminal, Markdown, explanation, and GUI output
 
 ## 3. Explicitly outside v0.1
 
 - Automatic fixes
-- Installed native GUI, TUI, or hosted dashboard
+- Signed installer, Store distribution, automatic desktop update, TUI, or hosted dashboard
 - Daemon or continuous monitoring
 - Telemetry or hosted service
 - Docker, GPU, network, package-manager, or general WSL health checks
@@ -86,6 +87,7 @@ Global behavior:
 - Invalid arguments use exit code 2
 - Default execution performs no network request
 - The local GUI binds only to loopback, performs no upload, and separates local detail from redacted Share output
+- The development desktop shell loads only its assigned loopback origin and is not a signed release artifact
 - A failed optional probe produces partial output
 - Human output goes to stdout; actionable process errors go to stderr
 
@@ -261,5 +263,6 @@ Decided:
 - Repository name: `execlocus`
 - Copyright notice: `Copyright (c) 2026 ExecLocus contributors`
 - Declared minimum Rust version: 1.85 (the minimum for Rust 2024 edition)
+- Desktop-shell minimum Rust version: 1.88 (kept separate so the CLI remains on 1.85)
 - Public GitHub repository with protected `main`
 - Rust 1.85 compatibility check in CI

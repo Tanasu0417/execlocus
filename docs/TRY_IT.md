@@ -10,6 +10,7 @@ This guide lets you run the implemented Rust CLI and local GUI in your own envir
 |---|---|---|
 | [Static concept demo](demo/prototype/index.html) | Review the layout and interaction before installing | Synthetic when opened with `file://` or an ordinary static server |
 | Local GUI | Run the same read-only CLI probes from one button and show candidates, impact, actions, and verification commands | Your local environment |
+| [Windows desktop development build](DESKTOP_TRY_IT.md) | Try the same GUI in an unsigned native window without browser chrome | Your local environment |
 | Rust CLI | Observe Windows/WSL, distribution, user, shell, executable candidates, and filesystem boundaries | Your local environment |
 
 The static concept demo does not run probes. Use the local GUI or CLI flow below when evaluating real usefulness.
