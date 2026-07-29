@@ -39,12 +39,13 @@ The Rust 1.85 suite passed on both Windows and Ubuntu-24.04 WSL:
 |---|---|---|---:|---|
 | Windows validation launched from the active Codex environment | `Codex`, inferred, high confidence, process ancestry | Windows native, observed | 0 | Redacted JSON contained none of the checked user, home, or machine values |
 | Ubuntu-24.04 WSL launched as a separate validation command | `Unknown` | Agent runtime `Unknown`; ExecLocus runtime remained observed WSL | 0 | Only redacted JSON was retained |
+| Ubuntu-24.04 WSL launched by Claude Code 2.1.212 | `Claude Code`, inferred, high confidence, process ancestry | WSL, observed, certain confidence | 0 | Isolated WSL-native directory; only automatically redacted JSON was exposed |
 
-The WSL `Unknown` result is expected: launching a separate WSL command from Windows does not create a supported Codex or Claude ancestor inside the Linux process chain. The adapter does not copy the visible Windows caller assumption across the OS boundary.
+The first WSL `Unknown` result is expected: launching a separate WSL command from Windows does not create a supported Codex or Claude ancestor inside the Linux process chain. The later Claude Code run establishes the positive case without copying the visible Windows caller assumption across the OS boundary. Full methodology is recorded in [`CLAUDE_CODE_WSL_2026-07-29.md`](CLAUDE_CODE_WSL_2026-07-29.md).
 
 ## Known limits
 
 - A `codex` ancestor establishes the Codex process family but cannot distinguish Codex CLI from a Codex Desktop backend with the same visible name.
 - A package-manager wrapper that exposes only `node` remains `Unknown`; reading the command line solely to force a match is intentionally out of scope for this privacy-first adapter.
-- Real Claude Code ancestry and a real agent-launched WSL session are not yet verified.
+- Windows-native Claude Code and agent-launched Codex inside WSL are not yet verified.
 - Absence of process evidence means `Unknown`, not “not installed”.
