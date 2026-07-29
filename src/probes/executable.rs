@@ -439,6 +439,17 @@ mod tests {
     }
 
     #[test]
+    fn malformed_and_truncated_headers_remain_unknown_without_panicking() {
+        for prefix in [b"".as_slice(), b"M", b"\x7fEL", b"not-a-header"] {
+            assert_eq!(detect_format_from_prefix(prefix), ExecutableFormat::Unknown);
+        }
+        assert_eq!(
+            detect_format_from_prefix(b"#!\xff\xfe"),
+            ExecutableFormat::Script
+        );
+    }
+
+    #[test]
     fn hides_windows_verbatim_path_prefixes() {
         assert_eq!(
             display_path(std::path::Path::new(r"\\?\C:\Program Files\Git\git.exe")),

@@ -57,20 +57,25 @@ where
 pub fn classify_path(path: &str, runtime: RuntimeKind) -> PathClass {
     let normalized = path.replace('\\', "/");
     let lower = normalized.to_ascii_lowercase();
+    let logical = lower
+        .strip_prefix("//?/unc/")
+        .map(|rest| format!("//{rest}"))
+        .or_else(|| lower.strip_prefix("//?/").map(str::to_owned))
+        .unwrap_or(lower);
 
-    if lower.starts_with("//wsl.localhost/") || lower.starts_with("//wsl$/") {
+    if logical.starts_with("//wsl.localhost/") || logical.starts_with("//wsl$/") {
         return PathClass::WslUnc;
     }
 
-    if is_windows_drive_path(path) {
+    if is_windows_drive_path(&logical) {
         return PathClass::WindowsNative;
     }
 
-    if is_wsl_mounted_drive(&lower) {
+    if is_wsl_mounted_drive(&logical) {
         return PathClass::WindowsMounted;
     }
 
-    if normalized.starts_with('/') {
+    if logical.starts_with('/') {
         return match runtime {
             RuntimeKind::Wsl => PathClass::WslNative,
             RuntimeKind::LinuxNative => PathClass::LinuxNative,
@@ -91,10 +96,10 @@ fn is_windows_drive_path(path: &str) -> bool {
 
 fn is_wsl_mounted_drive(lower: &str) -> bool {
     let bytes = lower.as_bytes();
-    bytes.len() >= 7
+    bytes.len() >= 6
         && bytes.starts_with(b"/mnt/")
         && bytes[5].is_ascii_lowercase()
-        && bytes[6] == b'/'
+        && (bytes.len() == 6 || bytes[6] == b'/')
 }
 
 #[cfg(test)]
@@ -114,6 +119,10 @@ mod tests {
     fn classifies_wsl_mounted_drive() {
         assert_eq!(
             classify_path("/mnt/c/Users/dev/project", RuntimeKind::Wsl),
+            PathClass::WindowsMounted
+        );
+        assert_eq!(
+            classify_path("/mnt/c", RuntimeKind::Wsl),
             PathClass::WindowsMounted
         );
     }
@@ -142,6 +151,21 @@ mod tests {
                 RuntimeKind::WindowsNative
             ),
             PathClass::WslUnc
+        );
+        assert_eq!(
+            classify_path(
+                r"\\?\UNC\wsl.localhost\Ubuntu-24.04\home\demo\project",
+                RuntimeKind::WindowsNative
+            ),
+            PathClass::WslUnc
+        );
+    }
+
+    #[test]
+    fn classifies_windows_verbatim_drive_path() {
+        assert_eq!(
+            classify_path(r"\\?\C:\demo\project", RuntimeKind::WindowsNative),
+            PathClass::WindowsNative
         );
     }
 }

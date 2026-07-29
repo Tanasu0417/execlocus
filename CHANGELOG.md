@@ -37,6 +37,8 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Production PowerShell, cmd, bash, and zsh resolution contracts with explicit unknown selection when parent-session evidence is unavailable
 - Terminal selected/losing candidate comparison with origin and evidence IDs
 - JSON schema version `0.5.0` for resolution method, shell, and session-completeness provenance
+- Zero-cost cargo-deny gate for RustSec advisories, licenses, sources, wildcard requirements, and duplicate dependencies
+- v0.1 threat model and privacy-safe security assessment
 
 ### Fixed
 
@@ -53,5 +55,8 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Shareable rendering removes usernames, home directories, machine names, and absolute paths
 - CSV cells that begin with formula-significant characters are escaped for spreadsheet import
 - Terminal output escapes control characters in observed identity, path, finding, and candidate values
+- Shareable Markdown neutralizes table, raw HTML, image-link, and control-character injection
+- Quoted absolute-path assignments cannot bypass shareable redaction
+- Windows verbatim paths, `/mnt/<drive>` roots, malformed executable headers, and partial candidate failures have regression coverage
 
 [Unreleased]: https://github.com/Tanasu0417/execlocus/commits/main

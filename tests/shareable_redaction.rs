@@ -273,3 +273,20 @@ fn shareable_markdown_matches_the_privacy_golden_file() {
 
     assert_eq!(output, include_str!("fixtures/shareable_report.md"));
 }
+
+#[test]
+fn shareable_markdown_neutralizes_untrusted_markup_and_controls() {
+    let (mut report, context) = private_fixture();
+    report.runtime.distribution =
+        Some("<script>|`code` ![track](https://example.invalid/pixel)\u{1b}[31m\nnext".to_owned());
+
+    let output = markdown::render_with_context(&report, &context);
+
+    assert!(output.contains("&lt;script&gt;"));
+    assert!(output.contains(r"\|\`code\`"));
+    assert!(output.contains(r"\!\[track\]"));
+    assert!(output.contains(r"\u{1b}\[31m next"));
+    assert!(!output.contains("<script>"));
+    assert!(!output.contains("![track]"));
+    assert!(!output.contains('\u{1b}'));
+}

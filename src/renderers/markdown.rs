@@ -193,13 +193,50 @@ fn row(output: &mut String, field: &str, value: &str, source: &str) {
 }
 
 fn cell(value: &str) -> String {
-    value
-        .replace('|', "\\|")
-        .replace(['\r', '\n'], " ")
-        .trim()
-        .to_owned()
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '\r' | '\n' | '\t' => escaped.push(' '),
+            '\\' => escaped.push_str("\\\\"),
+            '|' => escaped.push_str("\\|"),
+            '`' => escaped.push_str("\\`"),
+            '*' => escaped.push_str("\\*"),
+            '_' => escaped.push_str("\\_"),
+            '[' => escaped.push_str("\\["),
+            ']' => escaped.push_str("\\]"),
+            '!' => escaped.push_str("\\!"),
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            character if character.is_control() => {
+                write!(escaped, "\\u{{{:x}}}", u32::from(character))
+                    .expect("writing to String cannot fail");
+            }
+            character => escaped.push(character),
+        }
+    }
+    escaped.trim().to_owned()
 }
 
 fn source(source: Option<crate::model::RuntimeValueSource>) -> String {
     source.map_or_else(|| "unavailable".to_owned(), |value| format!("{value:?}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cell;
+
+    #[test]
+    fn escapes_table_structure_html_links_and_control_characters() {
+        let input = "<script>|`code` ![track](https://example.invalid)\u{1b}[31m\nnext";
+        let output = cell(input);
+
+        assert_eq!(
+            output,
+            r"&lt;script&gt;\|\`code\` \!\[track\](https://example.invalid)\u{1b}\[31m next"
+        );
+        assert!(!output.contains('<'));
+        assert!(!output.contains('\u{1b}'));
+        assert!(!output.contains("!["));
+    }
 }
