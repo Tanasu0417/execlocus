@@ -13,6 +13,9 @@ tauri-build = { version = "2", features = [] }
 execlocus = { path = "..", version = "=0.1.0-alpha.1" }
 tauri = { version = "2", features = [] }
 
+[target.'cfg(windows)'.dependencies]
+winsafe = { version = "0.0.28", features = ["dwm"] }
+
 [lints.rust]
 unsafe_code = "forbid"
 
