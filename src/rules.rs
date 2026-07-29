@@ -129,9 +129,9 @@ fn evaluate_git001(report: &Report, findings: &mut Vec<Finding>) {
 #[cfg(test)]
 mod tests {
     use crate::model::{
-        Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo, ExecutableOrigin,
-        ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
-        Topology,
+        AgentInfo, Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
+        ExecutableOrigin, ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo,
+        RuntimeKind, Topology,
     };
 
     use super::evaluate;
@@ -159,6 +159,7 @@ mod tests {
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
             },
+            agent: AgentInfo::default(),
             project: ProjectInfo {
                 path: Some("test".to_owned()),
                 class: project_class,

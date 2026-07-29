@@ -64,7 +64,7 @@ The target is intentionally small. A directory is introduced only when it has a 
 └── README.md / README.ja.md
 ```
 
-Planned `adapters/` and `privacy/` modules are created with their first tested feature, not as empty folders. The existing flat model and rule modules remain until splitting reduces real complexity.
+The `adapters/` and `privacy/` modules are created with tested vertical slices rather than as empty folders. The existing flat model and rule modules remain until splitting reduces real complexity.
 
 ## Development model: scenario-first vertical slices
 
@@ -134,7 +134,7 @@ Recommended implementation sequence:
 
 1. Complete UC-02 executable resolution first because the prototype already has most of the evidence path and can produce the first honest demo.
 2. Complete UC-03 profile-aware `/mnt/c` behavior by reusing the same fixture and finding contracts.
-3. Implement UC-01 agent adapters after invocation/process evidence and `unknown` behavior are proven by fixtures.
+3. Extend UC-01 beyond the initial exact-name process adapters only after additional invocation evidence and `unknown` behavior are proven by fixtures.
 
 Each question becomes a separate focused pull request when possible.
 

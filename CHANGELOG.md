@@ -23,6 +23,8 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Provenance fields for distribution, user, and shell values in terminal and JSON reports
 - JSON schema version `0.2.0` for runtime identity provenance fields
 - Automatically redacted Markdown reports and explicit redacted JSON output
+- Conservative Codex and Claude Code adapters based on exact names in bounded process ancestry
+- JSON schema version `0.3.0` with separate agent-product and agent-runtime provenance
 
 ### Security
 

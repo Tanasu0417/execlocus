@@ -62,6 +62,48 @@ pub enum RuntimeValueSource {
     OsRelease,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentProduct {
+    Codex,
+    ClaudeCode,
+}
+
+impl AgentProduct {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Codex => "Codex",
+            Self::ClaudeCode => "Claude Code",
+        }
+    }
+
+    #[must_use]
+    pub const fn evidence_value(self) -> &'static str {
+        match self {
+            Self::Codex => "codex",
+            Self::ClaudeCode => "claude_code",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentEvidenceSource {
+    ProcessAncestry,
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct AgentInfo {
+    pub product: Option<AgentProduct>,
+    pub product_status: ObservationStatus,
+    pub product_confidence: Confidence,
+    pub product_source: Option<AgentEvidenceSource>,
+    pub runtime: RuntimeKind,
+    pub runtime_status: ObservationStatus,
+    pub runtime_confidence: Confidence,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct RuntimeInfo {
     pub kind: RuntimeKind,
@@ -200,6 +242,19 @@ impl Topology {
             label: format!("{:?}", report.runtime.kind),
         });
 
+        if let Some(product) = report.agent.product {
+            topology.nodes.push(TopologyNode {
+                id: "agent.current".to_owned(),
+                kind: "agent".to_owned(),
+                label: product.label().to_owned(),
+            });
+            topology.edges.push(TopologyEdge {
+                from: "agent.current".to_owned(),
+                relation: "runs-in".to_owned(),
+                to: "runtime.current".to_owned(),
+            });
+        }
+
         if let Some(path) = &report.project.path {
             topology.nodes.push(TopologyNode {
                 id: "project.current".to_owned(),
@@ -239,6 +294,7 @@ pub struct Report {
     pub generated_at_unix_ms: u128,
     pub profile: Profile,
     pub runtime: RuntimeInfo,
+    pub agent: AgentInfo,
     pub project: ProjectInfo,
     pub executables: Vec<ExecutableInfo>,
     pub topology: Topology,

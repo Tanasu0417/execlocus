@@ -71,6 +71,8 @@ fn render_redacted(report: &Report) -> String {
         &format!("{:?}", report.project.class),
     );
 
+    render_agent(&mut output, report);
+
     writeln!(output, "\n## Toolchain\n").expect("writing to String cannot fail");
     writeln!(output, "| Role | Selected | Origin |").expect("writing to String cannot fail");
     writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
@@ -118,6 +120,38 @@ fn render_redacted(report: &Report) -> String {
     )
     .expect("writing to String cannot fail");
     output
+}
+
+fn render_agent(output: &mut String, report: &Report) {
+    writeln!(output, "\n## Agent execution evidence\n").expect("writing to String cannot fail");
+    writeln!(output, "| Field | Value | Evidence |").expect("writing to String cannot fail");
+    writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
+    row(
+        output,
+        "Product",
+        report
+            .agent
+            .product
+            .map_or("Unknown", crate::model::AgentProduct::label),
+        &format!(
+            "{:?} / {:?} / {}",
+            report.agent.product_status,
+            report.agent.product_confidence,
+            report
+                .agent
+                .product_source
+                .map_or_else(|| "unavailable".to_owned(), |source| format!("{source:?}"))
+        ),
+    );
+    row(
+        output,
+        "Runtime",
+        &format!("{:?}", report.agent.runtime),
+        &format!(
+            "{:?} / {:?}",
+            report.agent.runtime_status, report.agent.runtime_confidence
+        ),
+    );
 }
 
 fn row(output: &mut String, field: &str, value: &str, source: &str) {

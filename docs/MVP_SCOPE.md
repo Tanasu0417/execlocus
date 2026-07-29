@@ -87,7 +87,7 @@ Global behavior:
 
 ## 5. Normalized data contract
 
-The first internal schema must represent:
+The current internal schema (`0.3.0`, still pre-alpha) represents:
 
 ```text
 Report

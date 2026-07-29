@@ -2,7 +2,7 @@
 
 > Automatically redacted before rendering. Do not use raw JSON as a public attachment.
 
-- Schema: `0.2.0`
+- Schema: `0.3.0`
 - Profile: `Balanced`
 
 ## Current execution
@@ -15,6 +15,13 @@
 | Shell | [redacted-home]\bin\bash.exe | Environment |
 | Terminal | [redacted-machine] terminal | environment hint |
 | Project | [windows-mounted-project] | WindowsMounted |
+
+## Agent execution evidence
+
+| Field | Value | Evidence |
+|---|---|---|
+| Product | Codex | Inferred / High / ProcessAncestry |
+| Runtime | Wsl | Observed / Certain |
 
 ## Toolchain
 

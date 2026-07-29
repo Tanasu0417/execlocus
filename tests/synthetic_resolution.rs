@@ -184,7 +184,9 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
     let report = collect_report_with(&FixtureProbeContext::wsl(), Profile::Balanced);
 
     assert_eq!(report.generated_at_unix_ms, 1_234_567);
+    assert_eq!(report.schema_version, "0.3.0");
     assert_eq!(report.runtime.kind, RuntimeKind::Wsl);
+    assert_eq!(report.agent.product, None);
     assert_eq!(
         report.runtime.kind_source,
         Some(RuntimeValueSource::Environment)
