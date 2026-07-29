@@ -22,6 +22,113 @@ const STYLES_CSS: &str = include_str!("../docs/demo/prototype/styles.css");
 const OTTER_LAND: &str = include_str!("../docs/demo/assets/otter-guide.svg");
 const OTTER_SWIM: &str = include_str!("../docs/demo/assets/otter-swim.svg");
 
+/// A loopback-only GUI server that can be hosted by the CLI or a native shell.
+pub struct LocalGuiServer {
+    listener: TcpListener,
+    profile: Profile,
+    language: Language,
+    shell_snapshot: Option<(ShellKind, ShellSessionSnapshot)>,
+}
+
+impl LocalGuiServer {
+    /// Creates a server bound only to `127.0.0.1`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the loopback listener cannot be created.
+    pub fn bind(
+        profile: Profile,
+        language: Language,
+        shell_snapshot: Option<&(ShellKind, ShellSessionSnapshot)>,
+        port: u16,
+    ) -> Result<Self, String> {
+        let listener = TcpListener::bind(("127.0.0.1", port))
+            .map_err(|error| format!("could not bind the local GUI server: {error}"))?;
+        Ok(Self {
+            listener,
+            profile,
+            language,
+            shell_snapshot: shell_snapshot.cloned(),
+        })
+    }
+
+    /// Returns the local URL that the browser or native `WebView` should load.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the assigned listener address cannot be inspected.
+    pub fn url(&self) -> Result<String, String> {
+        let address = self
+            .listener
+            .local_addr()
+            .map_err(|error| format!("could not read the local GUI address: {error}"))?;
+        Ok(format!(
+            "http://127.0.0.1:{}/?mode=live&lang={}&profile={}",
+            address.port(),
+            self.language.code(),
+            self.profile.label()
+        ))
+    }
+
+    /// Serves the embedded read-only interface until the host process exits.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the listener address cannot be inspected.
+    pub fn run(self, open_browser: bool) -> Result<(), String> {
+        let address = self
+            .listener
+            .local_addr()
+            .map_err(|error| format!("could not read the local GUI address: {error}"))?;
+        let url = self.url()?;
+
+        println!(
+            "{}\n  {url}\n{}",
+            self.language.text(
+                "ExecLocus local GUI is ready:",
+                "ExecLocusローカルGUIを起動しました:"
+            ),
+            self.language.text(
+                "Keep this terminal open. Press Ctrl+C to stop the local server.",
+                "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
+            )
+        );
+
+        if open_browser {
+            if let Err(error) = launch_browser(&url) {
+                eprintln!(
+                    "{}: {error}",
+                    self.language.text(
+                        "The browser could not be opened automatically; open the URL above",
+                        "ブラウザを自動で開けませんでした。上記URLを手動で開いてください"
+                    )
+                );
+            }
+        }
+
+        let expected_origin = format!("http://127.0.0.1:{}", address.port());
+        let expected_host = format!("127.0.0.1:{}", address.port());
+        for connection in self.listener.incoming() {
+            match connection {
+                Ok(mut stream) => {
+                    if let Err(error) = handle_connection(
+                        &mut stream,
+                        self.profile,
+                        self.language,
+                        self.shell_snapshot.as_ref(),
+                        &expected_origin,
+                        &expected_host,
+                    ) {
+                        eprintln!("local GUI request failed: {error}");
+                    }
+                }
+                Err(error) => eprintln!("local GUI connection failed: {error}"),
+            }
+        }
+        Ok(())
+    }
+}
+
 /// # Errors
 ///
 /// Returns an error when the loopback listener cannot be created or inspected.
@@ -32,62 +139,7 @@ pub fn serve(
     port: u16,
     open_browser: bool,
 ) -> Result<(), String> {
-    let listener = TcpListener::bind(("127.0.0.1", port))
-        .map_err(|error| format!("could not bind the local GUI server: {error}"))?;
-    let address = listener
-        .local_addr()
-        .map_err(|error| format!("could not read the local GUI address: {error}"))?;
-    let url = format!(
-        "http://127.0.0.1:{}/?mode=live&lang={}&profile={}",
-        address.port(),
-        language.code(),
-        profile.label()
-    );
-
-    println!(
-        "{}\n  {url}\n{}",
-        language.text(
-            "ExecLocus local GUI is ready:",
-            "ExecLocusローカルGUIを起動しました:"
-        ),
-        language.text(
-            "Keep this terminal open. Press Ctrl+C to stop the local server.",
-            "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
-        )
-    );
-
-    if open_browser {
-        if let Err(error) = launch_browser(&url) {
-            eprintln!(
-                "{}: {error}",
-                language.text(
-                    "The browser could not be opened automatically; open the URL above",
-                    "ブラウザを自動で開けませんでした。上記URLを手動で開いてください"
-                )
-            );
-        }
-    }
-
-    let expected_origin = format!("http://127.0.0.1:{}", address.port());
-    let expected_host = format!("127.0.0.1:{}", address.port());
-    for connection in listener.incoming() {
-        match connection {
-            Ok(mut stream) => {
-                if let Err(error) = handle_connection(
-                    &mut stream,
-                    profile,
-                    language,
-                    shell_snapshot,
-                    &expected_origin,
-                    &expected_host,
-                ) {
-                    eprintln!("local GUI request failed: {error}");
-                }
-            }
-            Err(error) => eprintln!("local GUI connection failed: {error}"),
-        }
-    }
-    Ok(())
+    LocalGuiServer::bind(profile, language, shell_snapshot, port)?.run(open_browser)
 }
 
 fn handle_connection(
@@ -359,7 +411,19 @@ mod tests {
 
     use crate::{i18n::Language, model::Profile};
 
-    use super::{HttpRequest, authorized_api_request, parse_language, parse_profile, query_value};
+    use super::{
+        HttpRequest, LocalGuiServer, authorized_api_request, parse_language, parse_profile,
+        query_value,
+    };
+
+    #[test]
+    fn local_gui_server_uses_an_assigned_loopback_port() {
+        let server = LocalGuiServer::bind(Profile::Balanced, Language::English, None, 0)
+            .expect("loopback bind should succeed");
+        let url = server.url().expect("assigned URL should be readable");
+        assert!(url.starts_with("http://127.0.0.1:"));
+        assert!(url.ends_with("/?mode=live&lang=en&profile=balanced"));
+    }
 
     #[test]
     fn query_values_are_bounded_to_known_profiles_and_languages() {

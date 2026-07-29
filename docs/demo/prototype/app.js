@@ -46,10 +46,16 @@ const translations = {
     "field.origin": "由来",
     "field.format": "形式",
     "field.unavailable": "利用不可",
+    "field.noneObserved": "候補なし",
     "live.toolchainEyebrow": "実データ",
     "live.toolchainTitle": "現在のツール選択",
     "live.candidatesTitle": "候補・選択根拠・確認コマンド",
     "live.candidatesBadge": "実環境の観測結果",
+    "live.summaryEyebrow": "概要",
+    "live.summaryTitle": "5ツールの選択状態",
+    "live.detailHint": "各行を選択して詳細を開く",
+    "live.expandAll": "すべて展開",
+    "live.collapseAll": "すべて閉じる",
     "live.traceId": "LIVE-LOCAL-01",
     "live.noFindings": "現在の条件では検出結果はありません",
     "live.noFindingsSummary": "問題がない場合と、判定に必要な根拠が不足している場合があります。Toolchainの状態と確認コマンドも確認してください。",
@@ -146,10 +152,16 @@ const translations = {
     "field.origin": "Origin",
     "field.format": "Format",
     "field.unavailable": "Unavailable",
+    "field.noneObserved": "No candidates observed",
     "live.toolchainEyebrow": "LIVE DATA",
     "live.toolchainTitle": "Current tool selection",
     "live.candidatesTitle": "Candidates, selection evidence, and verification",
     "live.candidatesBadge": "OBSERVED LOCALLY",
+    "live.summaryEyebrow": "SUMMARY",
+    "live.summaryTitle": "Selection state for five tools",
+    "live.detailHint": "Select a row to open its details",
+    "live.expandAll": "Expand all",
+    "live.collapseAll": "Collapse all",
     "live.traceId": "LIVE-LOCAL-01",
     "live.noFindings": "No finding was emitted for the current conditions",
     "live.noFindingsSummary": "The condition may be absent or required evidence may be unavailable. Review the Toolchain states and verification commands too.",
@@ -273,6 +285,7 @@ const command = document.querySelector("#command");
 const runState = document.querySelector("#run-state");
 const otterGuide = document.querySelector("#otter-guide");
 const requestedOtterMotion = params.get("motion") === "swim" ? "swim" : "land";
+document.body.classList.toggle("live-mode", liveMode);
 
 function t(key) {
   return translations[language][key] ?? key;
@@ -377,26 +390,50 @@ function selectedValue(executable) {
   return executable.selected?.path ?? executable.selected_binding ?? "—";
 }
 
-function renderLiveToolchain(report) {
-  const summary = document.querySelector("#live-toolchain-table");
-  const details = document.querySelector("#live-candidates");
-  summary.replaceChildren();
-  details.replaceChildren();
-  report.executables.forEach((executable) => {
+function roleLabel(role) {
+  if (role === "codex") return "Codex";
+  if (role === "claude") return "Claude Code";
+  if (role === "git") return "Git";
+  if (role === "node") return "Node";
+  if (role === "npm") return "npm";
+  return role;
+}
+
+function renderOverviewTable(container, executables) {
+  container.replaceChildren();
+  executables.forEach((executable) => {
     const row = document.createElement("div");
     row.className = "live-table-row";
-    appendTextElement(row, "strong", executable.role);
+    appendTextElement(row, "strong", roleLabel(executable.role));
     appendTextElement(row, "span", enumLabel("state", executable.selection_state));
     appendTextElement(row, "code", selectedValue(executable));
     appendTextElement(row, "small", `${executable.candidates.length} ${language === "ja" ? "件" : "candidate(s)"}`);
-    summary.appendChild(row);
+    container.appendChild(row);
+  });
+}
 
-    const article = document.createElement("article");
+function renderLiveToolchain(report) {
+  const summary = document.querySelector("#live-toolchain-table");
+  const compareSummary = document.querySelector("#live-compare-table");
+  const details = document.querySelector("#live-candidates");
+  renderOverviewTable(summary, report.executables);
+  renderOverviewTable(compareSummary, report.executables);
+  details.replaceChildren();
+  report.executables.forEach((executable) => {
+    const article = document.createElement("details");
+    article.className = "live-candidate-card";
+    article.dataset.state = executable.selection_state;
     const header = document.createElement("div");
     header.className = "live-candidate-header";
-    appendTextElement(header, "h3", executable.role);
+    appendTextElement(header, "strong", roleLabel(executable.role));
     appendTextElement(header, "span", enumLabel("state", executable.selection_state), "live-candidate-state");
-    article.appendChild(header);
+    appendTextElement(header, "code", selectedValue(executable));
+    appendTextElement(header, "small", `${executable.candidates.length} ${language === "ja" ? "件" : "candidate(s)"}`);
+    const summaryElement = document.createElement("summary");
+    summaryElement.appendChild(header);
+    article.appendChild(summaryElement);
+    const content = document.createElement("div");
+    content.className = "live-candidate-content";
     const metadata = document.createElement("dl");
     metadata.className = "live-candidate-meta";
     [
@@ -409,7 +446,7 @@ function renderLiveToolchain(report) {
       appendTextElement(metadata, "dt", label);
       appendTextElement(metadata, "dd", value);
     });
-    article.appendChild(metadata);
+    content.appendChild(metadata);
     const list = document.createElement("div");
     list.className = "candidate-list";
     executable.candidates.forEach((candidate, index) => {
@@ -420,8 +457,9 @@ function renderLiveToolchain(report) {
       appendTextElement(item, "span", `${enumLabel("origin", candidate.origin)} · ${enumLabel("format", candidate.format)}`);
       list.appendChild(item);
     });
-    if (executable.candidates.length === 0) appendTextElement(list, "span", t("field.unavailable"));
-    article.appendChild(list);
+    if (executable.candidates.length === 0) appendTextElement(list, "span", t("field.noneObserved"));
+    content.appendChild(list);
+    article.appendChild(content);
     details.appendChild(article);
   });
 }
@@ -473,7 +511,7 @@ function renderLivePayload(payload) {
   document.querySelector("#live-overview").hidden = false;
   document.querySelector("#synthetic-comparison").hidden = true;
   document.querySelector("#synthetic-comparison-note").hidden = true;
-  document.querySelector("#live-candidates").hidden = false;
+  document.querySelector("#live-comparison").hidden = false;
   document.querySelector("#share-report").textContent = payload.shareable_markdown;
   document.querySelector("#copy-button").textContent = t("share.copyLive");
   renderLiveSummary(payload.report);
@@ -598,6 +636,12 @@ document.querySelector("#language-toggle").addEventListener("click", () => {
   applyLanguage(nextLanguage);
   if (refreshLiveReport) void runDiagnostic();
 });
+document.querySelector("#expand-all").addEventListener("click", () => {
+  document.querySelectorAll("#live-candidates details").forEach((detail) => { detail.open = true; });
+});
+document.querySelector("#collapse-all").addEventListener("click", () => {
+  document.querySelectorAll("#live-candidates details").forEach((detail) => { detail.open = false; });
+});
 document.querySelector("#copy-button").addEventListener("click", async () => {
   const state = document.querySelector("#copy-state");
   state.removeAttribute("data-i18n");
@@ -625,7 +669,7 @@ if (liveMode) {
   document.querySelector("#live-overview").hidden = false;
   document.querySelector("#synthetic-comparison").hidden = true;
   document.querySelector("#synthetic-comparison-note").hidden = true;
-  document.querySelector("#live-candidates").hidden = false;
+  document.querySelector("#live-comparison").hidden = false;
   const summary = document.querySelector("#live-summary");
   summary.replaceChildren();
   const card = document.createElement("article");

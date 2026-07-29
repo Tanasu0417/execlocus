@@ -96,12 +96,23 @@ cargo run -- --lang ja gui --open
 source ./scripts/try-execlocus.sh balanced gui ja
 ```
 
+ブラウザではなくWindowsアプリとして試す場合は、[署名なしデスクトップ開発版の手順](docs/DESKTOP_TRY_IT.ja.md)を使います。
+
+```powershell
+& .\scripts\build-desktop.ps1 -Configuration Debug
+& .\src-tauri\target\debug\execlocus-desktop.exe
+```
+
+これはソースからローカルビルドする試用版で、署名付きインストーラーや一般配布版ではありません。画面遷移は割り当てたloopback originだけに制限し、通常診断は外部通信しません。
+
 開発時の確認コマンド:
 
 ```console
 cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets --all-features
+cargo clippy --manifest-path src-tauri/Cargo.toml --locked --all-targets --all-features -- -D warnings
+cargo test --manifest-path src-tauri/Cargo.toml --locked --all-targets --all-features
 ```
 
 Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加えてMicrosoft C++ linkerとWindows SDKが必要です。WSL/Linuxでは`cc`などのC linkerが必要です。

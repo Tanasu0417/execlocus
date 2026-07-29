@@ -1,7 +1,7 @@
 # ExecLocus security and threat model
 
-- Scope: v0.1 local CLI, CI, and release artifacts
-- Last reviewed: 2026-07-29
+- Scope: v0.1 local CLI, loopback GUI, Windows desktop development shell, CI, and release artifacts
+- Last reviewed: 2026-07-30
 - Security contact: [private vulnerability reporting](https://github.com/Tanasu0417/execlocus/security/advisories/new)
 
 ExecLocus observes an execution context that may already contain attacker-controlled names, paths, files, and environment hints. It must report partial facts without turning those inputs into commands, trusted conclusions, or shareable identity leaks.
@@ -37,6 +37,8 @@ ExecLocus is a diagnostic aid, not a sandbox, endpoint-security product, secret 
 | Executables | ordered search directories, metadata, canonical path, first 512 bytes | PE/ELF/shebang classification; failures retained | no execution of candidates; no signature or malware claim |
 | Shell | supported name in bounded ancestry; explicit resolution contracts | parent session is incomplete unless supplied as a bounded snapshot | no profile sourcing, function-body capture, command-line scraping, or shell-string execution |
 | Rendering | normalized report object | redaction occurs before shareable serialization; context-specific escaping | raw terminal/JSON is not advertised as shareable |
+| Local GUI | same-process HTTP on a random `127.0.0.1` port | Host, Origin, custom header, request-size, method, CSP, no-cache, and loopback binding checks | no LAN bind, CORS, telemetry, or hosted upload |
+| Windows desktop shell | Tauri WebView loading the assigned loopback URL | navigation allowlist requires the exact `http://127.0.0.1:<assigned-port>` origin; no Tauri command or plugin capability is exposed | no remote navigation, installer, automatic update, or code-signing key |
 | Network | RustSec and source metadata in dedicated development/CI checks | normal CLI has no network path | no telemetry or hosted report upload |
 
 ## Primary threats and controls
@@ -53,11 +55,16 @@ ExecLocus is a diagnostic aid, not a sandbox, endpoint-security product, secret 
 | One optional probe fails | successful evidence remains available with reduced confidence and an explicit probe failure |
 | Malicious or compromised dependency | committed lockfile; weekly RustSec, license, registry/source, wildcard, and duplicate checks; Dependabot and CodeQL |
 | Workflow supply-chain substitution | workflow token defaults to `contents: read`; checkout credentials are not persisted; external Actions are full-SHA pinned |
+| Desktop WebView navigates away from the local diagnostic | native navigation policy accepts only the assigned loopback host and port; the served page also uses a restrictive CSP and contains no remote asset |
 | Tampered release binary | v0.1 gate requires SHA-256 checksums, immutable source tag/SHA, clean-machine verification, and GitHub artifact attestation |
 
 ## Dependency policy
 
-`cargo-deny 0.19.4` runs against the committed lockfile and the Windows/Linux v0.1 target graph. The policy:
+`cargo-deny 0.19.4` runs against the committed CLI lockfile and its Windows/Linux target graph. A second committed policy and lockfile cover the Tauri Windows target. The policies:
+
+The desktop shell has a separate Rust 1.88 MSRV because the Rust 1.85-compatible transitive selection contained known XML/time denial-of-service advisories. No advisory exception is accepted for that compatibility issue; the CLI-only MSRV remains 1.85.
+
+The reviewed desktop lockfile uses patched `quick-xml 0.41.0` and `time 0.3.54`; the desktop cargo-deny gate reports advisories, bans, licenses, and sources as clean. Duplicate transitive lines remain visible warnings rather than hidden exceptions.
 
 - fails known RustSec vulnerabilities and unsound advisories;
 - fails yanked dependencies;
@@ -86,6 +93,7 @@ Those write permissions belong only in the release job after owner approval. The
 
 - Process names and allowlisted environment hints can be spoofed by the same local user; they are provenance, not authentication.
 - The parent shell session is intentionally opaque, so some effective command selections remain unknown.
+- The unsigned desktop executable is a local development artifact only. SmartScreen reputation, publisher identity, installer integrity, and automatic-update safety are not claimed.
 - Reading metadata and a 512-byte prefix cannot establish publisher identity, code safety, or absence of malware.
 - Files can change between observations; ExecLocus does not lock project or executable files.
 - Redaction covers modeled identity/path classes and is not a general secret detector for arbitrary pasted content. Users must not paste raw terminal or raw JSON into public reports.

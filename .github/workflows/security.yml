@@ -31,3 +31,5 @@ jobs:
         run: cargo install --locked cargo-deny --version "$CARGO_DENY_VERSION"
       - name: Check RustSec advisories, licenses, sources, and dependency policy
         run: cargo deny --locked check advisories licenses sources bans
+      - name: Check Windows desktop dependencies
+        run: cargo deny --manifest-path src-tauri/Cargo.toml --locked check --config src-tauri/deny.toml advisories licenses sources bans

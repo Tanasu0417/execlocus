@@ -53,6 +53,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | Threat model | Implemented | Trust boundaries, controls, release requirements, and accepted v0.1 risks are documented |
 | `explain <RULE_ID>` | Implemented | Case-insensitive IDs show current trigger state, rationale, referenced evidence, and read-only suggestions; unknown IDs exit with code 2 |
 | Local diagnostic GUI | Implemented and locally verified | A button runs the same read-only probes over a loopback-only server; Compare shows tool states and candidates, Explain shows impact/actions/reverification/evidence, and Share renders only redacted Markdown |
+| Windows desktop development shell | Implemented and locally verified | Tauri opens the same GUI in a native WebView, restricts navigation to its assigned loopback origin, and builds an unsigned local trial exe; no installer or public desktop binary exists |
 | English/Japanese human output | Implemented | `--lang en|ja` covers terminal, Markdown, `explain`, and real GUI results; stable JSON keys, rule IDs, commands, and observed paths remain technical identifiers |
 | Local GUI boundary controls | Verified locally | Random port on `127.0.0.1`, custom-request header, loopback Host/Origin checks, no CORS, no cache, CSP, and no telemetry/upload; raw local values are isolated from the separately redacted Share payload |
 | Release binaries and checksums | Planned | Required for Windows x86_64 and Linux x86_64 |
@@ -75,4 +76,5 @@ Windows-native Claude Code and WSL-native Codex CLI are recorded in [`validation
 Production shell-resolution provenance, paired Windows/WSL scenarios, candidate display, and terminal control escaping are recorded in [`validation/SHELL_RESOLUTION_2026-07-29.md`](validation/SHELL_RESOLUTION_2026-07-29.md).
 Bounded current-session injection and the same-Documents Windows/WSL comparison are recorded in [`validation/TOOLCHAIN_SELECTION_2026-07-30.md`](validation/TOOLCHAIN_SELECTION_2026-07-30.md).
 The local GUI, Japanese/English output, loopback boundary, and redacted Share payload are recorded in [`validation/LOCAL_GUI_I18N_2026-07-30.md`](validation/LOCAL_GUI_I18N_2026-07-30.md).
+The compact Compare interaction and unsigned Windows desktop shell are recorded in [`validation/DESKTOP_GUI_2026-07-30.md`](validation/DESKTOP_GUI_2026-07-30.md).
 The free dependency gate, source review, injection/redaction/path tests, GitHub alert snapshot, and accepted risks are recorded in [`validation/SECURITY_ASSESSMENT_2026-07-29.md`](validation/SECURITY_ASSESSMENT_2026-07-29.md) and [`SECURITY_MODEL.md`](SECURITY_MODEL.md).

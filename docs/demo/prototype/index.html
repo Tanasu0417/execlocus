@@ -114,7 +114,21 @@
             </article>
           </div>
           <p id="synthetic-comparison-note" class="comparison-note" data-i18n="compare.note">2つのExecLocusプロセスを同じ形式で比較します。過去にエージェントが実行した対象とは断定しません。</p>
-          <div id="live-candidates" class="live-candidates" hidden></div>
+          <div id="live-comparison" class="live-comparison" hidden>
+            <div class="live-overview-heading">
+              <div>
+                <p class="eyebrow" data-i18n="live.summaryEyebrow">概要</p>
+                <h3 data-i18n="live.summaryTitle">5ツールの選択状態</h3>
+              </div>
+              <div class="detail-actions">
+                <span data-i18n="live.detailHint">各行を選択して詳細を開く</span>
+                <button id="expand-all" type="button" data-i18n="live.expandAll">すべて展開</button>
+                <button id="collapse-all" type="button" data-i18n="live.collapseAll">すべて閉じる</button>
+              </div>
+            </div>
+            <div id="live-compare-table" class="live-table live-compare-table"></div>
+            <div id="live-candidates" class="live-candidates"></div>
+          </div>
         </section>
 
         <section id="view-explain" class="view" data-panel="explain">
