@@ -5,7 +5,10 @@ use std::{
 };
 
 use execlocus::{
-    model::{Confidence, ExecutableResolutionMethod, ObservationStatus, RuntimeKind},
+    model::{
+        Confidence, ExecutableResolutionMethod, ExecutableSelectionKind, ObservationStatus,
+        RuntimeKind, ToolchainState,
+    },
     probes::{
         context::{CandidateSnapshot, HostPlatform, ProbeContext},
         executable::probe_with_shell_snapshot,
@@ -153,6 +156,32 @@ fn powershell_alias_wins_over_an_external_application() {
             .iter()
             .any(|item| { item.source.as_deref() == Some(r"C:\demo\project\node.cmd") })
     );
+}
+
+#[test]
+fn powershell_alias_is_selected_without_serializing_a_function_body() {
+    let snapshot = ShellSessionSnapshot::complete(vec![ShellCommandCandidate::session_binding(
+        ShellCommandKind::Alias,
+        "node",
+        Some("alias:node".to_owned()),
+    )]);
+    let result = probe_with_shell_snapshot(
+        &ShellFixture::windows(),
+        "node",
+        "node",
+        &RuntimeKind::WindowsNative,
+        ShellKind::PowerShell,
+        &snapshot,
+    );
+
+    assert_eq!(result.value.selection_state, ToolchainState::Selected);
+    assert_eq!(
+        result.value.selected_kind,
+        Some(ExecutableSelectionKind::Alias)
+    );
+    assert_eq!(result.value.selected_binding.as_deref(), Some("alias:node"));
+    assert!(result.value.selected.is_none());
+    assert!(!result.value.candidates.is_empty());
 }
 
 #[test]
@@ -338,6 +367,12 @@ fn windows_cmd_contract_maps_selected_and_losing_candidates_into_the_report_mode
         Some(r"C:\demo\project\node.cmd")
     );
     assert_eq!(result.value.candidates.len(), 2);
+    assert_eq!(result.value.selection_state, ToolchainState::Selected);
+    assert_eq!(
+        result.value.selected_kind,
+        Some(ExecutableSelectionKind::ExternalScript)
+    );
+    assert_eq!(result.value.verification_command, "where.exe node");
     assert!(
         result
             .evidence
@@ -366,4 +401,15 @@ fn wsl_bash_contract_keeps_effective_selection_unknown_in_the_report_model() {
     assert!(result.value.selected.is_none());
     assert_eq!(result.value.candidates.len(), 1);
     assert_eq!(result.value.status, ObservationStatus::Unavailable);
+    assert_eq!(
+        result.value.selection_state,
+        ToolchainState::CandidatesUnconfirmed
+    );
+    assert!(
+        result
+            .value
+            .selection_reason
+            .contains("aliases, functions, or builtins were not captured")
+    );
+    assert_eq!(result.value.verification_command, "type -a -- node");
 }

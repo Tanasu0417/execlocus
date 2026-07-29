@@ -6,8 +6,8 @@ use std::{
 use crate::{
     model::{
         Confidence, Evidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, ExecutableResolutionMethod, ObservationStatus, ProbeFailure, ProbeResult,
-        RuntimeKind,
+        ExecutableOrigin, ExecutableResolutionMethod, ExecutableSelectionKind, ObservationStatus,
+        ProbeFailure, ProbeResult, RuntimeKind, ToolchainState,
     },
     probes::context::{CandidateSnapshot, ProbeContext, SystemProbeContext},
     probes::path::classify_path,
@@ -78,11 +78,19 @@ pub fn probe_with_resolver(
         (true, false) => Confidence::High,
         (false, _) => Confidence::None,
     };
+    let selected_kind = selected.as_ref().map(|candidate| match candidate.format {
+        ExecutableFormat::Script => ExecutableSelectionKind::ExternalScript,
+        ExecutableFormat::Pe | ExecutableFormat::Elf | ExecutableFormat::Unknown => {
+            ExecutableSelectionKind::Application
+        }
+    });
 
     build_probe_result(
         role,
         command,
         selected,
+        selected_kind,
+        None,
         candidates,
         ExecutableResolutionMethod::PathFallback,
         None,
@@ -112,6 +120,18 @@ pub fn probe_with_shell_snapshot(
         .selected
         .as_ref()
         .and_then(|candidate| candidate.executable.clone());
+    let selected_kind = resolution
+        .selected
+        .as_ref()
+        .map(|candidate| selection_kind(candidate.kind));
+    let selected_binding = resolution.selected.as_ref().and_then(|candidate| {
+        candidate.executable.is_none().then(|| {
+            candidate
+                .source
+                .clone()
+                .unwrap_or_else(|| candidate.name.clone())
+        })
+    });
     let candidates = resolution
         .candidates
         .iter()
@@ -122,6 +142,8 @@ pub fn probe_with_shell_snapshot(
         role,
         command,
         selected,
+        selected_kind,
+        selected_binding,
         candidates,
         ExecutableResolutionMethod::ShellContract,
         Some(shell.contract_name().to_owned()),
@@ -138,6 +160,8 @@ fn build_probe_result(
     role: &str,
     command: &str,
     selected: Option<ExecutableCandidate>,
+    selected_kind: Option<ExecutableSelectionKind>,
+    selected_binding: Option<String>,
     candidates: Vec<ExecutableCandidate>,
     resolution_method: ExecutableResolutionMethod,
     resolution_shell: Option<String>,
@@ -147,6 +171,16 @@ fn build_probe_result(
     mut evidence: Vec<Evidence>,
     failures: Vec<ProbeFailure>,
 ) -> ProbeResult<ExecutableInfo> {
+    let selection_state =
+        selection_state(selected_kind, candidates.is_empty(), failures.is_empty());
+    let selection_reason = selection_reason(
+        selection_state,
+        resolution_method,
+        resolution_shell.as_deref(),
+        shell_session_complete,
+    );
+    let verification_command =
+        verification_command(command, resolution_method, resolution_shell.as_deref());
     evidence.push(Evidence {
         id: format!("executable.{role}.resolution"),
         probe: "executable/v2".to_owned(),
@@ -198,16 +232,97 @@ fn build_probe_result(
         value: ExecutableInfo {
             role: role.to_owned(),
             requested: command.to_owned(),
+            selection_state,
             selected,
+            selected_kind,
+            selected_binding,
             candidates,
             resolution_method,
             resolution_shell,
             shell_session_complete,
+            selection_reason,
+            verification_command,
             status,
             confidence,
         },
         evidence,
         failures,
+    }
+}
+
+const fn selection_kind(kind: crate::probes::shell::ShellCommandKind) -> ExecutableSelectionKind {
+    match kind {
+        crate::probes::shell::ShellCommandKind::Alias => ExecutableSelectionKind::Alias,
+        crate::probes::shell::ShellCommandKind::Function => ExecutableSelectionKind::Function,
+        crate::probes::shell::ShellCommandKind::Cmdlet => ExecutableSelectionKind::Cmdlet,
+        crate::probes::shell::ShellCommandKind::Builtin => ExecutableSelectionKind::Builtin,
+        crate::probes::shell::ShellCommandKind::ExternalScript => {
+            ExecutableSelectionKind::ExternalScript
+        }
+        crate::probes::shell::ShellCommandKind::Application => ExecutableSelectionKind::Application,
+    }
+}
+
+const fn selection_state(
+    selected_kind: Option<ExecutableSelectionKind>,
+    candidates_empty: bool,
+    failures_empty: bool,
+) -> ToolchainState {
+    if selected_kind.is_some() {
+        ToolchainState::Selected
+    } else if !candidates_empty {
+        ToolchainState::CandidatesUnconfirmed
+    } else if failures_empty {
+        ToolchainState::NotFound
+    } else {
+        ToolchainState::ProbeFailed
+    }
+}
+
+fn selection_reason(
+    state: ToolchainState,
+    method: ExecutableResolutionMethod,
+    shell: Option<&str>,
+    session_complete: Option<bool>,
+) -> String {
+    match state {
+        ToolchainState::Selected if method == ExecutableResolutionMethod::PathFallback => {
+            "generic PATH order selected the first inspected executable".to_owned()
+        }
+        ToolchainState::Selected => format!(
+            "complete {} session evidence established command precedence",
+            shell.unwrap_or("shell")
+        ),
+        ToolchainState::CandidatesUnconfirmed if session_complete == Some(false) => format!(
+            "external candidates were found, but parent {} aliases, functions, or builtins were not captured",
+            shell.unwrap_or("shell")
+        ),
+        ToolchainState::CandidatesUnconfirmed => {
+            "candidates were found, but probe evidence was incomplete".to_owned()
+        }
+        ToolchainState::NotFound => "no executable candidate or shell binding was found".to_owned(),
+        ToolchainState::ProbeFailed => {
+            "candidate probing failed before a reliable selection could be established".to_owned()
+        }
+    }
+}
+
+fn verification_command(
+    command: &str,
+    method: ExecutableResolutionMethod,
+    shell: Option<&str>,
+) -> String {
+    match (method, shell) {
+        (ExecutableResolutionMethod::ShellContract, Some("powershell")) => format!(
+            "Get-Command -All {command} | Select-Object CommandType, Name, Source, Definition"
+        ),
+        (ExecutableResolutionMethod::ShellContract, Some("cmd")) => {
+            format!("where.exe {command}")
+        }
+        (ExecutableResolutionMethod::ShellContract, Some("bash" | "zsh")) => {
+            format!("type -a -- {command}")
+        }
+        _ => format!("inspect PATH candidates for {command}"),
     }
 }
 
@@ -421,8 +536,27 @@ fn script_origin(prefix: &[u8], runtime: RuntimeKind) -> ExecutableOrigin {
 
 #[cfg(test)]
 mod tests {
-    use super::{detect_format_from_prefix, display_path, script_origin};
-    use crate::model::{ExecutableFormat, ExecutableOrigin, RuntimeKind};
+    use super::{detect_format_from_prefix, display_path, script_origin, selection_state};
+    use crate::model::{
+        ExecutableFormat, ExecutableOrigin, ExecutableSelectionKind, RuntimeKind, ToolchainState,
+    };
+
+    #[test]
+    fn toolchain_states_are_mutually_distinct() {
+        assert_eq!(
+            selection_state(Some(ExecutableSelectionKind::Application), false, true),
+            ToolchainState::Selected
+        );
+        assert_eq!(
+            selection_state(None, false, true),
+            ToolchainState::CandidatesUnconfirmed
+        );
+        assert_eq!(selection_state(None, true, true), ToolchainState::NotFound);
+        assert_eq!(
+            selection_state(None, true, false),
+            ToolchainState::ProbeFailed
+        );
+    }
 
     #[test]
     fn identifies_executable_headers() {

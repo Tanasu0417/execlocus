@@ -4,9 +4,10 @@ use execlocus::{
     model::{
         AgentEvidenceSource, AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind,
         AgentStateLocation, Confidence, Evidence, ExecutableCandidate, ExecutableFormat,
-        ExecutableInfo, ExecutableOrigin, ExecutableResolutionMethod, Finding, ObservationStatus,
-        PathClass, ProbeFailure, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
-        RuntimeValueSource, Severity, Topology, TopologyNode,
+        ExecutableInfo, ExecutableOrigin, ExecutableResolutionMethod, ExecutableSelectionKind,
+        Finding, ObservationStatus, PathClass, ProbeFailure, Profile, ProjectInfo, Report,
+        RuntimeInfo, RuntimeKind, RuntimeValueSource, Severity, ToolchainState, Topology,
+        TopologyNode,
     },
     privacy::{RedactionContext, redact_with_context},
     renderers::{json, markdown},
@@ -27,7 +28,7 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
     let windows_git = r"C:\Users\Alice\AppData\Local\Programs\Git\cmd\git.exe";
     let linux_git = "/usr/bin/git";
     let report = Report {
-        schema_version: "0.5.0".to_owned(),
+        schema_version: "0.6.0".to_owned(),
         generated_at_unix_ms: 123,
         profile: Profile::Balanced,
         runtime: RuntimeInfo {
@@ -58,11 +59,14 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
         executables: vec![ExecutableInfo {
             role: "git".to_owned(),
             requested: "git".to_owned(),
+            selection_state: ToolchainState::Selected,
             selected: Some(ExecutableCandidate {
                 path: windows_git.to_owned(),
                 format: ExecutableFormat::Pe,
                 origin: ExecutableOrigin::Windows,
             }),
+            selected_kind: Some(ExecutableSelectionKind::Application),
+            selected_binding: None,
             candidates: vec![
                 ExecutableCandidate {
                     path: windows_git.to_owned(),
@@ -80,6 +84,8 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
             shell_session_complete: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
+            selection_reason: format!("PATH selected {windows_git}"),
+            verification_command: format!("Get-Command -All {windows_git}"),
         }],
         topology: Topology {
             nodes: vec![TopologyNode {
@@ -97,6 +103,7 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
             summary: format!("Private path: {private_project}"),
             evidence_ids: Vec::new(),
             suggested_actions: vec![format!("Inspect {windows_git}")],
+            verification_steps: vec![format!("Verify {windows_git}")],
         }],
         probe_failures: vec![ProbeFailure {
             probe: "fixture/v1".to_owned(),

@@ -68,24 +68,26 @@ Record the commit ID if you need a reproducible pre-alpha test.
 ## Run from Windows PowerShell
 
 ```powershell
-pwsh -NoProfile -File .\scripts\try-execlocus.ps1
-pwsh -NoProfile -File .\scripts\try-execlocus.ps1 -Profile share-first
+& .\scripts\try-execlocus.ps1
+& .\scripts\try-execlocus.ps1 -Profile share-first
 ```
 
-The reports are written to `target/user-validation/windows-<profile>.md` and `windows-<profile>.redacted.json`. The JSON contains candidate details after redaction. Add `-ShowLocalDetails` only when you want to inspect raw terminal output locally. That output may contain personal absolute paths and must not be published.
+Running with `&` in the current PowerShell session lets the wrapper capture bounded `Get-Command -All` evidence for aliases, functions, and cmdlets. Reports are written to `target/user-validation/windows-<profile>.md` and `windows-<profile>.redacted.json`. Both formats contain redacted candidate details. Add `-ShowLocalDetails` only when you want to inspect raw terminal output locally. That output may contain personal absolute paths and must not be published.
 
 ## Run from WSL
 
 ```bash
-bash scripts/try-execlocus.sh
-bash scripts/try-execlocus.sh share-first
+source ./scripts/try-execlocus.sh
+source ./scripts/try-execlocus.sh share-first
 ```
 
 The reports are written to `target/user-validation/wsl-<profile>.md` and `wsl-<profile>.redacted.json`. To inspect raw details locally:
 
 ```bash
-SHOW_LOCAL_DETAILS=1 bash scripts/try-execlocus.sh balanced
+(SHOW_LOCAL_DETAILS=1 source ./scripts/try-execlocus.sh balanced)
 ```
+
+Sourcing the wrapper captures alias, function, builtin, and PATH resolution evidence from the same bash session. It never stores alias expansions or function bodies, and deletes its bounded temporary JSON when the run ends.
 
 If PowerShell reports `not recognized as the name of a script file`, or bash reports `No such file or directory`, the diagnostic has not started. Confirm that:
 
@@ -94,19 +96,28 @@ If PowerShell reports `not recognized as the name of a script file`, or bash rep
 - `test -f scripts/try-execlocus.sh && echo OK` prints `OK` in WSL; and
 - an existing checkout has been updated with `git pull --ff-only`.
 
-Run both scripts against the same repository under `/mnt/c` to compare Windows and WSL execution for one source tree. Use a separate non-sensitive test copy under the WSL filesystem if you also want to compare WSL-native placement.
+To open the same Windows Documents checkout from WSL without hard-coding a personal path:
+
+```bash
+documents_win="$(powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('MyDocuments')" | tr -d '\r')"
+cd "$(wslpath "$documents_win")/execlocus"
+source ./scripts/try-execlocus.sh balanced
+```
+
+Compare `windows-balanced.*` and `wsl-balanced.*` in the shared `target/user-validation/` directory. Use a separate non-sensitive test copy under the WSL filesystem if you also want to compare WSL-native placement.
 
 ## Review checklist
 
 - Windows reports Windows and WSL reports WSL.
 - The WSL distribution and shell evidence are reasonable.
 - Codex or Claude Code is inferred only when process evidence exists; `Unknown` is valid when launched from an ordinary terminal.
-- Git, Node, npm, and agent candidates match independently observed command resolution.
+- `Not found`, `Candidates found / selection unconfirmed`, `Selected`, and `Probe failed` match the available evidence.
+- Git, Node, npm, and agent candidate counts, Windows/Linux origins, and PE/ELF/script formats match independently observed command resolution.
 - Project storage is classified as Windows-mounted or WSL-native correctly.
 - `share-first`, `balanced`, and `linux-first` explanations match their stated intent.
 - The shareable Markdown contains no username, machine name, home directory, or personal absolute path.
 
-The child process cannot safely reconstruct aliases, functions, or hash state from its parent shell. When that session evidence is missing, ExecLocus lists external candidates but keeps the effective selection `Unknown` to avoid a false claim.
+The CLI alone cannot safely reconstruct aliases or functions from its parent. The wrappers pass only bounded binding kinds and fixed command names from the current session. Without that snapshot, ExecLocus lists external candidates as `Candidates found / selection unconfirmed` to avoid a false claim.
 
 ## Evaluate usefulness
 

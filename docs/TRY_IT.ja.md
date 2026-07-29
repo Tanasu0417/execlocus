@@ -72,38 +72,40 @@ test -f scripts/try-execlocus.sh || { pwd; echo "リポジトリ直下ではな�
 リポジトリ直下のPowerShellで実行します。
 
 ```powershell
-pwsh -NoProfile -File .\scripts\try-execlocus.ps1
+& .\scripts\try-execlocus.ps1
 ```
 
 利用目的を選ぶ場合:
 
 ```powershell
-pwsh -NoProfile -File .\scripts\try-execlocus.ps1 -Profile share-first
-pwsh -NoProfile -File .\scripts\try-execlocus.ps1 -Profile linux-first
+& .\scripts\try-execlocus.ps1 -Profile share-first
+& .\scripts\try-execlocus.ps1 -Profile linux-first
 ```
 
-出力先は`target/user-validation/windows-<profile>.md`と`windows-<profile>.redacted.json`です。候補の詳細は匿名化JSONで確認できます。未加工の詳細も手元だけで確認したい場合は`-ShowLocalDetails`を加えます。詳細表示には個人の絶対パスが含まれる場合があるため、画面共有やIssueへの貼り付けはしないでください。
+`&`で現在のPowerShellセッションから実行すると、`Get-Command -All`でalias／function／cmdletも確認してから診断します。出力先は`target/user-validation/windows-<profile>.md`と`windows-<profile>.redacted.json`です。候補の詳細は匿名化MarkdownとJSONの両方で確認できます。未加工の詳細も手元だけで確認したい場合は`-ShowLocalDetails`を加えます。詳細表示には個人の絶対パスが含まれる場合があるため、画面共有やIssueへの貼り付けはしないでください。
 
 ## 2. WSLで確認
 
 同じリポジトリをWSLのbashから開いて実行します。
 
 ```bash
-bash scripts/try-execlocus.sh
+source ./scripts/try-execlocus.sh
 ```
 
 利用目的を選ぶ場合:
 
 ```bash
-bash scripts/try-execlocus.sh share-first
-bash scripts/try-execlocus.sh linux-first
+source ./scripts/try-execlocus.sh share-first
+source ./scripts/try-execlocus.sh linux-first
 ```
 
 出力先は`target/user-validation/wsl-<profile>.md`と`wsl-<profile>.redacted.json`です。未加工の詳細を手元だけで見る場合:
 
 ```bash
-SHOW_LOCAL_DETAILS=1 bash scripts/try-execlocus.sh balanced
+(SHOW_LOCAL_DETAILS=1 source ./scripts/try-execlocus.sh balanced)
 ```
+
+`source`で現在のbashセッションから実行すると、alias／function／builtinとPATH候補を同じセッションの根拠として診断へ渡します。alias展開やfunction本体は保存せず、種類と固定コマンド名だけを一時JSONへ記録します。一時JSONは実行終了時に削除されます。
 
 `not recognized as the name of a script file`または`No such file or directory`になった場合、診断処理はまだ始まっていません。次を確認してください。
 
@@ -112,7 +114,15 @@ SHOW_LOCAL_DETAILS=1 bash scripts/try-execlocus.sh balanced
 - WSLでは`test -f scripts/try-execlocus.sh && echo OK`が`OK`を表示する
 - clone済みの古い作業コピーでは`git pull --ff-only`を実行済みである
 
-`/mnt/c`上の同じリポジトリをWindowsとWSLの両方から実行すると、同じソースに対する実行環境の差を比較できます。WSLネイティブ配置も確認する場合は、個人情報を含まない別のテスト用コピーをWSLのホーム側へ置いて比較してください。
+WindowsのDocumentsにある同じリポジトリをWSLから開く場合は、次のようにDocumentsの実パスを取得できます。
+
+```bash
+documents_win="$(powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('MyDocuments')" | tr -d '\r')"
+cd "$(wslpath "$documents_win")/execlocus"
+source ./scripts/try-execlocus.sh balanced
+```
+
+この方法でWindows側の`windows-balanced.*`とWSL側の`wsl-balanced.*`を同じ`target/user-validation/`へ出力し、同じソースに対する差を比較できます。WSLネイティブ配置も確認する場合は、個人情報を含まない別のテスト用コピーをWSLのホーム側へ置いて比較してください。
 
 ## 3. 何を確認するか
 
@@ -124,12 +134,12 @@ Markdownと匿名化JSONをローカルで開き、次を確認します。
 | ディストリビューション | WSLでUbuntuの名前と版が妥当か |
 | シェル | PowerShell／bashなどの根拠と確度が妥当か |
 | エージェント | Codex／Claude Codeの親プロセス根拠がある時だけ推定されるか。通常のターミナルからの実行で`Unknown`でも異常ではない |
-| 実行ファイル | Git、Node、npm、エージェントのWindows／Linux候補と順序が自分の環境に合うか |
+| 実行ファイル | `Not found`、`Candidates found / selection unconfirmed`、`Selected`、`Probe failed`が状況に合うか。Git、Node、npm、エージェントの候補数、Windows／Linux由来、PE／ELF／scriptが独立確認と一致するか |
 | プロジェクト | `/mnt/c`かWSLネイティブかが正しいか |
 | 診断 | `share-first`、`balanced`、`linux-first`で説明が利用目的に合うか |
 | 匿名化 | 利用者名、マシン名、ホーム、個人の絶対パスが共有用Markdownに残っていないか |
 
-子プロセスから親シェルのエイリアス、関数、ハッシュ状態までは安全に復元できません。そのため外部候補を表示しても、証拠不足なら実効選択を`Unknown`のままにします。これは誤判定を避けるための仕様です。
+CLI単体では親シェルのエイリアスや関数を安全に復元できません。補助スクリプトは現在のセッションから必要最小限の種類だけを渡します。補助スクリプトを使わずsession根拠が不足する場合、外部候補を表示しても`Candidates found / selection unconfirmed`のままにします。
 
 ## 4. 役に立つかを判定する
 

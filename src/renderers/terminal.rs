@@ -1,8 +1,8 @@
 use std::fmt::Write;
 
 use crate::model::{
-    AgentEvidenceSource, Confidence, ExecutableInfo, ExecutableOrigin, ExecutableResolutionMethod,
-    ObservationStatus, PathClass, Report, RuntimeValueSource, Severity,
+    AgentEvidenceSource, Confidence, ExecutableFormat, ExecutableInfo, ExecutableOrigin,
+    ExecutableResolutionMethod, ObservationStatus, PathClass, Report, RuntimeValueSource, Severity,
 };
 use crate::renderers::safe::terminal_text;
 
@@ -19,18 +19,34 @@ pub fn render(report: &Report) -> String {
 
     writeln!(output, "\nTOOLCHAIN").expect("writing to String cannot fail");
     for executable in &report.executables {
-        let (path, origin) = executable
+        let selected = executable
             .selected
             .as_ref()
-            .map_or(("Unknown", ExecutableOrigin::Unknown), |selected| {
-                (selected.path.as_str(), selected.origin)
-            });
-        let note = if executable.selected.is_some() {
-            format!("{} · {}", origin_label(origin), resolution_note(executable))
-        } else {
-            resolution_note(executable)
-        };
-        line(&mut output, role_label(&executable.role), path, &note);
+            .map(|candidate| candidate.path.as_str())
+            .or(executable.selected_binding.as_deref())
+            .unwrap_or("—");
+        let kind = executable
+            .selected_kind
+            .map_or("unknown", |kind| kind.label());
+        let note = format!(
+            "{} · {kind} · {} candidate(s)",
+            executable.selection_state.label(),
+            executable.candidates.len()
+        );
+        line(&mut output, role_label(&executable.role), selected, &note);
+        writeln!(
+            output,
+            "    why       {} · {}",
+            terminal_text(&executable.selection_reason),
+            terminal_text(&resolution_note(executable))
+        )
+        .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "    verify    {}",
+            terminal_text(&executable.verification_command)
+        )
+        .expect("writing to String cannot fail");
         render_candidates(&mut output, executable);
     }
 
@@ -50,6 +66,20 @@ pub fn render(report: &Report) -> String {
             severity_label(finding.severity)
         )
         .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "    impact       {}",
+            terminal_text(&finding.summary)
+        )
+        .expect("writing to String cannot fail");
+        for action in &finding.suggested_actions {
+            writeln!(output, "    recommended  {}", terminal_text(action))
+                .expect("writing to String cannot fail");
+        }
+        for step in &finding.verification_steps {
+            writeln!(output, "    verify       {}", terminal_text(step))
+                .expect("writing to String cannot fail");
+        }
     }
 
     if finding_count > 3 {
@@ -168,20 +198,22 @@ fn render_candidates(output: &mut String, executable: &ExecutableInfo) {
         .selected
         .as_ref()
         .map(|candidate| candidate.path.as_str());
+    let binding_selected = executable.selected_binding.is_some();
     for (index, candidate) in executable.candidates.iter().enumerate() {
         let disposition = if selected_path == Some(candidate.path.as_str()) {
             "selected"
-        } else if selected_path.is_some() {
+        } else if selected_path.is_some() || binding_selected {
             "losing"
         } else {
             "candidate"
         };
         writeln!(
             output,
-            "    {disposition:<9} #{} {}  {} · evidence executable.{}.candidate.{}",
+            "    {disposition:<9} #{} {}  {} · {} · evidence executable.{}.candidate.{}",
             index + 1,
             terminal_text(&candidate.path),
             origin_label(candidate.origin),
+            format_label(candidate.format),
             terminal_text(&executable.role),
             index + 1,
         )
@@ -298,6 +330,15 @@ const fn origin_label(origin: ExecutableOrigin) -> &'static str {
     }
 }
 
+const fn format_label(format: ExecutableFormat) -> &'static str {
+    match format {
+        ExecutableFormat::Pe => "PE",
+        ExecutableFormat::Elf => "ELF",
+        ExecutableFormat::Script => "script",
+        ExecutableFormat::Unknown => "unknown format",
+    }
+}
+
 const fn severity_label(severity: Severity) -> &'static str {
     match severity {
         Severity::Info => "info",
@@ -321,8 +362,9 @@ fn role_label(role: &str) -> &str {
 mod tests {
     use crate::model::{
         AgentInfo, Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, ExecutableResolutionMethod, ObservationStatus, PathClass, Profile,
-        ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource, Topology,
+        ExecutableOrigin, ExecutableResolutionMethod, ExecutableSelectionKind, Finding,
+        ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
+        RuntimeValueSource, Severity, ToolchainState, Topology,
     };
 
     use super::render;
@@ -361,11 +403,14 @@ mod tests {
             executables: vec![ExecutableInfo {
                 role: "node".to_owned(),
                 requested: "node".to_owned(),
+                selection_state: ToolchainState::Selected,
                 selected: Some(ExecutableCandidate {
                     path: "C:\\synthetic\\node\u{1b}[31m.exe\n".to_owned(),
                     format: ExecutableFormat::Pe,
                     origin: ExecutableOrigin::Windows,
                 }),
+                selected_kind: Some(ExecutableSelectionKind::Application),
+                selected_binding: None,
                 candidates: vec![
                     ExecutableCandidate {
                         path: "C:\\synthetic\\node\u{1b}[31m.exe\n".to_owned(),
@@ -383,10 +428,20 @@ mod tests {
                 shell_session_complete: None,
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
+                selection_reason: "PATH order selected this candidate.".to_owned(),
+                verification_command: "type -a -- node".to_owned(),
             }],
             topology: Topology::default(),
             evidence: Vec::new(),
-            findings: Vec::new(),
+            findings: vec![Finding {
+                id: "TOOL001".to_owned(),
+                title: "Synthetic tool mismatch".to_owned(),
+                severity: Severity::Warning,
+                summary: "Direct commands may fail.".to_owned(),
+                evidence_ids: Vec::new(),
+                suggested_actions: vec!["Inspect the same shell.".to_owned()],
+                verification_steps: vec!["Rerun after the change.".to_owned()],
+            }],
             probe_failures: Vec::new(),
         };
         let output = render(&report);
@@ -397,6 +452,9 @@ mod tests {
         assert!(output.contains("AGENT"));
         assert!(output.contains("Unknown"));
         assert!(output.contains("TOOLCHAIN"));
+        assert!(output.contains("impact       Direct commands may fail."));
+        assert!(output.contains("recommended  Inspect the same shell."));
+        assert!(output.contains("verify       Rerun after the change."));
         assert!(output.contains("generic PATH fallback"));
         assert!(output.contains("selected"));
         assert!(output.contains("losing"));

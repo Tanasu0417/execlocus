@@ -127,7 +127,7 @@ Missing evidence never becomes a passed check, and a visible terminal is never t
 
 Current user identity is read from the local OS process snapshot and resolved through the local OS account catalog. The launching shell is selected only when a supported shell appears in the bounded parent-process chain; otherwise the report labels the allowlisted `SHELL` or `ComSpec` value as an environment hint. The process snapshot requests only process names, parent IDs, and user IDs: command lines, process environments, working directories, roots, and executable paths are not requested. WSL detection prioritizes kernel-release evidence; a WSL environment variable without readable kernel evidence is labeled as an inference. Distribution detection uses the WSL registration name first and `/etc/os-release` as the Linux fallback. Normal execution does not invoke a command shell or access the network for these observations.
 
-PowerShell, cmd, bash, and zsh command-precedence contracts are connected when the launching shell has process-ancestry evidence. A child process cannot safely reconstruct aliases, functions, cmdlets, builtins, or shell hash state from its parent, so an incomplete parent session keeps the effective selection `Unknown` while still listing external candidates and evidence IDs. When no supported shell contract is proven, generic PATH resolution is labeled as a fallback. ExecLocus never sources profiles, scrapes command lines, or executes shell strings to force a result.
+PowerShell, cmd, bash, and zsh command-precedence contracts are connected when the launching shell has process-ancestry evidence. The optional validation wrappers pass a bounded current-session snapshot without function bodies or alias expansions. A missing snapshot reports external candidates as `Candidates found / selection unconfirmed`; it never guesses the winner. Reports distinguish `Not found`, `Candidates found / selection unconfirmed`, `Selected`, and `Probe failed`, with candidate origin, format, reason, and an independent verification command. When no supported shell contract is proven, generic PATH resolution is labeled as a fallback. ExecLocus never sources profiles, scrapes command lines, or executes shell strings to force a result.
 
 The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. When a Codex Linux/WSL sandbox hides every agent ancestor behind its PID namespace, a UUID-shaped `CODEX_THREAD_ID` child-process marker provides a medium-confidence fallback. Codex injects that allowlisted marker into tool processes; ExecLocus checks its shape but never stores or renders its value. Process evidence always wins. Similar names, installation presence, arbitrary environment hints, and a wrapper visible only as `node` remain insufficient. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction. For an active high-confidence process match, ExecLocus derives only the documented primary configuration root from an allowlisted home/config location, classifies the path, and never opens its files or reads credentials.
 
@@ -143,6 +143,7 @@ The agent adapters inspect that same bounded process snapshot. An exact ancestor
 | `FS002` | A share-first workflow uses a WSL-native project | Implemented |
 | `PATH001` | PATH chooses a cross-layer executable over a native candidate | Implemented |
 | `GIT001` | Git and the project use incompatible OS layers | Implemented |
+| `TOOL001` | npm is selected while Node is not found in the same complete shell snapshot | Implemented |
 
 Rules are read-only. Suggestions explain options but never modify the machine.
 
@@ -204,6 +205,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Agent adapter validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md)
 - [Real Claude Code on WSL validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/CLAUDE_CODE_WSL_2026-07-29.md)
 - [Windows Claude Code and WSL Codex validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md)
+- [Paired Windows/WSL toolchain-selection validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/TOOLCHAIN_SELECTION_2026-07-30.md)
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)

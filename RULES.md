@@ -346,9 +346,43 @@ Suggested actions:
 - Prefer Git native to the runtime that owns the project workflow
 - Review `core.autocrlf`, file-mode behavior, credential helper, and hooks before switching
 
+### TOOL001 — npm is selected while Node is not found
+
+- Category: toolchain
+- Default severity: warning
+- Applies when: npm has a selected command and a complete shell snapshot finds no Node command
+- Required evidence: selected npm command and complete Node resolution evidence
+- Confidence requirement: certain absence of a Node candidate in the captured shell
+
+Condition:
+
+```text
+npm.selection_state == selected
+and node.selection_state == not_found
+```
+
+Summary:
+
+> npm resolves in this shell, but Node does not.
+
+Impact:
+
+Direct Node commands and JavaScript tools that require `node` on PATH may fail even if a wrapper-specific npm launcher starts.
+
+Suggested actions:
+
+- Run the independent npm and Node verification commands in the same shell
+- Keep the wrapper only if both npm and the intended JavaScript workflow succeed
+- Otherwise initialize or install Node for that shell before changing unrelated PATH entries
+
+False-positive control:
+
+- Do not trigger when Node candidates exist but selection is unconfirmed
+- Do not trigger when the Node probe failed
+
 ### Explanation command contract
 
-`execlocus explain <RULE_ID>` looks up all eight implemented rule definitions case-insensitively. A known rule reports its current trigger state, rationale, required evidence, referenced observed evidence when triggered, and read-only suggested actions. A non-triggered explanation explicitly distinguishes an absent condition from unavailable evidence. An unknown ID exits with code `2` before runtime probes begin.
+`execlocus explain <RULE_ID>` looks up all nine implemented rule definitions case-insensitively. A known rule reports its current trigger state, rationale, required evidence, referenced observed evidence when triggered, read-only suggested actions, and reverification steps. A non-triggered explanation explicitly distinguishes an absent condition from unavailable evidence. An unknown ID exits with code `2` before runtime probes begin.
 
 Explanation output is local terminal output and can include observed paths needed to support a finding. It escapes terminal control characters but is not a shareable report; use automatically redacted Markdown or `report --format json --redact` before sharing.
 

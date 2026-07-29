@@ -5,7 +5,7 @@ pub mod probes;
 pub mod renderers;
 pub mod rules;
 
-use model::{Evidence, Profile, Report};
+use model::{Evidence, ExecutableInfo, ProbeFailure, Profile, Report, RuntimeInfo};
 use probes::context::{ProbeContext, SystemProbeContext};
 use probes::executable::{ExecutableResolver, PathExecutableResolver};
 use probes::process::{
@@ -20,13 +20,29 @@ pub fn collect_report(profile: Profile) -> Report {
         &SystemProbeContext,
         &PathExecutableResolver,
         Some(&SystemRuntimeIdentityInspector),
+        None,
+        profile,
+    )
+}
+
+#[must_use]
+pub fn collect_report_with_shell_snapshot(
+    profile: Profile,
+    shell: ShellKind,
+    snapshot: &ShellSessionSnapshot,
+) -> Report {
+    collect_report_with_components(
+        &SystemProbeContext,
+        &PathExecutableResolver,
+        Some(&SystemRuntimeIdentityInspector),
+        Some((shell, snapshot)),
         profile,
     )
 }
 
 #[must_use]
 pub fn collect_report_with(context: &dyn ProbeContext, profile: Profile) -> Report {
-    collect_report_with_components(context, &PathExecutableResolver, None, profile)
+    collect_report_with_components(context, &PathExecutableResolver, None, None, profile)
 }
 
 #[must_use]
@@ -35,13 +51,14 @@ pub fn collect_report_with_resolver(
     resolver: &dyn ExecutableResolver,
     profile: Profile,
 ) -> Report {
-    collect_report_with_components(context, resolver, None, profile)
+    collect_report_with_components(context, resolver, None, None, profile)
 }
 
 fn collect_report_with_components(
     context: &dyn ProbeContext,
     resolver: &dyn ExecutableResolver,
     identity_inspector: Option<&dyn RuntimeIdentityInspector>,
+    shell_snapshot: Option<(ShellKind, &ShellSessionSnapshot)>,
     profile: Profile,
 ) -> Report {
     let mut identity_failures = Vec::new();
@@ -95,8 +112,59 @@ fn collect_report_with_components(
     probe_failures.extend(agent_state_result.failures);
     probe_failures.extend(project_result.failures);
 
+    let executables = collect_executables(
+        context,
+        resolver,
+        &runtime,
+        shell_snapshot,
+        &mut evidence,
+        &mut probe_failures,
+    );
+
+    let mut report = Report {
+        schema_version: "0.6.0".to_owned(),
+        generated_at_unix_ms: context.now_unix_ms(),
+        profile,
+        runtime,
+        agent: agent_result.value,
+        project: project_result.value,
+        executables,
+        topology: model::Topology::default(),
+        evidence,
+        findings: Vec::new(),
+        probe_failures,
+    };
+
+    report.topology = model::Topology::from_report(&report);
+    report.findings = rules::evaluate(&report);
+    report
+}
+
+fn collect_executables(
+    context: &dyn ProbeContext,
+    resolver: &dyn ExecutableResolver,
+    runtime: &RuntimeInfo,
+    shell_snapshot: Option<(ShellKind, &ShellSessionSnapshot)>,
+    evidence: &mut Vec<Evidence>,
+    probe_failures: &mut Vec<ProbeFailure>,
+) -> Vec<ExecutableInfo> {
     let mut executables = Vec::new();
-    let active_shell = active_shell_contract(&runtime);
+    let active_shell = active_shell_contract(runtime);
+    let unavailable_snapshot = ShellSessionSnapshot::unavailable();
+    let supplied_snapshot = shell_snapshot
+        .and_then(|(shell, snapshot)| (Some(shell) == active_shell).then_some(snapshot));
+    if let Some((shell, _)) = shell_snapshot {
+        if Some(shell) != active_shell {
+            probe_failures.push(ProbeFailure {
+                probe: "shell-snapshot/v1".to_owned(),
+                code: "SHELL_SNAPSHOT_MISMATCH".to_owned(),
+                message: format!(
+                    "supplied {} snapshot does not match the observed shell contract",
+                    shell.contract_name()
+                ),
+            });
+        }
+    }
     for (role, command) in [
         ("codex", "codex"),
         ("claude", "claude"),
@@ -121,7 +189,7 @@ fn collect_report_with_components(
                     command,
                     &runtime.kind,
                     shell,
-                    &ShellSessionSnapshot::unavailable(),
+                    supplied_snapshot.unwrap_or(&unavailable_snapshot),
                 )
             },
         );
@@ -130,23 +198,7 @@ fn collect_report_with_components(
         executables.push(result.value);
     }
 
-    let mut report = Report {
-        schema_version: "0.5.0".to_owned(),
-        generated_at_unix_ms: context.now_unix_ms(),
-        profile,
-        runtime,
-        agent: agent_result.value,
-        project: project_result.value,
-        executables,
-        topology: model::Topology::default(),
-        evidence,
-        findings: Vec::new(),
-        probe_failures,
-    };
-
-    report.topology = model::Topology::from_report(&report);
-    report.findings = rules::evaluate(&report);
-    report
+    executables
 }
 
 fn active_shell_contract(runtime: &model::RuntimeInfo) -> Option<ShellKind> {

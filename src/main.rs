@@ -1,7 +1,12 @@
-use std::process::ExitCode;
+use std::{fs, path::PathBuf, process::ExitCode};
 
 use clap::{Parser, Subcommand, ValueEnum};
-use execlocus::{collect_report, model::Profile, renderers};
+use execlocus::{
+    collect_report, collect_report_with_shell_snapshot,
+    model::{Profile, Report},
+    probes::shell::{ShellKind, ShellSessionSnapshot, parse_snapshot_json},
+    renderers,
+};
 
 #[derive(Debug, Parser)]
 #[command(name = "execlocus")]
@@ -9,6 +14,10 @@ use execlocus::{collect_report, model::Profile, renderers};
 struct Cli {
     #[arg(long, value_enum, default_value_t = ProfileArg::Balanced, global = true)]
     profile: ProfileArg,
+
+    /// Read a bounded shell-session snapshot created by an `ExecLocus` wrapper.
+    #[arg(long, value_name = "PATH", global = true)]
+    shell_snapshot: Option<PathBuf>,
 
     #[command(subcommand)]
     command: Option<Command>,
@@ -72,12 +81,26 @@ fn main() -> ExitCode {
             );
             return ExitCode::from(2);
         };
-        let report = collect_report(cli.profile.into());
+        let shell_snapshot = match load_shell_snapshot(cli.shell_snapshot.as_ref()) {
+            Ok(snapshot) => snapshot,
+            Err(error) => {
+                eprintln!("failed to load shell snapshot: {error}");
+                return ExitCode::from(2);
+            }
+        };
+        let report = collect_for_cli(cli.profile, shell_snapshot.as_ref());
         print!("{}", renderers::explain::render(&report, definition));
         return ExitCode::SUCCESS;
     }
 
-    let report = collect_report(cli.profile.into());
+    let shell_snapshot = match load_shell_snapshot(cli.shell_snapshot.as_ref()) {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            eprintln!("failed to load shell snapshot: {error}");
+            return ExitCode::from(2);
+        }
+    };
+    let report = collect_for_cli(cli.profile, shell_snapshot.as_ref());
 
     match cli.command {
         Some(Command::Report { format, redact }) => match format {
@@ -110,4 +133,35 @@ fn main() -> ExitCode {
     } else {
         ExitCode::SUCCESS
     }
+}
+
+fn collect_for_cli(
+    profile: ProfileArg,
+    snapshot: Option<&(ShellKind, ShellSessionSnapshot)>,
+) -> Report {
+    snapshot.map_or_else(
+        || collect_report(profile.into()),
+        |(shell, snapshot)| collect_report_with_shell_snapshot(profile.into(), *shell, snapshot),
+    )
+}
+
+fn load_shell_snapshot(
+    path: Option<&PathBuf>,
+) -> Result<Option<(ShellKind, ShellSessionSnapshot)>, String> {
+    const MAX_SNAPSHOT_BYTES: u64 = 64 * 1024;
+    let Some(path) = path else {
+        return Ok(None);
+    };
+    let metadata = fs::metadata(path)
+        .map_err(|error| format!("could not inspect {}: {error}", path.display()))?;
+    if metadata.len() > MAX_SNAPSHOT_BYTES {
+        return Err(format!(
+            "{} is {} bytes; maximum is {MAX_SNAPSHOT_BYTES}",
+            path.display(),
+            metadata.len()
+        ));
+    }
+    let input = fs::read_to_string(path)
+        .map_err(|error| format!("could not read {}: {error}", path.display()))?;
+    parse_snapshot_json(&input).map(Some)
 }

@@ -18,6 +18,8 @@
 
 use std::path::PathBuf;
 
+use serde::Deserialize;
+
 use crate::{
     model::{
         Confidence, Evidence, ExecutableCandidate, ExecutableFormat, ObservationStatus,
@@ -29,7 +31,8 @@ use crate::{
     },
 };
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum ShellKind {
     PowerShell,
@@ -61,7 +64,8 @@ impl ShellKind {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum ShellCommandKind {
     Alias,
@@ -143,6 +147,100 @@ impl ShellSessionSnapshot {
             bindings,
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ShellSnapshotDocument {
+    shell: ShellKind,
+    complete: bool,
+    #[serde(default)]
+    bindings: Vec<ShellSnapshotBinding>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ShellSnapshotBinding {
+    kind: ShellCommandKind,
+    name: String,
+    source: Option<String>,
+}
+
+/// Parses a bounded, caller-supplied shell snapshot without accepting function
+/// bodies or arbitrary shell source.
+///
+/// # Errors
+///
+/// Returns an error when JSON is malformed, contains unsupported fields, or
+/// exceeds the binding and identifier limits.
+pub fn parse_snapshot_json(input: &str) -> Result<(ShellKind, ShellSessionSnapshot), String> {
+    const MAX_BINDINGS: usize = 128;
+    const MAX_NAME_BYTES: usize = 128;
+    const MAX_SOURCE_BYTES: usize = 1024;
+
+    let document: ShellSnapshotDocument = serde_json::from_str(input)
+        .map_err(|error| format!("invalid shell snapshot JSON: {error}"))?;
+    if document.bindings.len() > MAX_BINDINGS {
+        return Err(format!(
+            "shell snapshot has {} bindings; maximum is {MAX_BINDINGS}",
+            document.bindings.len()
+        ));
+    }
+
+    let mut bindings = Vec::with_capacity(document.bindings.len());
+    for binding in document.bindings {
+        let name = binding.name.trim();
+        if name.is_empty() || name.len() > MAX_NAME_BYTES {
+            return Err("shell snapshot contains an empty or oversized command name".to_owned());
+        }
+        if !matches!(name, "codex" | "claude" | "git" | "node" | "npm") {
+            return Err(
+                "shell snapshot contains a command outside the diagnostic allowlist".to_owned(),
+            );
+        }
+        let kind_label = match binding.kind {
+            ShellCommandKind::Alias => "alias",
+            ShellCommandKind::Function => "function",
+            ShellCommandKind::Cmdlet => "cmdlet",
+            ShellCommandKind::Builtin => "builtin",
+            ShellCommandKind::ExternalScript | ShellCommandKind::Application => {
+                return Err(
+                    "shell snapshot must not supply external script or application bindings"
+                        .to_owned(),
+                );
+            }
+        };
+        if binding
+            .source
+            .as_ref()
+            .is_some_and(|source| source.len() > MAX_SOURCE_BYTES)
+        {
+            return Err("shell snapshot contains an oversized source identifier".to_owned());
+        }
+        let expected_source = format!("{kind_label}:{name}");
+        if binding
+            .source
+            .as_deref()
+            .is_some_and(|source| source != expected_source)
+        {
+            return Err(
+                "shell snapshot source must be a non-sensitive binding identifier".to_owned(),
+            );
+        }
+        bindings.push(ShellCommandCandidate::session_binding(
+            binding.kind,
+            name,
+            binding.source,
+        ));
+    }
+
+    Ok((
+        document.shell,
+        ShellSessionSnapshot {
+            complete: document.complete,
+            bindings,
+        },
+    ))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -322,7 +420,7 @@ const fn precedence(shell: ShellKind, kind: ShellCommandKind) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::ShellKind;
+    use super::{ShellCommandKind, ShellKind, parse_snapshot_json};
 
     #[test]
     fn maps_only_supported_runtime_shell_labels() {
@@ -334,5 +432,49 @@ mod tests {
         assert_eq!(ShellKind::from_runtime_label("bash"), Some(ShellKind::Bash));
         assert_eq!(ShellKind::from_runtime_label("zsh"), Some(ShellKind::Zsh));
         assert_eq!(ShellKind::from_runtime_label("fish"), None);
+    }
+
+    #[test]
+    fn parses_a_bounded_shell_snapshot_without_function_bodies() {
+        let (shell, snapshot) = parse_snapshot_json(
+            r#"{"shell":"bash","complete":true,"bindings":[{"kind":"function","name":"node","source":"function:node"}]}"#,
+        )
+        .expect("valid snapshot");
+
+        assert_eq!(shell, ShellKind::Bash);
+        assert!(snapshot.complete);
+        assert_eq!(snapshot.bindings.len(), 1);
+        assert_eq!(snapshot.bindings[0].kind, ShellCommandKind::Function);
+        assert_eq!(
+            snapshot.bindings[0].source.as_deref(),
+            Some("function:node")
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_snapshot_fields_and_oversized_names() {
+        assert!(
+            parse_snapshot_json(
+                r#"{"shell":"bash","complete":true,"bindings":[],"function_body":"secret"}"#
+            )
+            .is_err()
+        );
+        let oversized = "n".repeat(129);
+        let input = format!(
+            r#"{{"shell":"bash","complete":true,"bindings":[{{"kind":"alias","name":"{oversized}","source":null}}]}}"#
+        );
+        assert!(parse_snapshot_json(&input).is_err());
+        assert!(
+            parse_snapshot_json(
+                r#"{"shell":"bash","complete":true,"bindings":[{"kind":"function","name":"node","source":"echo secret"}]}"#
+            )
+            .is_err()
+        );
+        assert!(
+            parse_snapshot_json(
+                r#"{"shell":"bash","complete":true,"bindings":[{"kind":"application","name":"node","source":null}]}"#
+            )
+            .is_err()
+        );
     }
 }

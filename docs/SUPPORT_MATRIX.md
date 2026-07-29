@@ -21,8 +21,8 @@ This is the source of truth for current capability claims. “Planned” means d
 | Windows 11, x86_64 MSVC | Verified | Windows CI plus sanitized local runtime-identity validation | No public binary is available |
 | WSL2, Ubuntu 24.04 | Verified | MSRV 1.85 test suite plus sanitized WSL runtime-identity validation | Validation covers one WSL distribution and no public binary |
 | Linux native, x86_64 | Partial | Ubuntu CI exercises the Linux code path | Product positioning and real-world testing focus on Windows/WSL |
-| PowerShell and cmd | Partial | PowerShell/cmd contracts feed reports when ancestry proves the shell; paired Windows contract tests cover selected and losing external candidates | Parent aliases/functions/macros cannot be reconstructed; real cmd ancestry remains unverified |
-| bash | Verified | bash ancestry is observed under Claude Code on Windows and in Ubuntu-24.04 WSL; an incomplete WSL session remains explicitly unknown | Validation covers Git Bash on Windows and one WSL distribution |
+| PowerShell and cmd | Partial | PowerShell wrapper injects bounded `Get-Command -All` alias/function/cmdlet evidence; paired contract tests cover selected and losing external candidates | Real cmd ancestry and current-session builtin injection remain unverified |
+| bash | Verified | bash wrapper injects bounded alias/function/builtin evidence; same Documents checkout was exercised from Ubuntu-24.04 WSL | Validation covers Git Bash on Windows and one WSL distribution |
 | zsh | Partial | Identity recognition and resolution contract tests exist | No real zsh validation yet |
 | macOS | Planned beyond v0.1 | Generic code may compile | No support guarantee or CI |
 | ARM | Planned beyond v0.1 | None | No release or verification target |
@@ -34,14 +34,15 @@ This is the source of truth for current capability claims. “Planned” means d
 | Current Windows, WSL, or Linux runtime | Verified | Target-platform and kernel-release provenance are explicit; a WSL environment-only fallback is labeled inferred |
 | Distribution, current user, and launching shell | Verified | WSL registration/OS release, OS account, and bounded process ancestry carry explicit provenance; environment values are labeled as hints |
 | Project filesystem classification | Implemented | Windows-native, Windows-mounted, WSL-native, WSL UNC, and Linux-native shapes are represented |
-| Git, Node, and npm resolution | Implemented | Shell-contract provenance or a labeled PATH fallback is recorded; terminal output shows selected, losing, or unproven external candidates with origin and evidence IDs |
+| Git, Node, and npm resolution | Verified on Windows and WSL | Four selection states, selected binding kind, candidate count, Windows/Linux origin, PE/ELF/script format, reason, and independent verification command are recorded in JSON and Markdown |
 | PE, ELF, and script classification | Implemented | Scripts remain a neutral origin when their shebang cannot establish an OS layer |
 | `ENV002`, `PATH001`, and `GIT001` | Implemented | Deterministic rules use the normalized report; neutral scripts do not trigger cross-layer PATH warnings |
+| `TOOL001` | Implemented | Complete shell evidence warns when npm is selected but Node is not found; uncertain Node candidates do not trigger it |
 | `FS001`, `FS002`, and profiles | Implemented | Certain filesystem evidence produces profile-specific read-only guidance; `/mnt/c` remains a supported interoperability choice |
 | `ENV001` rule evaluation | Partial, evidence-limited | The deterministic rule requires a session layer inferred from process evidence plus high-confidence agent runtime; current local adapters stay silent when a cross-layer launcher hides one side of that relationship |
 | `ENV003` and `ENV004` | Implemented | Duplicate agents require certain candidates in both layers; config checks classify the active agent root without reading its contents |
 | Terminal output | Implemented | Human-readable pre-alpha output escapes observed control characters before display |
-| JSON output | Implemented | Schema `0.5.0` adds resolution method, shell, and session-completeness provenance; it is not frozen yet |
+| JSON output | Implemented | Schema `0.6.0` adds four-state selection, selected binding kind, reason, verification command, and finding reverification steps; it is not frozen yet |
 | Codex evidence adapter | Verified on Windows and WSL | Exact ancestry is high confidence; a UUID-shaped Codex-injected child marker is a medium-confidence fallback when the WSL sandbox hides ancestors |
 | Claude Code process adapter | Verified on Windows and WSL | Claude Code 2.1.212 launched packaged ExecLocus binaries in both OS layers; exact ancestry produced high-confidence product evidence |
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |
@@ -69,4 +70,5 @@ Agent adapter validation is recorded in [`validation/AGENT_RUNTIME_ADAPTERS_2026
 The isolated real Claude Code/WSL run is recorded in [`validation/CLAUDE_CODE_WSL_2026-07-29.md`](validation/CLAUDE_CODE_WSL_2026-07-29.md).
 Windows-native Claude Code and WSL-native Codex CLI are recorded in [`validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md`](validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md).
 Production shell-resolution provenance, paired Windows/WSL scenarios, candidate display, and terminal control escaping are recorded in [`validation/SHELL_RESOLUTION_2026-07-29.md`](validation/SHELL_RESOLUTION_2026-07-29.md).
+Bounded current-session injection and the same-Documents Windows/WSL comparison are recorded in [`validation/TOOLCHAIN_SELECTION_2026-07-30.md`](validation/TOOLCHAIN_SELECTION_2026-07-30.md).
 The free dependency gate, source review, injection/redaction/path tests, GitHub alert snapshot, and accepted risks are recorded in [`validation/SECURITY_ASSESSMENT_2026-07-29.md`](validation/SECURITY_ASSESSMENT_2026-07-29.md) and [`SECURITY_MODEL.md`](SECURITY_MODEL.md).

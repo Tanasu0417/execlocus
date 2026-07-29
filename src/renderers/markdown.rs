@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    model::{ExecutableOrigin, Report},
+    model::{ExecutableFormat, ExecutableInfo, ExecutableOrigin, Report},
     privacy::{RedactionContext, redact_for_sharing, redact_with_context},
 };
 
@@ -32,23 +32,7 @@ fn render_redacted(report: &Report) -> String {
 
     render_agent(&mut output, report);
 
-    writeln!(output, "\n## Toolchain\n").expect("writing to String cannot fail");
-    writeln!(output, "| Role | Selected | Origin |").expect("writing to String cannot fail");
-    writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
-    for executable in &report.executables {
-        let (selected, origin) = executable
-            .selected
-            .as_ref()
-            .map_or(("Unavailable", ExecutableOrigin::Unknown), |candidate| {
-                (candidate.path.as_str(), candidate.origin)
-            });
-        row(
-            &mut output,
-            &executable.role,
-            selected,
-            &format!("{origin:?}"),
-        );
-    }
+    render_toolchain(&mut output, report);
 
     writeln!(output, "\n## Findings\n").expect("writing to String cannot fail");
     if report.findings.is_empty() {
@@ -63,6 +47,14 @@ fn render_redacted(report: &Report) -> String {
                 cell(&finding.summary)
             )
             .expect("writing to String cannot fail");
+            for action in &finding.suggested_actions {
+                writeln!(output, "  - Recommended: {}", cell(action))
+                    .expect("writing to String cannot fail");
+            }
+            for step in &finding.verification_steps {
+                writeln!(output, "  - Verify: {}", cell(step))
+                    .expect("writing to String cannot fail");
+            }
         }
     }
 
@@ -79,6 +71,103 @@ fn render_redacted(report: &Report) -> String {
     )
     .expect("writing to String cannot fail");
     output
+}
+
+fn render_toolchain(output: &mut String, report: &Report) {
+    writeln!(output, "\n## Toolchain\n").expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "| Role | State | Selected | Kind | Candidates | Why |"
+    )
+    .expect("writing to String cannot fail");
+    writeln!(output, "|---|---|---|---|---:|---|").expect("writing to String cannot fail");
+    for executable in &report.executables {
+        writeln!(
+            output,
+            "| {} | {} | {} | {} | {} | {} |",
+            cell(&executable.role),
+            executable.selection_state.label(),
+            cell(&selected_value(executable)),
+            executable.selected_kind.map_or("—", |kind| kind.label()),
+            executable.candidates.len(),
+            cell(&executable.selection_reason),
+        )
+        .expect("writing to String cannot fail");
+    }
+
+    writeln!(output, "\n### Candidate details\n").expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "| Role | # | Disposition | Origin | Format | Candidate |"
+    )
+    .expect("writing to String cannot fail");
+    writeln!(output, "|---|---:|---|---|---|---|").expect("writing to String cannot fail");
+    for executable in &report.executables {
+        let selected_path = executable
+            .selected
+            .as_ref()
+            .map(|candidate| candidate.path.as_str());
+        let binding_selected = executable.selected_binding.is_some();
+        for (index, candidate) in executable.candidates.iter().enumerate() {
+            let disposition = if selected_path == Some(candidate.path.as_str()) {
+                "selected"
+            } else if selected_path.is_some() || binding_selected {
+                "not selected"
+            } else {
+                "selection unconfirmed"
+            };
+            writeln!(
+                output,
+                "| {} | {} | {} | {} | {} | {} |",
+                cell(&executable.role),
+                index + 1,
+                disposition,
+                origin_label(candidate.origin),
+                format_label(candidate.format),
+                cell(&candidate.path),
+            )
+            .expect("writing to String cannot fail");
+        }
+    }
+
+    writeln!(output, "\n### Independent verification\n").expect("writing to String cannot fail");
+    writeln!(output, "| Role | Command | Context |").expect("writing to String cannot fail");
+    writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
+    for executable in &report.executables {
+        row(
+            output,
+            &executable.role,
+            &executable.verification_command,
+            "run in the same shell session",
+        );
+    }
+}
+
+fn selected_value(executable: &ExecutableInfo) -> String {
+    executable
+        .selected
+        .as_ref()
+        .map(|candidate| candidate.path.clone())
+        .or_else(|| executable.selected_binding.clone())
+        .unwrap_or_else(|| "—".to_owned())
+}
+
+const fn origin_label(origin: ExecutableOrigin) -> &'static str {
+    match origin {
+        ExecutableOrigin::Windows => "Windows",
+        ExecutableOrigin::Linux => "Linux",
+        ExecutableOrigin::Script => "Script",
+        ExecutableOrigin::Unknown => "Unknown",
+    }
+}
+
+const fn format_label(format: ExecutableFormat) -> &'static str {
+    match format {
+        ExecutableFormat::Pe => "PE",
+        ExecutableFormat::Elf => "ELF",
+        ExecutableFormat::Script => "script",
+        ExecutableFormat::Unknown => "unknown",
+    }
 }
 
 fn render_current_execution(output: &mut String, report: &Report) {
