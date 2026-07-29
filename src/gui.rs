@@ -81,23 +81,39 @@ impl LocalGuiServer {
     ///
     /// Returns an error when the listener address cannot be inspected.
     pub fn run(self, open_browser: bool) -> Result<(), String> {
+        self.run_internal(open_browser, true)
+    }
+
+    /// Serves the read-only interface for a native host without writing normal
+    /// lifecycle messages to an attached terminal.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the listener address cannot be inspected.
+    pub fn run_embedded(self) -> Result<(), String> {
+        self.run_internal(false, false)
+    }
+
+    fn run_internal(self, open_browser: bool, announce: bool) -> Result<(), String> {
         let address = self
             .listener
             .local_addr()
             .map_err(|error| format!("could not read the local GUI address: {error}"))?;
         let url = self.url()?;
 
-        println!(
-            "{}\n  {url}\n{}",
-            self.language.text(
-                "ExecLocus local GUI is ready:",
-                "ExecLocusローカルGUIを起動しました:"
-            ),
-            self.language.text(
-                "Keep this terminal open. Press Ctrl+C to stop the local server.",
-                "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
-            )
-        );
+        if announce {
+            println!(
+                "{}\n  {url}\n{}",
+                self.language.text(
+                    "ExecLocus local GUI is ready:",
+                    "ExecLocusローカルGUIを起動しました:"
+                ),
+                self.language.text(
+                    "Keep this terminal open. Press Ctrl+C to stop the local server.",
+                    "このターミナルを開いたままにしてください。終了するにはCtrl+Cを押します。"
+                )
+            );
+        }
 
         if open_browser {
             if let Err(error) = launch_browser(&url) {

@@ -20,6 +20,12 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-width: 0; min-height: 100%; background: var(--bg); }
+html { scrollbar-color: #365b65 #071217; scrollbar-width: thin; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: #071217; }
+*::-webkit-scrollbar-thumb { border: 2px solid #071217; border-radius: 999px; background: linear-gradient(180deg, #3a6871, #244750); }
+*::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #58a59e, #356a70); }
+*::-webkit-scrollbar-corner { background: #071217; }
 body { min-height: 100vh; background: radial-gradient(circle at 78% -12%, #153844 0, var(--bg) 36%); }
 button, input { color: inherit; font: inherit; }
 button { cursor: pointer; }

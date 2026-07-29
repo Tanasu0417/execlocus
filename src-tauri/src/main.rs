@@ -1,7 +1,7 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
 use execlocus::{gui::LocalGuiServer, i18n::Language, model::Profile};
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Manager, Theme, WebviewUrl, WebviewWindowBuilder};
 
 fn main() {
     let server = LocalGuiServer::bind(Profile::Balanced, Language::Japanese, None, 0)
@@ -13,7 +13,7 @@ fn main() {
     std::thread::Builder::new()
         .name("execlocus-loopback".to_owned())
         .spawn(move || {
-            if let Err(error) = server.run(false) {
+            if let Err(error) = server.run_embedded() {
                 eprintln!("ExecLocus desktop diagnostic server stopped: {error}");
             }
         })
@@ -36,6 +36,7 @@ fn main() {
                 .ok_or("the loopback-only GUI URL has no assigned port")?;
             WebviewWindowBuilder::new(app, "main", WebviewUrl::External(external_url))
                 .title("ExecLocus")
+                .theme(Some(Theme::Dark))
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(980.0, 680.0)
                 .on_navigation(move |candidate| {
