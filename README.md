@@ -74,6 +74,8 @@ The zero-argument command is the primary workflow. No configuration should be re
 
 ## Run the prototype from source
 
+For a privacy-first, step-by-step Windows/WSL evaluation, use the [public try-it guide](docs/TRY_IT.md). The companion scripts create an automatically redacted Markdown report under the Git-ignored `target/user-validation/` directory.
+
 ```console
 cargo run --
 cargo run -- check
@@ -193,6 +195,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [v0.1 delivery roadmap](https://github.com/Tanasu0417/execlocus/blob/main/docs/V0_1_ROADMAP.md)
 - [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
+- [Try it safely on Windows and WSL](https://github.com/Tanasu0417/execlocus/blob/main/docs/TRY_IT.md)
+- [Windows／WSLで安全に試す（日本語）](https://github.com/Tanasu0417/execlocus/blob/main/docs/TRY_IT.ja.md)
 - [Security and threat model](https://github.com/Tanasu0417/execlocus/blob/main/docs/SECURITY_MODEL.md)
 - [v0.1 security assessment](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SECURITY_ASSESSMENT_2026-07-29.md)
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)

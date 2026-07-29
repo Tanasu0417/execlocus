@@ -71,6 +71,8 @@ execlocus report --format json --redact
 
 ## ソースからプロトタイプを実行
 
+個人情報を公開せずWindows／WSLで順番に確認する場合は、[誰でも使える実機確認手順](docs/TRY_IT.ja.md)を利用してください。補助スクリプトは自動匿名化MarkdownをGit管理外の`target/user-validation/`へ保存します。
+
 ```console
 cargo run --
 cargo run -- check
@@ -140,6 +142,8 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - [v0.1提供ロードマップ](docs/V0_1_ROADMAP.md)
 - [初期ユースケース仕様](docs/USE_CASES.md)
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
+- [Windows／WSLで安全に試す手順](docs/TRY_IT.ja.md)
+- [Try it safely on Windows and WSL](docs/TRY_IT.md)
 - [セキュリティ／脅威モデル](docs/SECURITY_MODEL.md)
 - [v0.1セキュリティ評価](docs/validation/SECURITY_ASSESSMENT_2026-07-29.md)
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
@@ -148,9 +152,9 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - [1ページ製品紹介](docs/ONE_PAGER.ja.md)
 - [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
 - [絵コンテ・撮影scenario](docs/demo/README.md)
-- [操作できるlocal concept demo](docs/demo/prototype/index.html)
-- [60秒caption animatic](docs/demo/prototype/mv.html)
-- [日本語紹介deck（PPTX）](docs/demo/ExecLocus_intro_ja.pptx)
+- [操作できるローカルデモ](docs/demo/prototype/index.html)
+- [60秒字幕映像](docs/demo/prototype/mv.html)
+- [日本語紹介資料（PPTX）](docs/demo/ExecLocus_intro_ja.pptx)
 - [OSS成功パターンの採用設計](docs/ADOPTION_BLUEPRINT.md)
 - [代替手段・現在の回避策との比較](docs/research/ALTERNATIVES.md)
 - [OSSベンチマーク・公開戦略](docs/research/README.md)

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>ExecLocus interactive concept demo</title>
+  <title>ExecLocus 操作デモ</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,23 +14,24 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <div>
           <h1 id="product-name">ExecLocus</h1>
-          <p>Windows × WSL evidence console</p>
+          <p data-i18n="brand.subtitle">Windows × WSL 証拠コンソール</p>
         </div>
       </div>
-      <div class="top-status" aria-label="デモの状態">
-        <span class="badge badge-concept">INTERACTIVE CONCEPT</span>
+      <div class="top-status" aria-label="デモの状態" id="top-status">
+        <button id="language-toggle" class="language-toggle" type="button" aria-label="Switch to English">EN</button>
+        <span class="badge badge-concept" data-i18n="status.concept">操作デモ</span>
         <span class="status-dot" aria-hidden="true"></span>
-        <span>synthetic data · local only</span>
+        <span data-i18n="status.synthetic">合成データ · ローカルのみ</span>
       </div>
     </header>
 
     <section class="workspace">
-      <aside class="rail" aria-label="診断の流れ">
-        <p class="rail-label">TRACE</p>
-        <button class="rail-step active" data-view="inspect"><span>01</span>Inspect</button>
-        <button class="rail-step" data-view="compare"><span>02</span>Compare</button>
-        <button class="rail-step" data-view="explain"><span>03</span>Explain</button>
-        <button class="rail-step" data-view="share"><span>04</span>Share</button>
+      <aside class="rail" aria-label="診断の流れ" id="diagnostic-rail">
+        <p class="rail-label" data-i18n="nav.label">診断手順</p>
+        <button class="rail-step active" data-view="inspect"><span class="rail-index">01</span><span data-i18n="nav.inspect">診断</span></button>
+        <button class="rail-step" data-view="compare"><span class="rail-index">02</span><span data-i18n="nav.compare">比較</span></button>
+        <button class="rail-step" data-view="explain"><span class="rail-index">03</span><span data-i18n="nav.explain">説明</span></button>
+        <button class="rail-step" data-view="share"><span class="rail-index">04</span><span data-i18n="nav.share">共有</span></button>
         <div class="rail-footer">
           <span>schema 0.5.0</span>
           <span>v0.1.0-alpha.1</span>
@@ -40,115 +41,115 @@
       <section class="console" aria-live="polite">
         <div class="commandbar">
           <div class="prompt"><span class="prompt-mark">›</span><code id="command">execlocus --profile balanced check</code></div>
-          <button id="run-button" class="run-button">Run diagnostic <kbd>R</kbd></button>
+          <button id="run-button" class="run-button"><span data-i18n="action.run">診断を実行</span> <kbd>R</kbd></button>
         </div>
 
         <div class="profile-row" aria-label="診断プロファイル">
-          <span>Workflow profile</span>
+          <span data-i18n="profile.label">利用目的</span>
           <div class="segmented">
             <button data-profile="share-first">share-first</button>
             <button class="active" data-profile="balanced">balanced</button>
             <button data-profile="linux-first">linux-first</button>
           </div>
-          <span id="run-state" class="run-state">ready</span>
+          <span id="run-state" class="run-state">準備完了</span>
         </div>
 
         <section id="view-inspect" class="view active" data-panel="inspect">
           <div class="hero-copy">
-            <p class="eyebrow">CURRENT EXECUTION</p>
-            <h2>見た目ではなく、<br>実行根拠をたどる。</h2>
-            <p>runtime、shell、project境界、agent evidenceを分離して観測します。</p>
+            <p class="eyebrow" data-i18n="inspect.eyebrow">現在の実行環境</p>
+            <h2 data-i18n-html="inspect.title">見た目ではなく、<br>実行根拠をたどる。</h2>
+            <p data-i18n="inspect.body">実行環境、シェル、プロジェクト境界、エージェント根拠を分離して観測します。</p>
             <div class="trust-strip">
-              <span>READ ONLY</span><span>NO TELEMETRY</span><span>NO SHELL EXEC</span>
+              <span data-i18n="trust.readonly">読み取り専用</span><span data-i18n="trust.telemetry">送信なし</span><span data-i18n="trust.shell">シェル実行なし</span>
             </div>
           </div>
           <div class="runtime-map" aria-label="WindowsとWSLの実行境界">
             <div class="lane lane-windows">
-              <div class="lane-heading"><span>WIN</span><strong>Windows Native</strong></div>
+              <div class="lane-heading"><span>WIN</span><strong data-i18n="runtime.windows">Windowsネイティブ</strong></div>
               <p>PowerShell 7</p>
               <code>C:\demo\execlocus-sample</code>
-              <div class="candidate selected"><span>SELECTED</span><strong>node.exe</strong><small>PE · Windows</small></div>
+              <div class="candidate selected"><span data-i18n="candidate.selected">選択候補</span><strong>node.exe</strong><small>PE · Windows</small></div>
             </div>
             <div class="lane lane-wsl">
               <div class="lane-heading"><span>WSL</span><strong>Ubuntu 24.04</strong></div>
               <p>bash</p>
               <code>/mnt/c/demo/execlocus-sample</code>
-              <div class="candidate selected"><span>SELECTED</span><strong>/usr/bin/node</strong><small>ELF · Linux</small></div>
+              <div class="candidate selected"><span data-i18n="candidate.selected">選択候補</span><strong>/usr/bin/node</strong><small>ELF · Linux</small></div>
             </div>
-            <div class="project-node"><span></span>same source tree</div>
+            <div class="project-node"><span></span><b data-i18n="inspect.sameProject">同じソース一式</b></div>
             <div class="flow-line" aria-hidden="true"></div>
-            <img class="otter" src="../assets/otter-guide.svg" alt="根拠の経路を案内する、顔のないカワウソのシルエット">
+            <img id="otter-guide" class="otter" src="../assets/otter-guide.svg" alt="根拠の経路を案内する、顔のないカワウソのシルエット">
           </div>
         </section>
 
         <section id="view-compare" class="view" data-panel="compare">
           <div class="section-heading">
-            <div><p class="eyebrow">DEMO-UC02-PAIRED-01</p><h2>同じsource tree。違う実行context。</h2></div>
-            <span class="badge">SYNTHETIC REPRODUCTION</span>
+            <div><p class="eyebrow">DEMO-UC02-PAIRED-01</p><h2 data-i18n="compare.title">同じソース一式。異なる実行環境。</h2></div>
+            <span class="badge" data-i18n="compare.badge">合成データによる再現</span>
           </div>
           <div class="comparison">
             <article>
-              <p class="platform">WINDOWS CONTEXT</p>
-              <dl><div><dt>Runtime</dt><dd>Windows 11</dd></div><div><dt>Shell</dt><dd>PowerShell</dd></div><div><dt>Project</dt><dd>C:\demo\…</dd></div></dl>
-              <div class="resolution"><span>selected</span><strong>C:\Tools\node\node.exe</strong><small>PE · Windows · shell contract</small></div>
+              <p class="platform" data-i18n="compare.windows">WINDOWS 実行環境</p>
+              <dl><div><dt data-i18n="field.runtime">実行環境</dt><dd>Windows 11</dd></div><div><dt data-i18n="field.shell">シェル</dt><dd>PowerShell</dd></div><div><dt data-i18n="field.project">プロジェクト</dt><dd>C:\demo\…</dd></div></dl>
+              <div class="resolution"><span data-i18n="candidate.selected">選択候補</span><strong>C:\Tools\node\node.exe</strong><small>PE · Windows · <span data-i18n="candidate.contract">シェル規則</span></small></div>
               <div class="evidence"><span>candidate.path.0</span><span>executable.header.0</span><span>shell.ancestry</span></div>
             </article>
-            <div class="boundary"><span>≠</span><small>runtime boundary</small></div>
+            <div class="boundary"><span>≠</span><small data-i18n="compare.boundary">実行境界</small></div>
             <article>
-              <p class="platform">WSL CONTEXT</p>
-              <dl><div><dt>Runtime</dt><dd>WSL2 / Ubuntu</dd></div><div><dt>Shell</dt><dd>bash</dd></div><div><dt>Project</dt><dd>/mnt/c/demo/…</dd></div></dl>
-              <div class="resolution"><span>selected</span><strong>/usr/bin/node</strong><small>ELF · Linux · shell contract</small></div>
+              <p class="platform" data-i18n="compare.wsl">WSL 実行環境</p>
+              <dl><div><dt data-i18n="field.runtime">実行環境</dt><dd>WSL2 / Ubuntu</dd></div><div><dt data-i18n="field.shell">シェル</dt><dd>bash</dd></div><div><dt data-i18n="field.project">プロジェクト</dt><dd>/mnt/c/demo/…</dd></div></dl>
+              <div class="resolution"><span data-i18n="candidate.selected">選択候補</span><strong>/usr/bin/node</strong><small>ELF · Linux · <span data-i18n="candidate.contract">シェル規則</span></small></div>
               <div class="evidence"><span>candidate.path.0</span><span>executable.header.0</span><span>shell.ancestry</span></div>
             </article>
           </div>
-          <p class="comparison-note">2つのExecLocus processを同じschemaで比較。過去にagentが実行した対象とは断定しません。</p>
+          <p class="comparison-note" data-i18n="compare.note">2つのExecLocusプロセスを同じ形式で比較します。過去にエージェントが実行した対象とは断定しません。</p>
         </section>
 
         <section id="view-explain" class="view" data-panel="explain">
-          <div class="section-heading"><div><p class="eyebrow">RULE EXPLANATION</p><h2 id="rule-title">FS001 · mounted project boundary</h2></div><span id="severity" class="severity">INFO</span></div>
+          <div class="section-heading"><div><p class="eyebrow" data-i18n="explain.eyebrow">ルール説明</p><h2 id="rule-title">FS001 · マウントされたプロジェクトの境界</h2></div><span id="severity" class="severity">情報</span></div>
           <div class="explain-grid">
             <div class="explain-main">
-              <p class="state-line"><span class="state-icon">i</span><strong id="rule-state">Triggered as context</strong></p>
-              <p id="rule-summary">Project is on a Windows-mounted filesystem while ExecLocus runs inside WSL.</p>
-              <h3>Why it matters</h3>
-              <p id="rule-reason">Windows interoperability may be intentional. Performance and file-watching tradeoffs depend on the selected workflow profile.</p>
-              <h3>Read-only next action</h3>
-              <p id="rule-action">Keep the shared location, then measure your own workload before relocating the project.</p>
+              <p class="state-line"><span class="state-icon">i</span><strong id="rule-state">状況説明として発火</strong></p>
+              <p id="rule-summary">ExecLocusがWSL内で動作し、プロジェクトはWindowsマウント上にあります。</p>
+              <h3 data-i18n="explain.why">なぜ重要か</h3>
+              <p id="rule-reason">Windowsとの相互運用は意図的な場合があります。性能とファイル監視の特性差は利用目的によって変わります。</p>
+              <h3 data-i18n="explain.action">次に確認すること</h3>
+              <p id="rule-action">共有場所を維持し、移動を決める前に実際の作業負荷を測定してください。</p>
             </div>
             <div class="evidence-stack">
-              <p>EVIDENCE CHAIN</p>
+              <p data-i18n="explain.evidence">根拠の連鎖</p>
               <ol><li><span>runtime.kind</span><strong>WSL</strong></li><li><span>project.path</span><strong>WindowsMounted</strong></li><li><span>profile.selected</span><strong id="evidence-profile">balanced</strong></li></ol>
             </div>
           </div>
         </section>
 
         <section id="view-share" class="view" data-panel="share">
-          <div class="section-heading"><div><p class="eyebrow">SHAREABLE REPORT</p><h2>共有前に、識別情報を落とす。</h2></div><span class="badge badge-safe">AUTO REDACTED</span></div>
+          <div class="section-heading"><div><p class="eyebrow" data-i18n="share.eyebrow">共有用レポート</p><h2 data-i18n="share.title">共有前に、識別情報を落とす。</h2></div><span class="badge badge-safe" data-i18n="share.badge">自動匿名化</span></div>
           <div class="share-layout">
             <div class="redaction-list">
-              <p>Removed before render</p>
-              <ul><li>username <span>[redacted-user]</span></li><li>home directory <span>[redacted-home]</span></li><li>machine name <span>[redacted-machine]</span></li><li>absolute project path <span>[windows-project]</span></li></ul>
-              <button id="copy-button">Copy synthetic report</button>
-              <small id="copy-state">raw terminal / raw JSONは公開しない</small>
+              <p data-i18n="share.removed">描画前に除去</p>
+              <ul><li><b data-i18n="share.username">利用者名</b><span>[redacted-user]</span></li><li><b data-i18n="share.home">ホームディレクトリ</b><span>[redacted-home]</span></li><li><b data-i18n="share.machine">マシン名</b><span>[redacted-machine]</span></li><li><b data-i18n="share.path">個人の絶対パス</b><span>[windows-project]</span></li></ul>
+              <button id="copy-button" data-i18n="share.copy">合成レポートをコピー</button>
+              <small id="copy-state" data-i18n="share.warning">未加工のターミナル出力やJSONは公開しない</small>
             </div>
-            <pre class="report"><code># ExecLocus shareable report
+            <pre class="report"><code># <span data-i18n="report.title">ExecLocus 共有用レポート</span>
 
-- Schema: `0.5.0`
-- Profile: `<span id="report-profile">balanced</span>`
+- <span data-i18n="report.schema">形式</span>: `0.5.0`
+- <span data-i18n="report.profile">利用目的</span>: `<span id="report-profile">balanced</span>`
 
-| Field   | Value              |
-| Runtime | WSL                |
-| User    | [redacted-user]    |
-| Project | [windows-project]  |
+| <span data-i18n="report.field">項目</span> | <span data-i18n="report.value">値</span>                 |
+| <span data-i18n="field.runtime">実行環境</span> | WSL                |
+| <span data-i18n="report.user">利用者</span> | [redacted-user]    |
+| <span data-i18n="field.project">プロジェクト</span> | [windows-project]  |
 
-Finding: <span id="report-finding">FS001 · Info</span>
-No values were uploaded.</code></pre>
+<span data-i18n="report.finding">検出結果</span>: <span id="report-finding">FS001 · 情報</span>
+<span data-i18n="report.upload">値は外部送信されていません。</span></code></pre>
           </div>
         </section>
       </section>
     </section>
 
-    <footer class="footer"><span>Concept UI — not the v0.1 CLI surface</span><span>github.com/Tanasu0417/execlocus</span></footer>
+    <footer class="footer"><span data-i18n="footer.concept">コンセプト画面 — v0.1のCLI本体ではありません</span><span>github.com/Tanasu0417/execlocus</span></footer>
   </main>
   <script src="app.js"></script>
 </body>

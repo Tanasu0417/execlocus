@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-labelledby="title desc">
-  <title id="title">ExecLocus original faceless otter guide</title>
-  <desc id="desc">A calm faceless river otter silhouette with a low rounded body, short paws, and a broad tapered tail.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" role="img" aria-labelledby="title desc">
+  <title id="title">ExecLocus original faceless river otter guide</title>
+  <desc id="desc">An original side-view river otter silhouette with a small head, low neck, rounded back, short legs, and a long tapered tail.</desc>
   <style>
     :root {
       --otter-fill: #b8f3e7;
@@ -8,63 +8,70 @@
       --otter-signal: #55b8ff;
     }
     .guide {
-      transform-origin: 335px 160px;
-      animation: drift 4.8s cubic-bezier(.45, 0, .55, 1) infinite;
+      transform-origin: 320px 168px;
+      animation: breathe 4.8s cubic-bezier(.45, 0, .55, 1) infinite;
     }
-    .body-part { fill: var(--otter-fill); }
-    .body-outline {
+    .silhouette { fill: var(--otter-fill); }
+    .outline {
       fill: none;
       stroke: var(--otter-edge);
       stroke-width: 3;
       stroke-linecap: round;
-      opacity: .65;
+      opacity: .72;
     }
-    .tail {
-      transform-origin: 490px 176px;
-      animation: tail 4.8s cubic-bezier(.45, 0, .55, 1) infinite;
-    }
-    .paw { transform-origin: center; }
     .signal {
       fill: none;
       stroke: var(--otter-signal);
       stroke-width: 4;
       stroke-linecap: round;
-      transform-origin: 332px 278px;
+      transform-origin: 306px 282px;
       animation: pulse 2.4s ease-out infinite;
     }
     .marker { fill: var(--otter-signal); }
-    @keyframes drift {
-      0%, 100% { transform: translateY(4px) rotate(-.8deg); }
-      50% { transform: translateY(-5px) rotate(.8deg); }
-    }
-    @keyframes tail {
-      0%, 100% { transform: rotate(1.6deg); }
-      50% { transform: rotate(-2.4deg); }
+    @keyframes breathe {
+      0%, 100% { transform: translateY(3px) rotate(-.4deg); }
+      50% { transform: translateY(-4px) rotate(.5deg); }
     }
     @keyframes pulse {
       0% { transform: scale(.7); opacity: .9; }
       100% { transform: scale(1.6); opacity: 0; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .guide, .tail, .signal { animation: none; }
+      .guide, .signal { animation: none; }
     }
   </style>
   <g class="guide">
-    <g class="tail">
-      <path class="body-part" d="M468 151 C528 150 558 172 592 193 C627 215 663 224 704 222 C666 248 612 247 564 229 C526 215 495 197 461 188 Z"/>
-      <path class="body-outline" d="M468 151 C528 150 558 172 592 193 C627 215 663 224 704 222"/>
-    </g>
-    <ellipse class="body-part" cx="337" cy="158" rx="174" ry="76" transform="rotate(4 337 158)"/>
-    <ellipse class="body-part" cx="202" cy="148" rx="76" ry="59" transform="rotate(-7 202 148)"/>
-    <ellipse class="body-part" cx="137" cy="145" rx="65" ry="46" transform="rotate(-8 137 145)"/>
-    <ellipse class="body-part" cx="77" cy="151" rx="47" ry="26" transform="rotate(-5 77 151)"/>
-    <circle class="body-part" cx="154" cy="103" r="12"/>
-    <rect class="body-part paw" x="181" y="203" width="64" height="30" rx="15" transform="rotate(-11 213 218)"/>
-    <rect class="body-part paw" x="246" y="213" width="59" height="29" rx="14" transform="rotate(8 275 228)"/>
-    <rect class="body-part paw" x="387" y="208" width="63" height="30" rx="15" transform="rotate(-5 418 223)"/>
-    <rect class="body-part paw" x="438" y="196" width="58" height="29" rx="14" transform="rotate(13 467 211)"/>
-    <path class="body-outline" d="M31 151 C45 131 72 126 100 130 C118 105 137 97 160 99 C173 87 191 82 212 86 C250 76 298 77 345 86 C409 98 452 121 474 152"/>
-    <circle class="signal" cx="332" cy="278" r="17"/>
-    <rect class="marker" x="325" y="271" width="14" height="14" rx="3" transform="rotate(45 332 278)"/>
+    <path class="silhouette" d="M28 130
+      C38 116 54 108 75 107
+      C88 97 104 94 119 98
+      C130 100 138 105 145 113
+      C158 127 172 139 190 149
+      C204 157 219 161 235 161
+      C266 149 297 127 334 112
+      C374 96 418 98 452 114
+      C483 129 500 154 508 185
+      C515 210 525 228 543 241
+      C567 258 598 272 628 286
+      C595 284 561 279 526 270
+      C493 261 462 249 434 233
+      C420 225 407 216 396 205
+      C387 220 376 234 362 243
+      C351 251 338 253 328 248
+      C319 244 315 237 319 230
+      C324 222 335 218 344 209
+      C326 204 307 202 289 205
+      C267 208 249 218 232 228
+      C216 238 200 241 188 237
+      C179 234 175 226 180 219
+      C186 211 199 207 207 198
+      C214 189 211 179 201 169
+      C189 158 173 152 156 144
+      C139 136 125 125 108 120
+      C88 113 67 115 51 122
+      C40 127 33 133 28 130 Z"/>
+    <circle class="silhouette" cx="124" cy="98" r="9"/>
+    <path class="outline" d="M28 130 C38 116 54 108 75 107 C88 97 104 94 119 98 C130 100 138 105 145 113 C158 127 172 139 190 149 C204 157 219 161 235 161 C266 149 297 127 334 112 C374 96 418 98 452 114 C483 129 500 154 508 185 C515 210 525 228 543 241 C567 258 598 272 628 286"/>
+    <circle class="signal" cx="306" cy="282" r="17"/>
+    <rect class="marker" x="299" y="275" width="14" height="14" rx="3" transform="rotate(45 306 282)"/>
   </g>
 </svg>

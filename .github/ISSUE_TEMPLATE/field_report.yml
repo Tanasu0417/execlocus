@@ -5,9 +5,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for testing a pre-alpha project. Automatic redaction is not
-        implemented, so this form intentionally asks only for categories and a
-        short conclusion. Do not paste command output, environment dumps,
+        Thank you for testing a pre-alpha project. Shareable Markdown is
+        automatically redacted, but this form intentionally asks only for
+        categories and a short conclusion. Do not paste raw command output,
+        environment dumps,
         usernames, machine names, home directories, personal paths, tokens,
         credentials, private repository names, or other identifying data.
   - type: dropdown
