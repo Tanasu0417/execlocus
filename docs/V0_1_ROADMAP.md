@@ -8,19 +8,21 @@ This roadmap translates the approved MVP scope into independently reviewable wor
 
 ## Ordered delivery plan
 
-| Order | Work item | Current state | Definition of done |
-|---:|---|---|---|
-| 1 | README alignment and v0.1 tracking | In progress | Public status tables distinguish implemented and planned behavior; GitHub issues are attached to the v0.1 milestone |
-| 2 | `FS001`, `FS002`, and three profile behaviors | Planned | `share-first`, `balanced`, and `linux-first` change advice or severity without changing observed filesystem facts; positive, non-triggering, and missing-evidence tests pass |
-| 3 | `ENV001`, `ENV003`, and `ENV004` | Planned | Each rule has minimum evidence, a legitimate non-triggering setup, deterministic fixtures, and no private agent-state reads |
-| 4 | `explain <RULE_ID>` | Planned | Implemented rules return evidence, rationale, and read-only suggested actions; unknown IDs produce exit code 2 |
-| 5 | Production shell resolution and candidate display | Planned | PowerShell, cmd, bash, and zsh contracts feed the production report where evidence exists; selected and losing candidates are visible; incomplete shell evidence remains explicit |
-| 6 | Real demo and external prototype validation | Planned | A privacy-reviewed real demo is recorded; at least 10 collaborators across 10 Windows/WSL environments yield at least 3 independently verified useful cases |
-| 7 | Windows/Linux v0.1.0 release | Planned | Versioned x86_64 binaries, SHA-256 checksums, release notes, install instructions, and clean-machine smoke tests are published |
+| Order | Work item | Current state | Tracking | Definition of done |
+|---:|---|---|---|---|
+| 1 | README alignment and v0.1 tracking | Complete in this change | [v0.1.0 milestone](https://github.com/Tanasu0417/execlocus/milestone/1) | Public status tables distinguish implemented and planned behavior; GitHub issues are attached to the v0.1 milestone |
+| 2 | `FS001`, `FS002`, and three profile behaviors | Planned | [#11](https://github.com/Tanasu0417/execlocus/issues/11) | `share-first`, `balanced`, and `linux-first` change advice or severity without changing observed filesystem facts; positive, non-triggering, and missing-evidence tests pass |
+| 3 | `ENV001`, `ENV003`, and `ENV004` | Planned | [#12](https://github.com/Tanasu0417/execlocus/issues/12) | Each rule has minimum evidence, a legitimate non-triggering setup, deterministic fixtures, and no private agent-state reads |
+| 4 | `explain <RULE_ID>` | Planned | [#13](https://github.com/Tanasu0417/execlocus/issues/13) | Implemented rules return evidence, rationale, and read-only suggested actions; unknown IDs produce exit code 2 |
+| 5 | Production shell resolution and candidate display | Planned | [#14](https://github.com/Tanasu0417/execlocus/issues/14) | PowerShell, cmd, bash, and zsh contracts feed the production report where evidence exists; selected and losing candidates are visible; incomplete shell evidence remains explicit |
+| 6 | Real demo and external prototype validation | Planned | [#16](https://github.com/Tanasu0417/execlocus/issues/16) | A privacy-reviewed real demo is recorded; at least 10 collaborators across 10 Windows/WSL environments yield at least 3 independently verified useful cases |
+| 7 | Windows/Linux v0.1.0 release | Planned | [#17](https://github.com/Tanasu0417/execlocus/issues/17) | Versioned x86_64 binaries, SHA-256 checksums, release notes, install instructions, and clean-machine smoke tests are published |
 
 ## Security workstream
 
 Security is a gate across every item rather than a final audit only.
+
+The dedicated security assessment is tracked in [#15](https://github.com/Tanasu0417/execlocus/issues/15).
 
 | Control | Current state | Required follow-up |
 |---|---|---|
