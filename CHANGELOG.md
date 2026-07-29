@@ -34,6 +34,9 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Agent executable candidates, terminal-session layer evidence, and content-free primary-configuration path classification
 - JSON schema version `0.4.0` for terminal-layer and agent-state provenance
 - Case-insensitive `explain <RULE_ID>` output with current trigger state, rationale, referenced evidence, and read-only actions
+- Production PowerShell, cmd, bash, and zsh resolution contracts with explicit unknown selection when parent-session evidence is unavailable
+- Terminal selected/losing candidate comparison with origin and evidence IDs
+- JSON schema version `0.5.0` for resolution method, shell, and session-completeness provenance
 
 ### Fixed
 
@@ -49,5 +52,6 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Public examples, fixtures, and reports must exclude credentials and personal identity
 - Shareable rendering removes usernames, home directories, machine names, and absolute paths
 - CSV cells that begin with formula-significant characters are escaped for spreadsheet import
+- Terminal output escapes control characters in observed identity, path, finding, and candidate values
 
 [Unreleased]: https://github.com/Tanasu0417/execlocus/commits/main

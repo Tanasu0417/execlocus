@@ -4,9 +4,9 @@ use execlocus::{
     model::{
         AgentEvidenceSource, AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind,
         AgentStateLocation, Confidence, Evidence, ExecutableCandidate, ExecutableFormat,
-        ExecutableInfo, ExecutableOrigin, Finding, ObservationStatus, PathClass, ProbeFailure,
-        Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource, Severity,
-        Topology, TopologyNode,
+        ExecutableInfo, ExecutableOrigin, ExecutableResolutionMethod, Finding, ObservationStatus,
+        PathClass, ProbeFailure, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
+        RuntimeValueSource, Severity, Topology, TopologyNode,
     },
     privacy::{RedactionContext, redact_with_context},
     renderers::{json, markdown},
@@ -27,7 +27,7 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
     let windows_git = r"C:\Users\Alice\AppData\Local\Programs\Git\cmd\git.exe";
     let linux_git = "/usr/bin/git";
     let report = Report {
-        schema_version: "0.4.0".to_owned(),
+        schema_version: "0.5.0".to_owned(),
         generated_at_unix_ms: 123,
         profile: Profile::Balanced,
         runtime: RuntimeInfo {
@@ -75,6 +75,9 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
                     origin: ExecutableOrigin::Linux,
                 },
             ],
+            resolution_method: ExecutableResolutionMethod::PathFallback,
+            resolution_shell: None,
+            shell_session_complete: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
         }],

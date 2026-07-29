@@ -40,8 +40,8 @@ Today, users often combine `which`, `where.exe`, `Get-Command`, PATH inspection,
 | Available in source | Required before v0.1 |
 |---|---|
 | Runtime, filesystem, and conservative Codex/Claude process adapters | Broader invocation/wrapper evidence without collecting command lines |
-| Executable-origin and PATH candidate foundation | Shell-accurate resolution contracts and scenario fixtures |
+| PowerShell/cmd/bash/zsh contracts plus selected, losing, and unproven external candidates | Real cmd/zsh validation without reconstructing private parent-session state |
 | Terminal, pre-alpha JSON, and automatically redacted Markdown | Signed/checksummed Windows and Linux release artifacts |
-| All eight v0.1 rules, `explain`, and privacy golden tests | Production shell-specific resolution and candidate display |
+| All eight v0.1 rules, `explain`, and privacy golden tests | Real demo and external prototype validation |
 
 See the [support matrix](SUPPORT_MATRIX.md) for the current source of truth and the [alternatives analysis](research/ALTERNATIVES.md) for how this differs from manual commands.

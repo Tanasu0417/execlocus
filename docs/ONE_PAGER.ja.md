@@ -42,9 +42,9 @@ WindowsとWSLをまたいでCodex／Claude Codeを使うと、GitやNodeがど�
 | sourceで利用可能 | v0.1までに必要 |
 |---|---|
 | runtime／filesystem分類と保守的なCodex／Claude process adapter | command lineを収集しない範囲でのwrapper／invocation根拠拡張 |
-| executable origin／PATH候補の基盤 | shellに忠実なresolution contractとscenario fixture |
+| PowerShell／cmd／bash／zsh contractとselected／losing／未確定外部candidate | 親sessionのprivate状態を復元しないreal cmd／zsh検証 |
 | terminal／pre-alpha JSON／自動匿名化Markdown | checksum付きWindows／Linux release artifact |
-| v0.1の8 rule、`explain`、privacy golden test | shell固有の本番resolutionとcandidate表示 |
+| v0.1の8 rule、`explain`、privacy golden test | 実測demoと外部prototype検証 |
 
 正確な実装状況は[対応表](SUPPORT_MATRIX.md)、手作業との違いは[代替手段の比較](research/ALTERNATIVES.md)を参照してください。
 

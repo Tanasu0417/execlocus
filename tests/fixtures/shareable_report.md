@@ -2,7 +2,7 @@
 
 > Automatically redacted before rendering. Do not use raw JSON as a public attachment.
 
-- Schema: `0.4.0`
+- Schema: `0.5.0`
 - Profile: `balanced`
 
 ## Current execution

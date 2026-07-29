@@ -32,8 +32,11 @@ AGENT
   Runtime       Wsl                            observed · certain confidence
 
 TOOLCHAIN
-  Git           /usr/bin/git                   Linux
-  Node          /mnt/c/Program Files/node.exe  Windows
+  Git           /usr/bin/git                   Linux · generic PATH fallback
+    selected  #1 /usr/bin/git  Linux · evidence executable.git.candidate.1
+  Node          /mnt/c/Program Files/node.exe  Windows · generic PATH fallback
+    selected  #1 /mnt/c/Program Files/node.exe  Windows · evidence executable.node.candidate.1
+    losing    #2 /usr/bin/node  Linux · evidence executable.node.candidate.2
 
 2 findings
   ENV002  WSL execution resolves Windows Node                   warning
@@ -121,6 +124,8 @@ Every reported value has a state:
 Missing evidence never becomes a passed check, and a visible terminal is never treated as proof of the agent runtime.
 
 Current user identity is read from the local OS process snapshot and resolved through the local OS account catalog. The launching shell is selected only when a supported shell appears in the bounded parent-process chain; otherwise the report labels the allowlisted `SHELL` or `ComSpec` value as an environment hint. The process snapshot requests only process names, parent IDs, and user IDs: command lines, process environments, working directories, roots, and executable paths are not requested. WSL detection prioritizes kernel-release evidence; a WSL environment variable without readable kernel evidence is labeled as an inference. Distribution detection uses the WSL registration name first and `/etc/os-release` as the Linux fallback. Normal execution does not invoke a command shell or access the network for these observations.
+
+PowerShell, cmd, bash, and zsh command-precedence contracts are connected when the launching shell has process-ancestry evidence. A child process cannot safely reconstruct aliases, functions, cmdlets, builtins, or shell hash state from its parent, so an incomplete parent session keeps the effective selection `Unknown` while still listing external candidates and evidence IDs. When no supported shell contract is proven, generic PATH resolution is labeled as a fallback. ExecLocus never sources profiles, scrapes command lines, or executes shell strings to force a result.
 
 The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. When a Codex Linux/WSL sandbox hides every agent ancestor behind its PID namespace, a UUID-shaped `CODEX_THREAD_ID` child-process marker provides a medium-confidence fallback. Codex injects that allowlisted marker into tool processes; ExecLocus checks its shape but never stores or renders its value. Process evidence always wins. Similar names, installation presence, arbitrary environment hints, and a wrapper visible only as `node` remain insufficient. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction. For an active high-confidence process match, ExecLocus derives only the documented primary configuration root from an allowlisted home/config location, classifies the path, and never opens its files or reads credentials.
 
@@ -217,7 +222,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] `FS001`, `FS002`, and profile-aware filesystem guidance
 - [x] Evidence-bounded `ENV001`, `ENV003`, and `ENV004` agent-boundary rules
 - [x] `explain <RULE_ID>` with current evidence, rationale, and read-only actions
-- [ ] Production shell-specific candidate resolution
+- [x] Production shell-specific contracts, explicit PATH fallback, and selected/losing candidate display
 - [ ] External prototype validation and real demo capture
 - [ ] v0.1.0 release artifacts
 

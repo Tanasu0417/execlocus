@@ -531,8 +531,8 @@ mod tests {
     use crate::model::{
         AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind, AgentStateLocation,
         Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo, ExecutableOrigin,
-        ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
-        Severity, Topology,
+        ExecutableResolutionMethod, ObservationStatus, PathClass, Profile, ProjectInfo, Report,
+        RuntimeInfo, RuntimeKind, Severity, Topology,
     };
 
     use super::{RULE_DEFINITIONS, definition, evaluate};
@@ -847,6 +847,9 @@ mod tests {
             requested: role.to_owned(),
             selected: candidates.first().cloned(),
             candidates,
+            resolution_method: ExecutableResolutionMethod::PathFallback,
+            resolution_shell: None,
+            shell_session_complete: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
         }

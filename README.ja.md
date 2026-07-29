@@ -120,6 +120,8 @@ execlocus --profile linux-first check
 
 現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。CodexのLinux／WSL sandboxがPID namespaceで親processを隠す場合に限り、Codexがtool processへ注入する`CODEX_THREAD_ID`のUUID形状をmedium-confidence fallbackとして確認します。値自体は保存・表示せず、親processの証拠を常に優先します。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
 
+PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠がある場合だけ固有のcommand precedence contractへ接続します。子processから親shellのalias、function、cmdlet、builtin、hash状態を安全・正確には復元できないため、session根拠が不完全なら実効選択は`Unknown`のままにし、外部candidateとevidence IDだけを表示します。対応shellを証明できない場合はgeneric PATH探索をfallbackと明記します。profileのsource、command lineの収集、shell文字列の実行は行いません。
+
 ## 安全性とプライバシー
 
 - 読み取り専用で、PATHや設定を変更しない
@@ -163,7 +165,7 @@ execlocus --profile linux-first check
 - [x] `FS001`／`FS002`と3 profileの実動作
 - [x] `ENV001`／`ENV003`／`ENV004`
 - [x] 現在の根拠・理由・読み取り専用提案を示す`explain <RULE_ID>`
-- [ ] shell固有candidate表示
+- [x] shell固有contract、明示的PATH fallback、selected／losing candidate表示
 - [ ] 外部prototype検証、実測demo、v0.1.0 release artifact
 
 ## 実環境での仮説検証にご協力ください

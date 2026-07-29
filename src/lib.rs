@@ -12,6 +12,7 @@ use probes::process::{
     MAX_PROCESS_ANCESTRY, RuntimeIdentityInspector, SystemRuntimeIdentityInspector,
     snapshot_failure,
 };
+use probes::shell::{ShellKind, ShellSessionSnapshot};
 
 #[must_use]
 pub fn collect_report(profile: Profile) -> Report {
@@ -95,6 +96,7 @@ fn collect_report_with_components(
     probe_failures.extend(project_result.failures);
 
     let mut executables = Vec::new();
+    let active_shell = active_shell_contract(&runtime);
     for (role, command) in [
         ("codex", "codex"),
         ("claude", "claude"),
@@ -102,12 +104,26 @@ fn collect_report_with_components(
         ("node", "node"),
         ("npm", "npm"),
     ] {
-        let result = probes::executable::probe_with_resolver(
-            context,
-            resolver,
-            role,
-            command,
-            &runtime.kind,
+        let result = active_shell.map_or_else(
+            || {
+                probes::executable::probe_with_resolver(
+                    context,
+                    resolver,
+                    role,
+                    command,
+                    &runtime.kind,
+                )
+            },
+            |shell| {
+                probes::executable::probe_with_shell_snapshot(
+                    context,
+                    role,
+                    command,
+                    &runtime.kind,
+                    shell,
+                    &ShellSessionSnapshot::unavailable(),
+                )
+            },
         );
         evidence.extend(result.evidence);
         probe_failures.extend(result.failures);
@@ -115,7 +131,7 @@ fn collect_report_with_components(
     }
 
     let mut report = Report {
-        schema_version: "0.4.0".to_owned(),
+        schema_version: "0.5.0".to_owned(),
         generated_at_unix_ms: context.now_unix_ms(),
         profile,
         runtime,
@@ -131,4 +147,69 @@ fn collect_report_with_components(
     report.topology = model::Topology::from_report(&report);
     report.findings = rules::evaluate(&report);
     report
+}
+
+fn active_shell_contract(runtime: &model::RuntimeInfo) -> Option<ShellKind> {
+    if runtime.shell_source != Some(model::RuntimeValueSource::ProcessAncestry) {
+        return None;
+    }
+    runtime
+        .shell
+        .as_deref()
+        .and_then(ShellKind::from_runtime_label)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        active_shell_contract,
+        model::{Confidence, ObservationStatus, RuntimeInfo, RuntimeKind, RuntimeValueSource},
+        probes::shell::ShellKind,
+    };
+
+    fn runtime(shell: Option<&str>, source: Option<RuntimeValueSource>) -> RuntimeInfo {
+        RuntimeInfo {
+            kind: RuntimeKind::Wsl,
+            kind_source: Some(RuntimeValueSource::KernelRelease),
+            os_name: "WSL".to_owned(),
+            distribution: Some("Synthetic Linux".to_owned()),
+            distribution_source: Some(RuntimeValueSource::OsRelease),
+            user: None,
+            user_source: None,
+            shell: shell.map(str::to_owned),
+            shell_source: source,
+            terminal: None,
+            terminal_layer: RuntimeKind::Unknown,
+            terminal_layer_status: ObservationStatus::Unavailable,
+            terminal_layer_confidence: Confidence::None,
+            terminal_layer_source: None,
+            status: ObservationStatus::Observed,
+            confidence: Confidence::Certain,
+        }
+    }
+
+    #[test]
+    fn production_shell_contract_requires_process_ancestry_evidence() {
+        assert_eq!(
+            active_shell_contract(&runtime(
+                Some("bash"),
+                Some(RuntimeValueSource::ProcessAncestry)
+            )),
+            Some(ShellKind::Bash)
+        );
+        assert_eq!(
+            active_shell_contract(&runtime(
+                Some("bash"),
+                Some(RuntimeValueSource::Environment)
+            )),
+            None
+        );
+        assert_eq!(
+            active_shell_contract(&runtime(
+                Some("unsupported-shell"),
+                Some(RuntimeValueSource::ProcessAncestry)
+            )),
+            None
+        );
+    }
 }

@@ -87,7 +87,7 @@ Global behavior:
 
 ## 5. Normalized data contract
 
-The current internal schema (`0.4.0`, still pre-alpha) represents:
+The current internal schema (`0.5.0`, still pre-alpha) represents:
 
 ```text
 Report
@@ -102,6 +102,11 @@ Report
     installations[]
     state_locations[]
   executables[]
+    resolution_method
+    resolution_shell
+    shell_session_complete
+    selected
+    candidates[]
   topology.nodes[]
   topology.edges[]
   evidence[]

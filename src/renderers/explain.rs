@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use crate::{model::Report, rules::RuleDefinition};
+use crate::{model::Report, renderers::safe::terminal_text, rules::RuleDefinition};
 
 #[must_use]
 pub fn render(report: &Report, definition: &RuleDefinition) -> String {
@@ -38,7 +38,7 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
         writeln!(output, "\nCURRENT FINDING").expect("writing to String cannot fail");
         writeln!(output, "  Severity: {:?}", finding.severity)
             .expect("writing to String cannot fail");
-        writeln!(output, "  Summary: {}", escape_terminal(&finding.summary))
+        writeln!(output, "  Summary: {}", terminal_text(&finding.summary))
             .expect("writing to String cannot fail");
 
         writeln!(output, "\nOBSERVED EVIDENCE").expect("writing to String cannot fail");
@@ -47,12 +47,12 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
                 let value = evidence
                     .value
                     .as_deref()
-                    .map_or("<value unavailable>".to_owned(), escape_terminal);
+                    .map_or("<value unavailable>".to_owned(), terminal_text);
                 writeln!(
                     output,
                     "  - {}: {} = {} [{}]",
                     evidence.id,
-                    escape_terminal(&evidence.claim),
+                    terminal_text(&evidence.claim),
                     value,
                     evidence.probe
                 )
@@ -74,12 +74,12 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
     writeln!(output, "\nREAD-ONLY SUGGESTED ACTIONS").expect("writing to String cannot fail");
     if let Some(finding) = finding {
         for action in &finding.suggested_actions {
-            writeln!(output, "  - {}", escape_terminal(action))
+            writeln!(output, "  - {}", terminal_text(action))
                 .expect("writing to String cannot fail");
         }
     } else {
         for action in definition.suggested_actions {
-            writeln!(output, "  - {}", escape_terminal(action))
+            writeln!(output, "  - {}", terminal_text(action))
                 .expect("writing to String cannot fail");
         }
     }
@@ -90,23 +90,6 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
     .expect("writing to String cannot fail");
 
     output
-}
-
-fn escape_terminal(value: &str) -> String {
-    let mut escaped = String::with_capacity(value.len());
-    for character in value.chars() {
-        match character {
-            '\n' => escaped.push_str("\\n"),
-            '\r' => escaped.push_str("\\r"),
-            '\t' => escaped.push_str("\\t"),
-            character if character.is_control() => {
-                write!(escaped, "\\u{{{:x}}}", u32::from(character))
-                    .expect("writing to String cannot fail");
-            }
-            character => escaped.push(character),
-        }
-    }
-    escaped
 }
 
 #[cfg(test)]
