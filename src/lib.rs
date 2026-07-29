@@ -1,3 +1,4 @@
+pub mod adapters;
 pub mod model;
 pub mod privacy;
 pub mod probes;
@@ -7,7 +8,10 @@ pub mod rules;
 use model::{Profile, Report};
 use probes::context::{ProbeContext, SystemProbeContext};
 use probes::executable::{ExecutableResolver, PathExecutableResolver};
-use probes::process::{RuntimeIdentityInspector, SystemRuntimeIdentityInspector};
+use probes::process::{
+    MAX_PROCESS_ANCESTRY, RuntimeIdentityInspector, SystemRuntimeIdentityInspector,
+    snapshot_failure,
+};
 
 #[must_use]
 pub fn collect_report(profile: Profile) -> Report {
@@ -39,17 +43,28 @@ fn collect_report_with_components(
     identity_inspector: Option<&dyn RuntimeIdentityInspector>,
     profile: Profile,
 ) -> Report {
-    let runtime_result = identity_inspector.map_or_else(
-        || probes::runtime::probe_with(context),
-        |inspector| probes::runtime::probe_with_inspector(context, inspector),
-    );
+    let mut identity_failures = Vec::new();
+    let identity = identity_inspector.and_then(|inspector| {
+        inspector.inspect(MAX_PROCESS_ANCESTRY).map_or_else(
+            |error| {
+                identity_failures.push(snapshot_failure(&error));
+                None
+            },
+            Some,
+        )
+    });
+    let runtime_result = probes::runtime::probe_with_identity(context, identity.as_ref());
     let runtime = runtime_result.value;
+    let agent_result = adapters::probe(&runtime, identity.as_ref());
     let project_result = probes::path::probe_project_with(context, &runtime.kind);
 
     let mut evidence = runtime_result.evidence;
+    evidence.extend(agent_result.evidence);
     evidence.extend(project_result.evidence);
 
-    let mut probe_failures = runtime_result.failures;
+    let mut probe_failures = identity_failures;
+    probe_failures.extend(runtime_result.failures);
+    probe_failures.extend(agent_result.failures);
     probe_failures.extend(project_result.failures);
 
     let mut executables = Vec::new();
@@ -67,10 +82,11 @@ fn collect_report_with_components(
     }
 
     let mut report = Report {
-        schema_version: "0.2.0".to_owned(),
+        schema_version: "0.3.0".to_owned(),
         generated_at_unix_ms: context.now_unix_ms(),
         profile,
         runtime,
+        agent: agent_result.value,
         project: project_result.value,
         executables,
         topology: model::Topology::default(),

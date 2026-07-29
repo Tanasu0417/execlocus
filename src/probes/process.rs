@@ -2,6 +2,10 @@ use std::io;
 
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind, Users, get_current_pid};
 
+use crate::model::ProbeFailure;
+
+pub const MAX_PROCESS_ANCESTRY: usize = 24;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProcessRecord {
     pub pid: u32,
@@ -12,6 +16,7 @@ pub struct ProcessRecord {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RuntimeIdentitySnapshot {
     pub user: Option<String>,
+    /// Starts with the current `ExecLocus` process and walks toward its parents.
     pub process_ancestry: Vec<ProcessRecord>,
 }
 
@@ -76,5 +81,13 @@ impl RuntimeIdentityInspector for SystemRuntimeIdentityInspector {
             user,
             process_ancestry,
         })
+    }
+}
+
+pub(crate) fn snapshot_failure(error: &io::Error) -> ProbeFailure {
+    ProbeFailure {
+        probe: "process-identity/v1".to_owned(),
+        code: "PROCESS_IDENTITY_SNAPSHOT_FAILED".to_owned(),
+        message: format!("optional process identity observation failed: {error}"),
     }
 }

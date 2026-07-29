@@ -1,7 +1,8 @@
 use std::fmt::Write;
 
 use crate::model::{
-    ExecutableOrigin, ObservationStatus, PathClass, Report, RuntimeValueSource, Severity,
+    AgentEvidenceSource, Confidence, ExecutableOrigin, ObservationStatus, PathClass, Report,
+    RuntimeValueSource, Severity,
 };
 
 #[must_use]
@@ -53,6 +54,8 @@ pub fn render(report: &Report) -> String {
         path_label(report.project.class),
     );
 
+    render_agent(&mut output, report);
+
     writeln!(output, "\nTOOLCHAIN").expect("writing to String cannot fail");
     for executable in &report.executables {
         let (path, origin) = executable
@@ -103,6 +106,29 @@ pub fn render(report: &Report) -> String {
     output
 }
 
+fn render_agent(output: &mut String, report: &Report) {
+    writeln!(output, "\nAGENT").expect("writing to String cannot fail");
+    line(
+        output,
+        "Product",
+        report
+            .agent
+            .product
+            .map_or("Unknown", crate::model::AgentProduct::label),
+        &agent_note(
+            report.agent.product_status,
+            report.agent.product_confidence,
+            report.agent.product_source,
+        ),
+    );
+    line(
+        output,
+        "Runtime",
+        &format!("{:?}", report.agent.runtime),
+        &status_confidence_note(report.agent.runtime_status, report.agent.runtime_confidence),
+    );
+}
+
 fn line(output: &mut String, key: &str, value: &str, note: &str) {
     writeln!(output, "  {key:<13} {value:<42} {note}").expect("writing to String cannot fail");
 }
@@ -115,16 +141,56 @@ fn runtime_label(report: &Report) -> String {
 }
 
 fn observation_note(status: ObservationStatus, source: Option<RuntimeValueSource>) -> String {
-    let status = match status {
-        ObservationStatus::Observed => "observed",
-        ObservationStatus::Inferred => "inferred",
-        ObservationStatus::Unavailable => "unavailable",
-        ObservationStatus::Failed => "failed",
-    };
+    let status = status_label(status);
     source.map_or_else(
         || status.to_owned(),
         |source| format!("{status} · {}", source_label(source)),
     )
+}
+
+fn agent_note(
+    status: ObservationStatus,
+    confidence: Confidence,
+    source: Option<AgentEvidenceSource>,
+) -> String {
+    let base = status_confidence_note(status, confidence);
+    source.map_or(base.clone(), |source| {
+        format!("{base} · {}", agent_source_label(source))
+    })
+}
+
+fn status_confidence_note(status: ObservationStatus, confidence: Confidence) -> String {
+    let status = status_label(status);
+    if confidence == Confidence::None {
+        status.to_owned()
+    } else {
+        format!("{status} · {} confidence", confidence_label(confidence))
+    }
+}
+
+const fn status_label(status: ObservationStatus) -> &'static str {
+    match status {
+        ObservationStatus::Observed => "observed",
+        ObservationStatus::Inferred => "inferred",
+        ObservationStatus::Unavailable => "unavailable",
+        ObservationStatus::Failed => "failed",
+    }
+}
+
+const fn confidence_label(confidence: Confidence) -> &'static str {
+    match confidence {
+        Confidence::Certain => "certain",
+        Confidence::High => "high",
+        Confidence::Medium => "medium",
+        Confidence::Low => "low",
+        Confidence::None => "none",
+    }
+}
+
+const fn agent_source_label(source: AgentEvidenceSource) -> &'static str {
+    match source {
+        AgentEvidenceSource::ProcessAncestry => "process ancestry",
+    }
 }
 
 const fn source_label(source: RuntimeValueSource) -> &'static str {
@@ -176,8 +242,8 @@ fn capitalize(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use crate::model::{
-        Confidence, ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo,
-        RuntimeKind, RuntimeValueSource, Topology,
+        AgentInfo, Confidence, ObservationStatus, PathClass, Profile, ProjectInfo, Report,
+        RuntimeInfo, RuntimeKind, RuntimeValueSource, Topology,
     };
 
     use super::render;
@@ -202,6 +268,7 @@ mod tests {
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
             },
+            agent: AgentInfo::default(),
             project: ProjectInfo {
                 path: Some("/mnt/c/demo/project".to_owned()),
                 class: PathClass::WindowsMounted,
@@ -218,6 +285,8 @@ mod tests {
         assert!(output.contains("ExecLocus"));
         assert!(output.contains("CURRENT EXECUTION"));
         assert!(output.contains("observed · kernel release"));
+        assert!(output.contains("AGENT"));
+        assert!(output.contains("Unknown"));
         assert!(output.contains("TOOLCHAIN"));
     }
 }

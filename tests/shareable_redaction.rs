@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use execlocus::{
     model::{
-        Confidence, Evidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, Finding, ObservationStatus, PathClass, ProbeFailure, Profile,
-        ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource, Severity, Topology,
-        TopologyNode,
+        AgentEvidenceSource, AgentInfo, AgentProduct, Confidence, Evidence, ExecutableCandidate,
+        ExecutableFormat, ExecutableInfo, ExecutableOrigin, Finding, ObservationStatus, PathClass,
+        ProbeFailure, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource,
+        Severity, Topology, TopologyNode,
     },
     privacy::{RedactionContext, redact_with_context},
     renderers::{json, markdown},
@@ -26,7 +26,7 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
     let windows_git = r"C:\Users\Alice\AppData\Local\Programs\Git\cmd\git.exe";
     let linux_git = "/usr/bin/git";
     let report = Report {
-        schema_version: "0.2.0".to_owned(),
+        schema_version: "0.3.0".to_owned(),
         generated_at_unix_ms: 123,
         profile: Profile::Balanced,
         runtime: RuntimeInfo {
@@ -42,6 +42,15 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
             terminal: Some("WORKSTATION-42 terminal".to_owned()),
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
+        },
+        agent: AgentInfo {
+            product: Some(AgentProduct::Codex),
+            product_status: ObservationStatus::Inferred,
+            product_confidence: Confidence::High,
+            product_source: Some(AgentEvidenceSource::ProcessAncestry),
+            runtime: RuntimeKind::Wsl,
+            runtime_status: ObservationStatus::Observed,
+            runtime_confidence: Confidence::Certain,
         },
         project: ProjectInfo {
             path: Some(private_project.to_owned()),
@@ -189,6 +198,8 @@ fn redacted_json_contains_no_identity_or_absolute_path() {
     assert!(output.contains("[redacted-machine]"));
     assert!(output.contains("[windows-mounted-project]"));
     assert!(output.contains("[windows-executable:git:1]"));
+    assert!(output.contains("\"product\": \"codex\""));
+    assert!(output.contains("\"from\": \"agent.current\""));
 }
 
 #[test]

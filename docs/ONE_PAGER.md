@@ -4,7 +4,7 @@
 
 ExecLocus is a local, read-only CLI for developers who use AI coding agents across Windows and WSL. It explains the current execution context, which executable would be selected, where the project is stored, and the evidence behind each conclusion.
 
-**Status:** pre-alpha source prototype. No public binary is available yet. Current-context resolution does not prove what an agent previously executed; that claim requires separate invocation or process evidence.
+**Status:** pre-alpha source prototype. No public binary is available yet. Exact Codex/Claude ancestor-process evidence can identify the agent family and runtime; current-context command resolution alone does not prove what an agent previously executed.
 
 ## The problem
 
@@ -39,9 +39,9 @@ Today, users often combine `which`, `where.exe`, `Get-Command`, PATH inspection,
 
 | Available in source | Required before v0.1 |
 |---|---|
-| Runtime and filesystem classification | Codex and Claude invocation/process adapters |
+| Runtime, filesystem, and conservative Codex/Claude process adapters | Broader invocation/wrapper evidence without collecting command lines |
 | Executable-origin and PATH candidate foundation | Shell-accurate resolution contracts and scenario fixtures |
-| Terminal and pre-alpha JSON output | Redacted Markdown output and golden privacy tests |
-| Initial deterministic rules | Signed/checksummed Windows and Linux release artifacts |
+| Terminal, pre-alpha JSON, and automatically redacted Markdown | Signed/checksummed Windows and Linux release artifacts |
+| Initial deterministic rules and privacy golden tests | Remaining v0.1 rules and `explain` command |
 
 See the [support matrix](SUPPORT_MATRIX.md) for the current source of truth and the [alternatives analysis](research/ALTERNATIVES.md) for how this differs from manual commands.

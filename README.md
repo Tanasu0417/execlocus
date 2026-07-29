@@ -8,7 +8,7 @@ It answers a deceptively simple question:
 
 > In this context, would the command resolve to Windows, WSL, or a mixture of both—and what evidence supports that result?
 
-> **Project status:** pre-alpha prototype. Runtime, path, executable-origin, terminal, JSON, and initial rule foundations are implemented; no release is available yet.
+> **Project status:** pre-alpha prototype. Runtime, conservative Codex/Claude process adapters, path, executable-origin, terminal, JSON, shareable-report redaction, and initial rule foundations are implemented; no release is available yet.
 
 ## What the first screen will show
 
@@ -26,8 +26,8 @@ CURRENT EXECUTION
   Project       /mnt/c/Users/dev/project       observed · Windows-mounted
 
 AGENT
-  Product       Claude Code                    inferred · high confidence
-  Executable    /usr/local/bin/claude          observed · Linux
+  Product       Claude Code                    inferred · high confidence · process ancestry
+  Runtime       Wsl                            observed · certain confidence
 
 TOOLCHAIN
   Git           /usr/bin/git                   Linux
@@ -111,6 +111,8 @@ Missing evidence never becomes a passed check, and a visible terminal is never t
 
 Current user identity is read from the local OS process snapshot and resolved through the local OS account catalog. The launching shell is selected only when a supported shell appears in the bounded parent-process chain; otherwise the report labels the allowlisted `SHELL` or `ComSpec` value as an environment hint. The process snapshot requests only process names, parent IDs, and user IDs: command lines, process environments, working directories, roots, and executable paths are not requested. WSL detection prioritizes kernel-release evidence; a WSL environment variable without readable kernel evidence is labeled as an inference. Distribution detection uses the WSL registration name first and `/etc/os-release` as the Linux fallback. Normal execution does not invoke a command shell or access the network for these observations.
 
+The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. Similar names, installation presence, and a wrapper visible only as `node` remain `Unknown`. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction.
+
 ## Initial diagnostic rules
 
 | Rule | Detects |
@@ -133,7 +135,7 @@ Rules are read-only. Suggestions explain options but never modify the machine.
 | Host | Windows 11 |
 | Linux layer | WSL2, with Ubuntu 24.04 as the primary validation target |
 | Shells | PowerShell, cmd, bash, zsh |
-| Agents | Codex CLI, Claude Code; evidence-limited Codex Desktop detection |
+| Agents | Codex process family and Claude Code where exact ancestor-process evidence exists; otherwise `Unknown` |
 | Tools | Agent executable, Git, Node.js, npm, shell |
 | Output | Terminal, JSON, Markdown, redacted Markdown |
 
@@ -169,6 +171,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [Shareable redaction validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
+- [Agent adapter validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md)
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)
@@ -188,8 +191,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Executable-origin and filesystem classification
 - [x] Terminal and JSON renderers
 - [x] Initial deterministic rules
-- [ ] Codex and Claude adapters
-- [ ] Redacted Markdown reports
+- [x] Conservative Codex and Claude process adapters
+- [x] Redacted Markdown reports
 - [x] Windows and Linux CI workflow
 - [ ] v0.1.0 release artifacts
 

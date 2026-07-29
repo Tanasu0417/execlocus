@@ -6,7 +6,7 @@
 
 WindowsとWSLをまたいでCodex／Claude Codeを使うと、GitやNodeがどちら側の実行ファイルへ解決されるか分かりにくくなります。ExecLocusは、selected candidate、alternative、projectのfilesystem境界と判定根拠を、local・read-onlyの1画面へまとめるCLIです。
 
-**現在の状態:** pre-alphaのsource prototypeで、公開binaryはまだありません。「現在のコンテキストなら選ばれる実行ファイル」と「エージェントが過去に実行した実行ファイル」は別物です。後者はprocessまたはinvocationの証拠がある場合だけ表示します。
+**現在の状態:** pre-alphaのsource prototypeで、公開binaryはまだありません。Codex／Claudeの完全一致する親processがある場合はagent familyとruntimeを表示できますが、「現在のコンテキストなら選ばれる実行ファイル」だけを過去の実行根拠にはしません。
 
 ## 解決する問題
 
@@ -41,13 +41,13 @@ WindowsとWSLをまたいでCodex／Claude Codeを使うと、GitやNodeがど�
 
 | sourceで利用可能 | v0.1までに必要 |
 |---|---|
-| runtime／filesystem分類 | Codex／Claudeのinvocation・process adapter |
+| runtime／filesystem分類と保守的なCodex／Claude process adapter | command lineを収集しない範囲でのwrapper／invocation根拠拡張 |
 | executable origin／PATH候補の基盤 | shellに忠実なresolution contractとscenario fixture |
-| terminal／pre-alpha JSON | 秘匿化Markdownとprivacy golden test |
-| 初期の決定論的rule | checksum付きWindows／Linux release artifact |
+| terminal／pre-alpha JSON／自動匿名化Markdown | checksum付きWindows／Linux release artifact |
+| 初期の決定論的ruleとprivacy golden test | 残りのv0.1 ruleと`explain` command |
 
 正確な実装状況は[対応表](SUPPORT_MATRIX.md)、手作業との違いは[代替手段の比較](research/ALTERNATIVES.md)を参照してください。
 
 ## 現在お願いしたいこと
 
-公開binaryの利用募集ではなく、Windows／WSLで最近困った経験と、現在使っている確認方法を調査しています。[需要検証計画](research/X_POST_STRATEGY.md)を参照してください。自動秘匿化が完成するまで、公開Issueやreplyへ生の診断出力を貼らないでください。
+公開binaryの利用募集ではなく、Windows／WSLで最近困った経験と、現在使っている確認方法を調査しています。[需要検証計画](research/X_POST_STRATEGY.md)を参照してください。公開Issueやreplyへは自動匿名化Markdownまたは`--redact`付きJSONだけを使用し、生の診断出力は貼らないでください。

@@ -176,8 +176,7 @@ CURRENT EXECUTION
 
 AGENT
   Product       Claude Code                    inferred · high confidence
-  Executable    /usr/local/bin/claude          observed · Linux
-  Config        /home/dev/.claude              observed · redacted when shared
+  Runtime       WSL                            observed · certain confidence
 
 TOOLCHAIN
   Git           /usr/bin/git                   Linux

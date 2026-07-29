@@ -1,4 +1,4 @@
-use std::{io, path::Path};
+use std::path::Path;
 
 use crate::model::{
     Confidence, Evidence, ObservationStatus, ProbeFailure, ProbeResult, RuntimeInfo, RuntimeKind,
@@ -7,12 +7,10 @@ use crate::model::{
 use crate::probes::{
     context::{HostPlatform, ProbeContext, SystemProbeContext},
     process::{
-        ProcessRecord, RuntimeIdentityInspector, RuntimeIdentitySnapshot,
-        SystemRuntimeIdentityInspector,
+        MAX_PROCESS_ANCESTRY, ProcessRecord, RuntimeIdentityInspector, RuntimeIdentitySnapshot,
+        SystemRuntimeIdentityInspector, snapshot_failure,
     },
 };
-
-const MAX_PROCESS_ANCESTRY: usize = 12;
 
 struct DetectedValue {
     value: String,
@@ -41,7 +39,18 @@ pub fn probe_with<C>(context: &C) -> ProbeResult<RuntimeInfo>
 where
     C: ProbeContext + ?Sized,
 {
-    probe_internal(context, None)
+    probe_with_identity(context, None)
+}
+
+#[must_use]
+pub fn probe_with_identity<C>(
+    context: &C,
+    identity: Option<&RuntimeIdentitySnapshot>,
+) -> ProbeResult<RuntimeInfo>
+where
+    C: ProbeContext + ?Sized,
+{
+    probe_internal(context, identity, Vec::new())
 }
 
 #[must_use]
@@ -52,12 +61,16 @@ pub fn probe_with_inspector<C>(
 where
     C: ProbeContext + ?Sized,
 {
-    probe_internal(context, Some(inspector))
+    match inspector.inspect(MAX_PROCESS_ANCESTRY) {
+        Ok(identity) => probe_internal(context, Some(&identity), Vec::new()),
+        Err(error) => probe_internal(context, None, vec![snapshot_failure(&error)]),
+    }
 }
 
 fn probe_internal<C>(
     context: &C,
-    inspector: Option<&dyn RuntimeIdentityInspector>,
+    identity: Option<&RuntimeIdentitySnapshot>,
+    failures: Vec<ProbeFailure>,
 ) -> ProbeResult<RuntimeInfo>
 where
     C: ProbeContext + ?Sized,
@@ -70,16 +83,8 @@ where
         RuntimeKind::Unknown => context.os_name(),
     };
     let distribution = detect_distribution(context, runtime.kind);
-    let mut failures = Vec::new();
-    let identity = inspector.and_then(|inspector| match inspector.inspect(MAX_PROCESS_ANCESTRY) {
-        Ok(snapshot) => Some(snapshot),
-        Err(error) => {
-            failures.push(identity_failure("RUNTIME_IDENTITY_SNAPSHOT_FAILED", &error));
-            None
-        }
-    });
-    let user = detect_user(context, identity.as_ref());
-    let shell = detect_shell(context, identity.as_ref());
+    let user = detect_user(context, identity);
+    let shell = detect_shell(context, identity);
     let terminal = detect_terminal(context);
 
     let evidence = build_runtime_evidence(
@@ -374,14 +379,6 @@ const fn source_kind(source: RuntimeValueSource) -> &'static str {
     }
 }
 
-fn identity_failure(code: &str, error: &io::Error) -> ProbeFailure {
-    ProbeFailure {
-        probe: "runtime-identity/v1".to_owned(),
-        code: code.to_owned(),
-        message: format!("optional runtime identity observation failed: {error}"),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{detect_runtime, kernel_mentions_microsoft, known_shell, probe_with_inspector};
@@ -521,7 +518,7 @@ mod tests {
             Some(RuntimeValueSource::Environment)
         );
         assert_eq!(result.failures.len(), 1);
-        assert_eq!(result.failures[0].code, "RUNTIME_IDENTITY_SNAPSHOT_FAILED");
+        assert_eq!(result.failures[0].code, "PROCESS_IDENTITY_SNAPSHOT_FAILED");
     }
 
     #[test]
