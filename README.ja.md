@@ -119,6 +119,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [製品仕様](PRODUCT_SPEC.md)
 - [診断ルール仕様](RULES.md)
 - [MVPスコープ](docs/MVP_SCOPE.md)
+- [v0.1提供ロードマップ](docs/V0_1_ROADMAP.md)
 - [初期ユースケース仕様](docs/USE_CASES.md)
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
@@ -144,6 +145,10 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
 - [x] Codex/Claude adapter
 - [x] 自動匿名化Markdownレポートと`--redact` JSON
+- [ ] `FS001`／`FS002`と3 profileの実動作
+- [ ] `ENV001`／`ENV003`／`ENV004`
+- [ ] `explain <RULE_ID>`とshell固有candidate表示
+- [ ] 外部prototype検証、実測demo、v0.1.0 release artifact
 
 ## 実環境での仮説検証にご協力ください
 

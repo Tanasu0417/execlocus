@@ -113,18 +113,18 @@ Current user identity is read from the local OS process snapshot and resolved th
 
 The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. When a Codex Linux/WSL sandbox hides every agent ancestor behind its PID namespace, a UUID-shaped `CODEX_THREAD_ID` child-process marker provides a medium-confidence fallback. Codex injects that allowlisted marker into tool processes; ExecLocus checks its shape but never stores or renders its value. Process evidence always wins. Similar names, installation presence, arbitrary environment hints, and a wrapper visible only as `node` remain insufficient. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction.
 
-## Initial diagnostic rules
+## Diagnostic rule coverage
 
-| Rule | Detects |
-|---|---|
-| `ENV001` | Visible terminal and observed agent runtime differ |
-| `ENV002` | WSL resolves a Windows executable for a core tool |
-| `ENV003` | The same agent is installed in Windows and WSL |
-| `ENV004` | Agent state or configuration crosses OS layers |
-| `FS001` | A WSL workflow uses a Windows-mounted path |
-| `FS002` | A share-first workflow uses a WSL-native project |
-| `PATH001` | PATH chooses a cross-layer executable over a native candidate |
-| `GIT001` | Git and the project use incompatible OS layers |
+| Rule | Detects | Current status |
+|---|---|---|
+| `ENV001` | Visible terminal and observed agent runtime differ | Planned for v0.1 |
+| `ENV002` | WSL resolves a Windows executable for a core tool | Implemented |
+| `ENV003` | The same agent is installed in Windows and WSL | Planned for v0.1 |
+| `ENV004` | Agent state or configuration crosses OS layers | Planned for v0.1 |
+| `FS001` | A WSL workflow uses a Windows-mounted path | Planned for v0.1 |
+| `FS002` | A share-first workflow uses a WSL-native project | Planned for v0.1 |
+| `PATH001` | PATH chooses a cross-layer executable over a native candidate | Implemented |
+| `GIT001` | Git and the project use incompatible OS layers | Implemented |
 
 Rules are read-only. Suggestions explain options but never modify the machine.
 
@@ -169,6 +169,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Product specification](https://github.com/Tanasu0417/execlocus/blob/main/PRODUCT_SPEC.md)
 - [Diagnostic rule specification](https://github.com/Tanasu0417/execlocus/blob/main/RULES.md)
 - [MVP scope](https://github.com/Tanasu0417/execlocus/blob/main/docs/MVP_SCOPE.md)
+- [v0.1 delivery roadmap](https://github.com/Tanasu0417/execlocus/blob/main/docs/V0_1_ROADMAP.md)
 - [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
@@ -198,6 +199,9 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Conservative Codex and Claude process adapters
 - [x] Redacted Markdown reports
 - [x] Windows and Linux CI workflow
+- [ ] Remaining profile-aware and agent-boundary rules
+- [ ] `explain <RULE_ID>` and production shell-specific candidate resolution
+- [ ] External prototype validation and real demo capture
 - [ ] v0.1.0 release artifacts
 
 ## Help validate the product hypothesis
