@@ -229,15 +229,66 @@ pub struct ExecutableCandidate {
     pub origin: ExecutableOrigin,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolchainState {
+    NotFound,
+    CandidatesUnconfirmed,
+    Selected,
+    ProbeFailed,
+}
+
+impl ToolchainState {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::NotFound => "Not found",
+            Self::CandidatesUnconfirmed => "Candidates found / selection unconfirmed",
+            Self::Selected => "Selected",
+            Self::ProbeFailed => "Probe failed",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecutableSelectionKind {
+    Alias,
+    Function,
+    Cmdlet,
+    Builtin,
+    ExternalScript,
+    Application,
+}
+
+impl ExecutableSelectionKind {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Alias => "alias",
+            Self::Function => "function",
+            Self::Cmdlet => "cmdlet",
+            Self::Builtin => "builtin",
+            Self::ExternalScript => "external script",
+            Self::Application => "application",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct ExecutableInfo {
     pub role: String,
     pub requested: String,
+    pub selection_state: ToolchainState,
     pub selected: Option<ExecutableCandidate>,
+    pub selected_kind: Option<ExecutableSelectionKind>,
+    pub selected_binding: Option<String>,
     pub candidates: Vec<ExecutableCandidate>,
     pub resolution_method: ExecutableResolutionMethod,
     pub resolution_shell: Option<String>,
     pub shell_session_complete: Option<bool>,
+    pub selection_reason: String,
+    pub verification_command: String,
     pub status: ObservationStatus,
     pub confidence: Confidence,
 }
@@ -282,6 +333,7 @@ pub struct Finding {
     pub summary: String,
     pub evidence_ids: Vec<String>,
     pub suggested_actions: Vec<String>,
+    pub verification_steps: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]

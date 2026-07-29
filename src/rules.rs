@@ -1,6 +1,6 @@
 use crate::model::{
     AgentStateLocation, Confidence, ExecutableOrigin, Finding, ObservationStatus, PathClass,
-    Profile, Report, RuntimeKind, Severity,
+    Profile, Report, RuntimeKind, Severity, ToolchainState,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -130,6 +130,22 @@ pub const RULE_DEFINITIONS: &[RuleDefinition] = &[
             "Review line endings, file modes, hooks, and credential helpers before switching.",
         ],
     },
+    RuleDefinition {
+        id: "TOOL001",
+        title: "npm is selected while Node is not found",
+        category: "toolchain",
+        default_severity: "warning",
+        rationale: "npm launchers can be wrapper-specific, while JavaScript tools that invoke node directly still require a resolvable Node command.",
+        required_evidence: &[
+            "selected npm command",
+            "complete shell evidence with Node not found",
+        ],
+        suggested_actions: &[
+            "Run the independent npm and Node verification commands in the same shell.",
+            "Keep the wrapper only if both npm and the intended JavaScript workflow succeed.",
+            "Otherwise initialize or install Node for that shell before changing unrelated PATH entries.",
+        ],
+    },
 ];
 
 #[must_use]
@@ -150,6 +166,7 @@ pub fn evaluate(report: &Report) -> Vec<Finding> {
     evaluate_env002(report, &mut findings);
     evaluate_path001(report, &mut findings);
     evaluate_git001(report, &mut findings);
+    evaluate_tool001(report, &mut findings);
     findings.sort_by(|left, right| {
         right
             .severity
@@ -190,6 +207,10 @@ fn evaluate_env001(report: &Report, findings: &mut Vec<Finding>) {
             "Compare resolved Git, Node, shell, and project paths before changing configuration."
                 .to_owned(),
             "Use a structured report to inspect the relationship evidence.".to_owned(),
+        ],
+        verification_steps: vec![
+            "Run the Toolchain verification commands in both the visible terminal and agent execution context, then rerun ExecLocus."
+                .to_owned(),
         ],
     });
 }
@@ -251,6 +272,10 @@ fn evaluate_env003(report: &Report, findings: &mut Vec<Finding>) {
                 "Keep both installations when both workflows are intentional.".to_owned(),
                 "Remove or deprioritize one only after confirming the active workflow.".to_owned(),
             ],
+            verification_steps: vec![format!(
+                "Run the {} verification command shown in Toolchain from both Windows and WSL, then rerun ExecLocus.",
+                installation.product.label()
+            )],
         });
     }
 }
@@ -295,6 +320,10 @@ fn evaluate_env004(report: &Report, findings: &mut Vec<Finding>) {
                 "Share only configuration files documented as portable by the agent vendor."
                     .to_owned(),
                 "Back up state before manually relocating it.".to_owned(),
+            ],
+            verification_steps: vec![
+                "Rerun ExecLocus after changing the configuration location and confirm ENV004 is absent."
+                    .to_owned(),
             ],
         });
     }
@@ -376,6 +405,10 @@ fn evaluate_fs001(report: &Report, findings: &mut Vec<Finding>) {
             "profile.selected".to_owned(),
         ],
         suggested_actions,
+        verification_steps: vec![
+            "Rerun ExecLocus with the same profile after changing project or cache placement."
+                .to_owned(),
+        ],
     });
 }
 
@@ -399,6 +432,10 @@ fn evaluate_fs002(report: &Report, findings: &mut Vec<Finding>) {
                 .to_owned(),
             r"Access the project from Windows through its \\wsl.localhost UNC path.".to_owned(),
             "Move it only if a required Windows application cannot use the UNC path reliably."
+                .to_owned(),
+        ],
+        verification_steps: vec![
+            "Rerun ExecLocus with the share-first profile after changing the project location."
                 .to_owned(),
         ],
     });
@@ -442,6 +479,10 @@ fn evaluate_env002(report: &Report, findings: &mut Vec<Finding>) {
                     executable.role
                 ),
             ],
+            verification_steps: vec![format!(
+                "Run `{}` in the same shell, then rerun ExecLocus.",
+                executable.verification_command
+            )],
         });
     }
 }
@@ -486,17 +527,23 @@ fn evaluate_path001(report: &Report, findings: &mut Vec<Finding>) {
                 "Review PATH order for the active shell before changing configuration.".to_owned(),
                 "Use an explicit executable path in reproducible automation.".to_owned(),
             ],
+            verification_steps: vec![format!(
+                "Run `{}` in the same shell, then rerun ExecLocus.",
+                executable.verification_command
+            )],
         });
     }
 }
 
 fn evaluate_git001(report: &Report, findings: &mut Vec<Finding>) {
-    let Some(git) = report
+    let Some(git_info) = report
         .executables
         .iter()
         .find(|executable| executable.role == "git")
-        .and_then(|executable| executable.selected.as_ref())
     else {
+        return;
+    };
+    let Some(git) = git_info.selected.as_ref() else {
         return;
     };
 
@@ -523,6 +570,56 @@ fn evaluate_git001(report: &Report, findings: &mut Vec<Finding>) {
             "Review line endings, file modes, hooks, and credential helpers before switching."
                 .to_owned(),
         ],
+        verification_steps: vec![format!(
+            "Run `{}` in the same shell, then rerun ExecLocus.",
+            git_info.verification_command
+        )],
+    });
+}
+
+fn evaluate_tool001(report: &Report, findings: &mut Vec<Finding>) {
+    let Some(npm) = report
+        .executables
+        .iter()
+        .find(|executable| executable.role == "npm")
+    else {
+        return;
+    };
+    let Some(node) = report
+        .executables
+        .iter()
+        .find(|executable| executable.role == "node")
+    else {
+        return;
+    };
+    if npm.selection_state != ToolchainState::Selected
+        || node.selection_state != ToolchainState::NotFound
+    {
+        return;
+    }
+
+    findings.push(Finding {
+        id: "TOOL001".to_owned(),
+        title: "npm is selected while Node is not found".to_owned(),
+        severity: Severity::Warning,
+        summary: "npm resolves in this shell, but Node does not. Direct Node commands and JavaScript tools that require node on PATH may fail even if this npm wrapper starts."
+            .to_owned(),
+        evidence_ids: vec![
+            "executable.npm".to_owned(),
+            "executable.node.resolution".to_owned(),
+        ],
+        suggested_actions: vec![
+            "Run the independent npm and Node verification commands in the same shell."
+                .to_owned(),
+            "Keep the wrapper only if both npm and the intended JavaScript workflow succeed."
+                .to_owned(),
+            "Otherwise initialize or install Node for that shell before changing unrelated PATH entries."
+                .to_owned(),
+        ],
+        verification_steps: vec![format!(
+            "Run `{}` and `{}`, then rerun ExecLocus.",
+            npm.verification_command, node.verification_command
+        )],
     });
 }
 
@@ -531,8 +628,8 @@ mod tests {
     use crate::model::{
         AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind, AgentStateLocation,
         Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo, ExecutableOrigin,
-        ExecutableResolutionMethod, ObservationStatus, PathClass, Profile, ProjectInfo, Report,
-        RuntimeInfo, RuntimeKind, Severity, Topology,
+        ExecutableResolutionMethod, ExecutableSelectionKind, ObservationStatus, PathClass, Profile,
+        ProjectInfo, Report, RuntimeInfo, RuntimeKind, Severity, ToolchainState, Topology,
     };
 
     use super::{RULE_DEFINITIONS, definition, evaluate};
@@ -549,6 +646,7 @@ mod tests {
             ids,
             std::collections::HashSet::from([
                 "ENV001", "ENV002", "ENV003", "ENV004", "FS001", "FS002", "PATH001", "GIT001",
+                "TOOL001",
             ])
         );
         assert_eq!(definition("env002").map(|item| item.id), Some("ENV002"));
@@ -845,13 +943,18 @@ mod tests {
         ExecutableInfo {
             role: role.to_owned(),
             requested: role.to_owned(),
+            selection_state: ToolchainState::Selected,
             selected: candidates.first().cloned(),
+            selected_kind: Some(ExecutableSelectionKind::Application),
+            selected_binding: None,
             candidates,
             resolution_method: ExecutableResolutionMethod::PathFallback,
             resolution_shell: None,
             shell_session_complete: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
+            selection_reason: "PATH order selected this candidate.".to_owned(),
+            verification_command: format!("type -a -- {role}"),
         }
     }
 
@@ -884,6 +987,42 @@ mod tests {
             )],
         ));
         assert!(findings.iter().any(|finding| finding.id == "PATH001"));
+    }
+
+    #[test]
+    fn tool001_requires_selected_npm_and_certainly_missing_node() {
+        let npm = executable("npm", ExecutableOrigin::Linux, &[]);
+        let mut node = executable("node", ExecutableOrigin::Linux, &[]);
+        node.selection_state = ToolchainState::NotFound;
+        node.selected = None;
+        node.selected_kind = None;
+        node.candidates.clear();
+
+        let missing_node_report = report(
+            RuntimeKind::Wsl,
+            PathClass::WindowsMounted,
+            vec![npm, node.clone()],
+        );
+        let finding = evaluate(&missing_node_report)
+            .into_iter()
+            .find(|item| item.id == "TOOL001")
+            .expect("missing Node should be actionable when npm is selected");
+        assert_eq!(finding.severity, Severity::Warning);
+        assert!(finding.summary.contains("Direct Node commands"));
+        assert!(!finding.verification_steps.is_empty());
+
+        node.selection_state = ToolchainState::CandidatesUnconfirmed;
+        node.candidates.push(ExecutableCandidate {
+            path: "/usr/bin/node".to_owned(),
+            format: ExecutableFormat::Elf,
+            origin: ExecutableOrigin::Linux,
+        });
+        let uncertain = report(
+            RuntimeKind::Wsl,
+            PathClass::WindowsMounted,
+            vec![executable("npm", ExecutableOrigin::Linux, &[]), node],
+        );
+        assert!(!evaluate(&uncertain).iter().any(|item| item.id == "TOOL001"));
     }
 
     #[test]

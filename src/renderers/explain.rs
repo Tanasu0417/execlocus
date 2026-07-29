@@ -71,6 +71,13 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
         .expect("writing to String cannot fail");
     }
 
+    if let Some(finding) = finding {
+        writeln!(output, "\nREVERIFICATION").expect("writing to String cannot fail");
+        for step in &finding.verification_steps {
+            writeln!(output, "  - {}", terminal_text(step)).expect("writing to String cannot fail");
+        }
+    }
+
     writeln!(output, "\nREAD-ONLY SUGGESTED ACTIONS").expect("writing to String cannot fail");
     if let Some(finding) = finding {
         for action in &finding.suggested_actions {
@@ -158,6 +165,7 @@ mod tests {
             summary: "Synthetic summary".to_owned(),
             evidence_ids: vec!["project.path".to_owned()],
             suggested_actions: vec!["Keep the intentional shared path.".to_owned()],
+            verification_steps: vec!["Rerun ExecLocus after the change.".to_owned()],
         };
 
         let output = render(&report(vec![finding]), definition("FS001").unwrap());

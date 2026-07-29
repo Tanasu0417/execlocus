@@ -37,6 +37,11 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Production PowerShell, cmd, bash, and zsh resolution contracts with explicit unknown selection when parent-session evidence is unavailable
 - Terminal selected/losing candidate comparison with origin and evidence IDs
 - JSON schema version `0.5.0` for resolution method, shell, and session-completeness provenance
+- Four distinct toolchain states with selected binding kind, candidate details, selection reason, and independent verification commands
+- Bounded PowerShell and bash current-session snapshots in the local validation wrappers, without alias expansions or function bodies
+- Finding-level recommended actions and reverification steps in Markdown and JSON
+- `TOOL001` for a selected npm launcher with no Node command in the same complete shell snapshot
+- JSON schema version `0.6.0` for toolchain selection and reverification provenance
 - Zero-cost cargo-deny gate for RustSec advisories, licenses, sources, wildcard requirements, and duplicate dependencies
 - v0.1 threat model and privacy-safe security assessment
 - Local interactive concept demo, 60-second caption animatic, original faceless otter silhouette, and Japanese introduction deck

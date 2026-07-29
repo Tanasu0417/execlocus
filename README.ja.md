@@ -122,7 +122,7 @@ execlocus --profile linux-first check
 
 現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。CodexのLinux／WSL sandboxがPID namespaceで親processを隠す場合に限り、Codexがtool processへ注入する`CODEX_THREAD_ID`のUUID形状をmedium-confidence fallbackとして確認します。値自体は保存・表示せず、親processの証拠を常に優先します。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
 
-PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠がある場合だけ固有のcommand precedence contractへ接続します。子processから親shellのalias、function、cmdlet、builtin、hash状態を安全・正確には復元できないため、session根拠が不完全なら実効選択は`Unknown`のままにし、外部candidateとevidence IDだけを表示します。対応shellを証明できない場合はgeneric PATH探索をfallbackと明記します。profileのsource、command lineの収集、shell文字列の実行は行いません。
+PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠がある場合だけ固有のcommand precedence contractへ接続します。実機確認用wrapperは、function本体やalias展開を含まない上限付きのcurrent-session snapshotを渡します。snapshotがない場合は勝者を推測せず、外部candidateを`Candidates found / selection unconfirmed`と表示します。`Not found`、`Candidates found / selection unconfirmed`、`Selected`、`Probe failed`を分離し、候補の由来・形式・理由・独立確認commandを表示します。対応shellを証明できない場合はgeneric PATH探索をfallbackと明記します。profileのsource、command lineの収集、shell文字列の実行は行いません。
 
 ## 安全性とプライバシー
 
@@ -149,6 +149,7 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [共有用匿名化の検証記録](docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [Windows Claude Code／WSL Codex実測](docs/validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md)
+- [同一DocumentsプロジェクトのWindows／WSL toolchain実測](docs/validation/TOOLCHAIN_SELECTION_2026-07-30.md)
 - [1ページ製品紹介](docs/ONE_PAGER.ja.md)
 - [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
 - [絵コンテ・撮影scenario](docs/demo/README.md)
@@ -176,6 +177,7 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - [x] `ENV001`／`ENV003`／`ENV004`
 - [x] 現在の根拠・理由・読み取り専用提案を示す`explain <RULE_ID>`
 - [x] shell固有contract、明示的PATH fallback、selected／losing candidate表示
+- [x] toolchainの4状態、候補詳細、影響・推奨対応・再検証、および`TOOL001`
 - [ ] 外部prototype検証、実測demo、v0.1.0 release artifact
 
 ## 実環境での仮説検証にご協力ください

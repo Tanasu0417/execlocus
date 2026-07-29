@@ -69,9 +69,42 @@ pub fn redact_with_context(report: &Report, context: &dyn RedactionContext) -> R
 
     redact_agent_locations(&mut redacted);
 
-    for executable in &mut redacted.executables {
-        executable.role = redact_text(&executable.role, &secrets);
-        executable.requested = redact_path_hint(&executable.requested, &secrets);
+    redact_executables(&mut redacted, &secrets);
+    redact_evidence(&mut redacted, &secrets);
+
+    for failure in &mut redacted.probe_failures {
+        failure.probe = redact_text(&failure.probe, &secrets);
+        failure.code = redact_text(&failure.code, &secrets);
+        "optional probe details omitted from shareable report".clone_into(&mut failure.message);
+    }
+
+    redacted.topology = Topology::from_report(&redacted);
+    redacted.findings = rules::evaluate(&redacted);
+    for finding in &mut redacted.findings {
+        finding.title = redact_free_text(&finding.title, &secrets);
+        finding.summary = redact_free_text(&finding.summary, &secrets);
+        for action in &mut finding.suggested_actions {
+            *action = redact_free_text(action, &secrets);
+        }
+        for step in &mut finding.verification_steps {
+            *step = redact_free_text(step, &secrets);
+        }
+    }
+
+    redacted
+}
+
+fn redact_executables(report: &mut Report, secrets: &[Secret]) {
+    for executable in &mut report.executables {
+        executable.role = redact_text(&executable.role, secrets);
+        executable.requested = redact_path_hint(&executable.requested, secrets);
+        executable.selected_binding = executable
+            .selected_binding
+            .as_deref()
+            .map(|value| redact_path_hint(value, secrets));
+        executable.selection_reason = redact_free_text(&executable.selection_reason, secrets);
+        executable.verification_command =
+            redact_free_text(&executable.verification_command, secrets);
         let selected_path = executable
             .selected
             .as_ref()
@@ -96,16 +129,18 @@ pub fn redact_with_context(report: &Report, context: &dyn RedactionContext) -> R
                 })
             });
     }
+}
 
-    for evidence in &mut redacted.evidence {
-        evidence.id = redact_text(&evidence.id, &secrets);
-        evidence.probe = redact_text(&evidence.probe, &secrets);
-        evidence.kind = redact_text(&evidence.kind, &secrets);
-        evidence.claim = redact_free_text(&evidence.claim, &secrets);
+fn redact_evidence(report: &mut Report, secrets: &[Secret]) {
+    for evidence in &mut report.evidence {
+        evidence.id = redact_text(&evidence.id, secrets);
+        evidence.probe = redact_text(&evidence.probe, secrets);
+        evidence.kind = redact_text(&evidence.kind, secrets);
+        evidence.claim = redact_free_text(&evidence.claim, secrets);
         evidence.value = match (evidence.sensitive, evidence.id.as_str()) {
             (true, "runtime.user") => Some(REDACTED_USER.to_owned()),
-            (true, "project.path") => redacted.project.path.clone(),
-            (true, id) if id.starts_with("executable.") => redacted
+            (true, "project.path") => report.project.path.clone(),
+            (true, id) if id.starts_with("executable.") => report
                 .executables
                 .iter()
                 .find(|executable| id == format!("executable.{}", executable.role))
@@ -116,27 +151,9 @@ pub fn redact_with_context(report: &Report, context: &dyn RedactionContext) -> R
             (false, _) => evidence
                 .value
                 .as_deref()
-                .map(|value| redact_value(value, &secrets)),
+                .map(|value| redact_value(value, secrets)),
         };
     }
-
-    for failure in &mut redacted.probe_failures {
-        failure.probe = redact_text(&failure.probe, &secrets);
-        failure.code = redact_text(&failure.code, &secrets);
-        "optional probe details omitted from shareable report".clone_into(&mut failure.message);
-    }
-
-    redacted.topology = Topology::from_report(&redacted);
-    redacted.findings = rules::evaluate(&redacted);
-    for finding in &mut redacted.findings {
-        finding.title = redact_free_text(&finding.title, &secrets);
-        finding.summary = redact_free_text(&finding.summary, &secrets);
-        for action in &mut finding.suggested_actions {
-            *action = redact_free_text(action, &secrets);
-        }
-    }
-
-    redacted
 }
 
 fn redact_agent_locations(report: &mut Report) {
