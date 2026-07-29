@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use execlocus::{gui::LocalGuiServer, i18n::Language, model::Profile};
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 fn main() {
     let server = LocalGuiServer::bind(Profile::Balanced, Language::Japanese, None, 0)
@@ -20,6 +20,13 @@ fn main() {
         .expect("the loopback-only diagnostic thread could not start");
 
     tauri::Builder::default()
+        .on_window_event(|window, event| {
+            if window.label() == "main"
+                && matches!(event, tauri::WindowEvent::CloseRequested { .. })
+            {
+                window.app_handle().exit(0);
+            }
+        })
         .setup(move |app| {
             let external_url: tauri::Url = url
                 .parse()
