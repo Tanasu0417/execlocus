@@ -114,6 +114,8 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 
 ## 関連資料
 
+- [追加支出0円の開発ポリシー](COST_POLICY.ja.md)
+- [Zero-incremental-cost development policy](COST_POLICY.md)
 - [製品仕様](PRODUCT_SPEC.md)
 - [診断ルール仕様](RULES.md)
 - [MVPスコープ](docs/MVP_SCOPE.md)

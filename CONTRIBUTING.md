@@ -25,6 +25,14 @@ cargo test --all-targets --all-features
 Windows development with the MSVC Rust target also requires the Microsoft C++
 linker and Windows SDK. WSL/Linux requires a C linker such as `cc`.
 
+## Cost policy
+
+Development has a default incremental budget of 0 JPY. Do not add or invoke a
+metered API, hosted AI model, paid runner, cloud resource, paid external
+service, or paid-subscription quota without explicit approval before use.
+Trials and promotional credits are not treated as free. See
+[COST_POLICY.md](COST_POLICY.md) for the approval and CI requirements.
+
 ## Diagnostic rule requirements
 
 A new rule must include:
