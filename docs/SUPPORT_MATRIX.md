@@ -22,7 +22,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | WSL2, Ubuntu 24.04 | Verified | MSRV 1.85 test suite plus sanitized WSL runtime-identity validation | Validation covers one WSL distribution and no public binary |
 | Linux native, x86_64 | Partial | Ubuntu CI exercises the Linux code path | Product positioning and real-world testing focus on Windows/WSL |
 | PowerShell and cmd | Partial | PowerShell 7 ancestry and a Windows Codex-family adapter run are verified; cmd resolution has synthetic contract tests | Real cmd ancestry and cmd-launched agent invocation remain unverified |
-| bash | Verified | bash ancestry is observed in Ubuntu-24.04 WSL | A real WSL agent ancestor has not yet been exercised |
+| bash | Verified | bash and Claude Code ancestry are observed in Ubuntu-24.04 WSL | Validation covers one WSL distribution and one Claude Code release |
 | zsh | Partial | Identity recognition and resolution contract tests exist | No real zsh validation yet |
 | macOS | Planned beyond v0.1 | Generic code may compile | No support guarantee or CI |
 | ARM | Planned beyond v0.1 | None | No release or verification target |
@@ -40,7 +40,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | Terminal output | Implemented | Human-readable pre-alpha output |
 | JSON output | Implemented | Schema `0.3.0` is pre-alpha and not frozen for compatibility yet |
 | Codex process adapter | Verified on Windows | Exact `codex`/`codex.exe` ancestor names infer the Codex family; installation presence alone is ignored |
-| Claude Code process adapter | Implemented | Exact `claude`/`claude.exe` ancestor names are covered by Windows/WSL-shaped fixtures; a real Claude Code run remains unverified |
+| Claude Code process adapter | Verified on WSL | Claude Code 2.1.212 launched the packaged ExecLocus binary inside Ubuntu-24.04 WSL; product and runtime provenance matched the synthetic contract |
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |
 | Markdown report | Implemented | Shareable Markdown is always redacted before rendering |
 | Redaction-before-rendering | Verified | Synthetic golden tests plus sanitized Windows and WSL executions cover username, home, machine, and absolute-path removal |
@@ -60,3 +60,4 @@ This is the source of truth for current capability claims. “Planned” means d
 The sanitized Windows/WSL evidence is recorded in [`validation/RUNTIME_IDENTITY_2026-07-29.md`](validation/RUNTIME_IDENTITY_2026-07-29.md).
 Shareable output validation is recorded in [`validation/SHAREABLE_REDACTION_2026-07-29.md`](validation/SHAREABLE_REDACTION_2026-07-29.md).
 Agent adapter validation is recorded in [`validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md`](validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md).
+The isolated real Claude Code/WSL run is recorded in [`validation/CLAUDE_CODE_WSL_2026-07-29.md`](validation/CLAUDE_CODE_WSL_2026-07-29.md).

@@ -25,6 +25,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Automatically redacted Markdown reports and explicit redacted JSON output
 - Conservative Codex and Claude Code adapters based on exact names in bounded process ancestry
 - JSON schema version `0.3.0` with separate agent-product and agent-runtime provenance
+- Isolated real-environment validation of Claude Code launching ExecLocus inside Ubuntu-24.04 WSL
 
 ### Security
 

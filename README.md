@@ -172,6 +172,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [Shareable redaction validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [Agent adapter validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md)
+- [Real Claude Code on WSL validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/CLAUDE_CODE_WSL_2026-07-29.md)
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)
