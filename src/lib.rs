@@ -56,11 +56,21 @@ fn collect_report_with_components(
     let runtime_result = probes::runtime::probe_with_identity(context, identity.as_ref());
     let runtime = runtime_result.value;
     let codex_thread_id = context.env_var("CODEX_THREAD_ID");
-    let agent_result = adapters::probe_with_codex_thread_id(
+    let mut agent_result = adapters::probe_with_codex_thread_id(
         &runtime,
         identity.as_ref(),
         codex_thread_id.as_deref(),
     );
+    let mut installation_evidence = Vec::new();
+    let mut installation_failures = Vec::new();
+    for product in [model::AgentProduct::Codex, model::AgentProduct::ClaudeCode] {
+        let result = probes::agent_installation::probe_with(context, product, runtime.kind);
+        installation_evidence.extend(result.evidence);
+        installation_failures.extend(result.failures);
+        agent_result.value.installations.push(result.value);
+    }
+    let agent_state_result = probes::agent_state::probe_with(context, &agent_result.value);
+    agent_result.value.state_locations = agent_state_result.value;
     let project_result = probes::path::probe_project_with(context, &runtime.kind);
 
     let mut evidence = vec![Evidence {
@@ -73,15 +83,25 @@ fn collect_report_with_components(
     }];
     evidence.extend(runtime_result.evidence);
     evidence.extend(agent_result.evidence);
+    evidence.extend(installation_evidence);
+    evidence.extend(agent_state_result.evidence);
     evidence.extend(project_result.evidence);
 
     let mut probe_failures = identity_failures;
     probe_failures.extend(runtime_result.failures);
     probe_failures.extend(agent_result.failures);
+    probe_failures.extend(installation_failures);
+    probe_failures.extend(agent_state_result.failures);
     probe_failures.extend(project_result.failures);
 
     let mut executables = Vec::new();
-    for (role, command) in [("git", "git"), ("node", "node"), ("npm", "npm")] {
+    for (role, command) in [
+        ("codex", "codex"),
+        ("claude", "claude"),
+        ("git", "git"),
+        ("node", "node"),
+        ("npm", "npm"),
+    ] {
         let result = probes::executable::probe_with_resolver(
             context,
             resolver,
@@ -95,7 +115,7 @@ fn collect_report_with_components(
     }
 
     let mut report = Report {
-        schema_version: "0.3.0".to_owned(),
+        schema_version: "0.4.0".to_owned(),
         generated_at_unix_ms: context.now_unix_ms(),
         profile,
         runtime,

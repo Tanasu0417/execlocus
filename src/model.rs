@@ -105,6 +105,50 @@ pub enum AgentEvidenceSource {
     EnvironmentMarker,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentStateKind {
+    PrimaryConfig,
+}
+
+impl AgentStateKind {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::PrimaryConfig => "primary-config",
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct AgentStateLocation {
+    pub product: AgentProduct,
+    pub kind: AgentStateKind,
+    pub path: String,
+    pub class: PathClass,
+    pub status: ObservationStatus,
+    pub confidence: Confidence,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct AgentInstallationInfo {
+    pub product: AgentProduct,
+    pub candidates: Vec<ExecutableCandidate>,
+    pub status: ObservationStatus,
+    pub confidence: Confidence,
+}
+
+impl AgentStateLocation {
+    #[must_use]
+    pub fn evidence_id(&self) -> String {
+        format!(
+            "agent.state.{}.{}",
+            self.product.evidence_value(),
+            self.kind.label()
+        )
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct AgentInfo {
     pub product: Option<AgentProduct>,
@@ -114,6 +158,8 @@ pub struct AgentInfo {
     pub runtime: RuntimeKind,
     pub runtime_status: ObservationStatus,
     pub runtime_confidence: Confidence,
+    pub installations: Vec<AgentInstallationInfo>,
+    pub state_locations: Vec<AgentStateLocation>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -128,6 +174,10 @@ pub struct RuntimeInfo {
     pub shell: Option<String>,
     pub shell_source: Option<RuntimeValueSource>,
     pub terminal: Option<String>,
+    pub terminal_layer: RuntimeKind,
+    pub terminal_layer_status: ObservationStatus,
+    pub terminal_layer_confidence: Confidence,
+    pub terminal_layer_source: Option<RuntimeValueSource>,
     pub status: ObservationStatus,
     pub confidence: Confidence,
 }
@@ -265,6 +315,34 @@ impl Topology {
                 relation: "runs-in".to_owned(),
                 to: "runtime.current".to_owned(),
             });
+
+            for (index, state) in report.agent.state_locations.iter().enumerate() {
+                let id = format!("agent.state.{index}");
+                topology.nodes.push(TopologyNode {
+                    id: id.clone(),
+                    kind: "agent-state".to_owned(),
+                    label: state.path.clone(),
+                });
+                topology.edges.push(TopologyEdge {
+                    from: "agent.current".to_owned(),
+                    relation: "reads-config-from".to_owned(),
+                    to: id,
+                });
+            }
+        }
+
+        for installation in &report.agent.installations {
+            for (index, candidate) in installation.candidates.iter().enumerate() {
+                topology.nodes.push(TopologyNode {
+                    id: format!(
+                        "agent.installation.{}.{}",
+                        installation.product.evidence_value(),
+                        index
+                    ),
+                    kind: "agent-installation".to_owned(),
+                    label: candidate.path.clone(),
+                });
+            }
         }
 
         if let Some(path) = &report.project.path {

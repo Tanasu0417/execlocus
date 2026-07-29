@@ -38,8 +38,10 @@ This is the source of truth for current capability claims. “Planned” means d
 | PE, ELF, and script classification | Implemented | Scripts remain a neutral origin when their shebang cannot establish an OS layer |
 | `ENV002`, `PATH001`, and `GIT001` | Implemented | Deterministic rules use the normalized report; neutral scripts do not trigger cross-layer PATH warnings |
 | `FS001`, `FS002`, and profiles | Implemented | Certain filesystem evidence produces profile-specific read-only guidance; `/mnt/c` remains a supported interoperability choice |
+| `ENV001` rule evaluation | Partial, evidence-limited | The deterministic rule requires a session layer inferred from process evidence plus high-confidence agent runtime; current local adapters stay silent when a cross-layer launcher hides one side of that relationship |
+| `ENV003` and `ENV004` | Implemented | Duplicate agents require certain candidates in both layers; config checks classify the active agent root without reading its contents |
 | Terminal output | Implemented | Human-readable pre-alpha output |
-| JSON output | Implemented | Schema `0.3.0` is pre-alpha and not frozen for compatibility yet |
+| JSON output | Implemented | Schema `0.4.0` is pre-alpha and not frozen for compatibility yet |
 | Codex evidence adapter | Verified on Windows and WSL | Exact ancestry is high confidence; a UUID-shaped Codex-injected child marker is a medium-confidence fallback when the WSL sandbox hides ancestors |
 | Claude Code process adapter | Verified on Windows and WSL | Claude Code 2.1.212 launched packaged ExecLocus binaries in both OS layers; exact ancestry produced high-confidence product evidence |
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |

@@ -24,6 +24,7 @@ CURRENT EXECUTION
   User          dev                            OS account
   Shell         bash                           process ancestry
   Terminal      Windows Terminal               environment hint
+  Session layer Wsl                            inferred · certain confidence
   Project       /mnt/c/Users/dev/project       observed · Windows-mounted
 
 AGENT
@@ -112,6 +113,8 @@ execlocus --profile linux-first check
 
 表示中のターミナルだけでエージェントの実行場所を断定しません。証拠がなければ`Unknown`と表示します。
 
+`ENV001`はcross-layer launcherによってprocess関係の片側が見えない場合には発火しません。Windows Terminal上でWSLを開いているという表示名だけでは差異と判定しません。
+
 現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。CodexのLinux／WSL sandboxがPID namespaceで親processを隠す場合に限り、Codexがtool processへ注入する`CODEX_THREAD_ID`のUUID形状をmedium-confidence fallbackとして確認します。値自体は保存・表示せず、親processの証拠を常に優先します。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
 
 ## 安全性とプライバシー
@@ -155,7 +158,7 @@ execlocus --profile linux-first check
 - [x] Codex/Claude adapter
 - [x] 自動匿名化Markdownレポートと`--redact` JSON
 - [x] `FS001`／`FS002`と3 profileの実動作
-- [ ] `ENV001`／`ENV003`／`ENV004`
+- [x] `ENV001`／`ENV003`／`ENV004`
 - [ ] `explain <RULE_ID>`とshell固有candidate表示
 - [ ] 外部prototype検証、実測demo、v0.1.0 release artifact
 

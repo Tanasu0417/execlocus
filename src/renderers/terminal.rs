@@ -12,48 +12,7 @@ pub fn render(report: &Report) -> String {
     writeln!(output, "See what your agent context resolves—and why.\n")
         .expect("writing to String cannot fail");
 
-    writeln!(output, "CURRENT EXECUTION").expect("writing to String cannot fail");
-    line(&mut output, "Profile", report.profile.label(), "selected");
-    line(
-        &mut output,
-        "Runtime",
-        &runtime_label(report),
-        &observation_note(report.runtime.status, report.runtime.kind_source),
-    );
-    line(
-        &mut output,
-        "User",
-        report.runtime.user.as_deref().unwrap_or("Unknown"),
-        report
-            .runtime
-            .user_source
-            .map_or("unavailable", source_label),
-    );
-    line(
-        &mut output,
-        "Shell",
-        report.runtime.shell.as_deref().unwrap_or("Unknown"),
-        report
-            .runtime
-            .shell_source
-            .map_or("unavailable", source_label),
-    );
-    line(
-        &mut output,
-        "Terminal",
-        report.runtime.terminal.as_deref().unwrap_or("Unknown"),
-        if report.runtime.terminal.is_some() {
-            "environment hint"
-        } else {
-            "unavailable"
-        },
-    );
-    line(
-        &mut output,
-        "Project",
-        report.project.path.as_deref().unwrap_or("Unknown"),
-        path_label(report.project.class),
-    );
+    render_current_execution(&mut output, report);
 
     render_agent(&mut output, report);
 
@@ -67,7 +26,7 @@ pub fn render(report: &Report) -> String {
             });
         line(
             &mut output,
-            &capitalize(&executable.role),
+            role_label(&executable.role),
             path,
             origin_label(origin),
         );
@@ -107,6 +66,60 @@ pub fn render(report: &Report) -> String {
     output
 }
 
+fn render_current_execution(output: &mut String, report: &Report) {
+    writeln!(output, "CURRENT EXECUTION").expect("writing to String cannot fail");
+    line(output, "Profile", report.profile.label(), "selected");
+    line(
+        output,
+        "Runtime",
+        &runtime_label(report),
+        &observation_note(report.runtime.status, report.runtime.kind_source),
+    );
+    line(
+        output,
+        "User",
+        report.runtime.user.as_deref().unwrap_or("Unknown"),
+        report
+            .runtime
+            .user_source
+            .map_or("unavailable", source_label),
+    );
+    line(
+        output,
+        "Shell",
+        report.runtime.shell.as_deref().unwrap_or("Unknown"),
+        report
+            .runtime
+            .shell_source
+            .map_or("unavailable", source_label),
+    );
+    line(
+        output,
+        "Terminal",
+        report.runtime.terminal.as_deref().unwrap_or("Unknown"),
+        if report.runtime.terminal.is_some() {
+            "environment hint"
+        } else {
+            "unavailable"
+        },
+    );
+    line(
+        output,
+        "Session layer",
+        &format!("{:?}", report.runtime.terminal_layer),
+        &status_confidence_note(
+            report.runtime.terminal_layer_status,
+            report.runtime.terminal_layer_confidence,
+        ),
+    );
+    line(
+        output,
+        "Project",
+        report.project.path.as_deref().unwrap_or("Unknown"),
+        path_label(report.project.class),
+    );
+}
+
 fn render_agent(output: &mut String, report: &Report) {
     writeln!(output, "\nAGENT").expect("writing to String cannot fail");
     line(
@@ -128,6 +141,13 @@ fn render_agent(output: &mut String, report: &Report) {
         &format!("{:?}", report.agent.runtime),
         &status_confidence_note(report.agent.runtime_status, report.agent.runtime_confidence),
     );
+    for installation in &report.agent.installations {
+        let value = format!("{} candidate(s)", installation.candidates.len());
+        line(output, installation.product.label(), &value, "PATH scan");
+    }
+    for state in &report.agent.state_locations {
+        line(output, "Config root", &state.path, path_label(state.class));
+    }
 }
 
 fn line(output: &mut String, key: &str, value: &str, note: &str) {
@@ -234,11 +254,15 @@ const fn severity_label(severity: Severity) -> &'static str {
     }
 }
 
-fn capitalize(value: &str) -> String {
-    let mut characters = value.chars();
-    characters.next().map_or_else(String::new, |first| {
-        first.to_uppercase().collect::<String>() + characters.as_str()
-    })
+fn role_label(role: &str) -> &str {
+    match role {
+        "codex" => "Codex",
+        "claude" => "Claude Code",
+        "git" => "Git",
+        "node" => "Node",
+        "npm" => "npm",
+        other => other,
+    }
 }
 
 #[cfg(test)]
@@ -267,6 +291,10 @@ mod tests {
                 shell: Some("/bin/bash".to_owned()),
                 shell_source: Some(RuntimeValueSource::ProcessAncestry),
                 terminal: None,
+                terminal_layer: RuntimeKind::Wsl,
+                terminal_layer_status: ObservationStatus::Inferred,
+                terminal_layer_confidence: Confidence::Certain,
+                terminal_layer_source: Some(RuntimeValueSource::ProcessAncestry),
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
             },

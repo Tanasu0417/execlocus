@@ -30,6 +30,9 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Isolated real-environment validation of Windows-native Claude Code and WSL-native Codex CLI
 - Profile-aware `FS001` and `FS002` filesystem guidance for Windows-mounted and WSL-native projects
 - Selected-profile provenance in reports and the terminal summary
+- Evidence-bounded `ENV001`, `ENV003`, and `ENV004` agent-boundary rules
+- Agent executable candidates, terminal-session layer evidence, and content-free primary-configuration path classification
+- JSON schema version `0.4.0` for terminal-layer and agent-state provenance
 
 ### Fixed
 

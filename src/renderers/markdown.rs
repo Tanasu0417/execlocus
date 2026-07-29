@@ -28,49 +28,7 @@ fn render_redacted(report: &Report) -> String {
     writeln!(output, "- Profile: `{}`\n", report.profile.label())
         .expect("writing to String cannot fail");
 
-    writeln!(output, "## Current execution\n").expect("writing to String cannot fail");
-    writeln!(output, "| Field | Value | Source |").expect("writing to String cannot fail");
-    writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
-    row(
-        &mut output,
-        "Runtime",
-        &format!("{:?}", report.runtime.kind),
-        &source(report.runtime.kind_source),
-    );
-    row(
-        &mut output,
-        "Distribution",
-        report
-            .runtime
-            .distribution
-            .as_deref()
-            .unwrap_or("Unavailable"),
-        &source(report.runtime.distribution_source),
-    );
-    row(
-        &mut output,
-        "User",
-        report.runtime.user.as_deref().unwrap_or("Unavailable"),
-        &source(report.runtime.user_source),
-    );
-    row(
-        &mut output,
-        "Shell",
-        report.runtime.shell.as_deref().unwrap_or("Unavailable"),
-        &source(report.runtime.shell_source),
-    );
-    row(
-        &mut output,
-        "Terminal",
-        report.runtime.terminal.as_deref().unwrap_or("Unavailable"),
-        "environment hint",
-    );
-    row(
-        &mut output,
-        "Project",
-        report.project.path.as_deref().unwrap_or("Unavailable"),
-        &format!("{:?}", report.project.class),
-    );
+    render_current_execution(&mut output, report);
 
     render_agent(&mut output, report);
 
@@ -123,6 +81,58 @@ fn render_redacted(report: &Report) -> String {
     output
 }
 
+fn render_current_execution(output: &mut String, report: &Report) {
+    writeln!(output, "## Current execution\n").expect("writing to String cannot fail");
+    writeln!(output, "| Field | Value | Source |").expect("writing to String cannot fail");
+    writeln!(output, "|---|---|---|").expect("writing to String cannot fail");
+    row(
+        output,
+        "Runtime",
+        &format!("{:?}", report.runtime.kind),
+        &source(report.runtime.kind_source),
+    );
+    row(
+        output,
+        "Distribution",
+        report
+            .runtime
+            .distribution
+            .as_deref()
+            .unwrap_or("Unavailable"),
+        &source(report.runtime.distribution_source),
+    );
+    row(
+        output,
+        "User",
+        report.runtime.user.as_deref().unwrap_or("Unavailable"),
+        &source(report.runtime.user_source),
+    );
+    row(
+        output,
+        "Shell",
+        report.runtime.shell.as_deref().unwrap_or("Unavailable"),
+        &source(report.runtime.shell_source),
+    );
+    row(
+        output,
+        "Terminal",
+        report.runtime.terminal.as_deref().unwrap_or("Unavailable"),
+        "environment hint",
+    );
+    row(
+        output,
+        "Session layer",
+        &format!("{:?}", report.runtime.terminal_layer),
+        &source(report.runtime.terminal_layer_source),
+    );
+    row(
+        output,
+        "Project",
+        report.project.path.as_deref().unwrap_or("Unavailable"),
+        &format!("{:?}", report.project.class),
+    );
+}
+
 fn render_agent(output: &mut String, report: &Report) {
     writeln!(output, "\n## Agent execution evidence\n").expect("writing to String cannot fail");
     writeln!(output, "| Field | Value | Evidence |").expect("writing to String cannot fail");
@@ -153,6 +163,22 @@ fn render_agent(output: &mut String, report: &Report) {
             report.agent.runtime_status, report.agent.runtime_confidence
         ),
     );
+    for installation in &report.agent.installations {
+        row(
+            output,
+            installation.product.label(),
+            &format!("{} candidate(s)", installation.candidates.len()),
+            &format!("{:?} / {:?}", installation.status, installation.confidence),
+        );
+    }
+    for state in &report.agent.state_locations {
+        row(
+            output,
+            "Primary config root",
+            &state.path,
+            &format!("{:?} / {:?}", state.class, state.confidence),
+        );
+    }
 }
 
 fn row(output: &mut String, field: &str, value: &str, source: &str) {
