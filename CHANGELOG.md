@@ -51,6 +51,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 ### Fixed
 
 - Treat portable scripts as a neutral executable origin so Git Bash shims do not create false cross-layer `PATH001` findings on Windows
+- Write PowerShell shell snapshots as BOM-free UTF-8 and tolerate a single legacy BOM when parsing snapshots from Windows PowerShell 5.1
 
 ### Changed
 
