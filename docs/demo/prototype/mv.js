@@ -1,8 +1,8 @@
 const sceneDefinitions = [
-  { start: 0, end: 5, view: "inspect", ja: ["問い", "同じプロジェクト。選ばれるNodeも同じ？"], en: ["THE QUESTION", "Same project. Does it resolve the same Node?"] },
+  { start: 0, end: 5, view: "inspect&motion=swim", ja: ["問い", "同じプロジェクト。選ばれるNodeも同じ？"], en: ["THE QUESTION", "Same project. Does it resolve the same Node?"] },
   { start: 5, end: 12, view: "compare", ja: ["手作業で確認", "確認結果は、ターミナルごとに分かれる。"], en: ["MANUAL CHECKS", "Each terminal can produce a different answer."] },
-  { start: 12, end: 17, view: "inspect", ja: ["根拠を1画面へ", "選ばれる候補と理由を、1画面へ。"], en: ["ONE EVIDENCE VIEW", "Bring the selected candidate and its reasons into one view."] },
-  { start: 17, end: 25, view: "inspect", ja: ["読み取り専用", "設定なし。PATHを変えず、まず1回実行。"], en: ["READ-ONLY PROBE", "No setup. Run once without changing PATH."] },
+  { start: 12, end: 17, view: "inspect&motion=land", ja: ["根拠を1画面へ", "選ばれる候補と理由を、1画面へ。"], en: ["ONE EVIDENCE VIEW", "Bring the selected candidate and its reasons into one view."] },
+  { start: 17, end: 25, view: "inspect&motion=land", ja: ["読み取り専用", "設定なし。PATHを変えず、まず1回実行。"], en: ["READ-ONLY PROBE", "No setup. Run once without changing PATH."] },
   { start: 25, end: 35, view: "compare", ja: ["2つの実行環境", "同じソース一式でも、選ばれる実行ファイルは違う。"], en: ["PAIRED CONTEXT", "The same source tree can resolve a different executable."] },
   { start: 35, end: 43, view: "explain", ja: ["断定より根拠", "予測と、実行済みの証拠を混同しない。"], en: ["EVIDENCE BEFORE CLAIMS", "Do not confuse a prediction with evidence of past execution."] },
   { start: 43, end: 51, view: "explain&profile=share-first", ja: ["目的に合わせる", "/mnt/cは目的次第。共有のための正しい選択にもなる。"], en: ["PURPOSE-AWARE", "/mnt/c depends on intent. It can be the right choice for sharing."] },

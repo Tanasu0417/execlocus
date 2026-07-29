@@ -18,11 +18,11 @@ The concept demo does not run probes. Use the CLI flow below when evaluating rea
 After cloning the repository, open `docs/demo/prototype/index.html` in a browser. Use the `EN` / `日本語` control to switch the complete explanatory interface.
 
 1. Read the evidence categories on Inspect.
-2. Press `Run diagnostic` or `R` and confirm the transition to Compare.
+2. Press `Run diagnostic` or `R`; confirm that the otter changes to its swimming pose before the transition to Compare.
 3. Switch among `share-first`, `balanced`, and `linux-first`.
 4. Open Explain and confirm that `/mnt/c` advice changes with intent.
 5. Open Share and review which identifiers are removed.
-6. Open `docs/demo/prototype/mv.html` and test playback, frame selection, and language switching.
+6. Open `docs/demo/prototype/mv.html` and test playback, frame selection, language switching, and the land/swim pose changes.
 
 Clipboard access may be blocked when the HTML file is opened directly. This does not affect the visual review. If Python is available, serve it locally from the repository root:
 

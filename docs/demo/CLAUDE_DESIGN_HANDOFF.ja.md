@@ -24,7 +24,7 @@ Claude Designはcodebase／fileのimportとHTML、PPTX、PDFへのexportに対�
 3. [`STORYBOARD.ja.md`](STORYBOARD.ja.md) — 8 frame、画面、字幕、ナレーション、gate
 4. [`NARRATION.ja.md`](NARRATION.ja.md) — 読み上げ原稿
 5. [`OTTER_GUIDE_SPEC.md`](OTTER_GUIDE_SPEC.md) — 顔なしカワウソの造形とmotion
-6. [`otter-guide.svg`](assets/otter-guide.svg) — 完全オリジナルのmotion reference
+6. [`otter-guide.svg`](assets/otter-guide.svg)／[`otter-swim.svg`](assets/otter-swim.svg) — 承認済みの陸上／泳ぎpose
 7. [`DEMO_PLAN.md`](../DEMO_PLAN.md) — Conceptから実測版への段階
 8. [`ONE_PAGER.ja.md`](../ONE_PAGER.ja.md) — audience、価値、CTA
 

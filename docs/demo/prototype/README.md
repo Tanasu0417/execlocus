@@ -13,9 +13,11 @@ Stable capture URLs:
 - `index.html?view=explain&profile=balanced`
 - `index.html?view=share&profile=share-first`
 - `index.html?view=inspect&lang=en`
+- `index.html?view=inspect&motion=land`
+- `index.html?view=inspect&motion=swim`
 
 The 60-second caption master is `mv.html`. Add `?lang=en`, or add `?autoplay=1&capture=1` for a clean autoplay surface. It is a concept animatic, not a final MP4 and not evidence of a released binary.
 
 To test the implemented CLI against a real environment, follow [the Japanese try-it guide](../../TRY_IT.ja.md) or [the English guide](../../TRY_IT.md).
 
-All paths and identities in the prototype are synthetic. The otter is an original project-native SVG and does not trace the earlier third-party reference image.
+All paths and identities in the prototype are synthetic. The approved land and swim otter poses are original project-native SVG paths. The supplied illustration informed only general river-otter anatomy; its contour is neither traced nor included in the repository.

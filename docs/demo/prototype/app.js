@@ -210,6 +210,8 @@ let runPhase = "ready";
 const stage = document.querySelector(".stage");
 const command = document.querySelector("#command");
 const runState = document.querySelector("#run-state");
+const otterGuide = document.querySelector("#otter-guide");
+const requestedOtterMotion = params.get("motion") === "swim" ? "swim" : "land";
 
 function t(key) {
   return translations[language][key] ?? key;
@@ -218,6 +220,12 @@ function t(key) {
 function updateRunState() {
   runState.textContent = t(`state.${runPhase}`);
   runState.className = `run-state${runPhase === "running" ? " running" : runPhase === "complete" ? " complete" : ""}`;
+}
+
+function setOtterMotion(motion) {
+  const swimming = motion === "swim";
+  otterGuide.classList.toggle("is-swimming", swimming);
+  otterGuide.classList.toggle("is-idle", !swimming);
 }
 
 function selectView(name) {
@@ -259,7 +267,7 @@ function applyLanguage(nextLanguage) {
   document.querySelector("#diagnostic-rail").setAttribute("aria-label", t("aria.rail"));
   document.querySelector(".runtime-map").setAttribute("aria-label", t("aria.map"));
   document.querySelector(".profile-row").setAttribute("aria-label", t("aria.profile"));
-  document.querySelector("#otter-guide").setAttribute("alt", t("aria.otter"));
+  otterGuide.setAttribute("aria-label", t("aria.otter"));
   document.querySelector("#rule-title").textContent = t("explain.rule");
   selectProfile(selectedProfile);
   updateRunState();
@@ -269,12 +277,14 @@ function runDiagnostic() {
   stage.classList.remove("is-running");
   void stage.offsetWidth;
   stage.classList.add("is-running");
+  setOtterMotion("swim");
   runPhase = "running";
   updateRunState();
   window.setTimeout(() => {
     runPhase = "complete";
     updateRunState();
     selectView("compare");
+    if (requestedOtterMotion !== "swim") setOtterMotion("land");
   }, 720);
 }
 
@@ -305,4 +315,5 @@ document.addEventListener("keydown", (event) => {
 
 const requestedView = params.get("view");
 if (["inspect", "compare", "explain", "share"].includes(requestedView)) selectView(requestedView);
+setOtterMotion(requestedOtterMotion);
 applyLanguage(language);

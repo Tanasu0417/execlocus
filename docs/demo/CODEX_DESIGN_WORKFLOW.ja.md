@@ -11,10 +11,11 @@
 
 - [`prototype/index.html`](prototype/index.html): profile切替、診断transition、Windows／WSL比較、rule説明、匿名化共有を操作できるconcept UI。
 - [`prototype/mv.html`](prototype/mv.html): 8 frame、60秒、caption、timeline、play／pause／resetを持つanimatic。
-- [`assets/otter-guide.svg`](assets/otter-guide.svg): 目、鼻、口、ひげ、衣装を使わないoriginal silhouette。
+- [`assets/otter-guide.svg`](assets/otter-guide.svg): 目、鼻、口、ひげ、衣装を使わない承認済み陸上silhouette。
+- [`assets/otter-swim.svg`](assets/otter-swim.svg): 同じ造形方針の泳ぎsilhouette。
 - [`ExecLocus_intro_ja.pptx`](ExecLocus_intro_ja.pptx): WSL2利用者向けの7 slide紹介deck。
 
-これらは外部の画像生成、hosted deployment、有料音声APIを使わずに作成した。prototypeはsynthetic値だけを表示し、実際のprobeを実行しない。
+これらはhosted deploymentや有料音声APIを使わずに作成した。カワウソ候補だけはCodex内蔵の画像生成で比較案を作り、承認されたA（陸上）／D（泳ぎ）をローカル処理で単純化したSVG pathへ変換した。添付illustrationは一般的な体型の参考に限定し、輪郭をtraceせずrepositoryへ同梱していない。prototypeはsynthetic値だけを表示し、実際のprobeを実行しない。
 
 ## Codexで追加利用できる表現手段
 

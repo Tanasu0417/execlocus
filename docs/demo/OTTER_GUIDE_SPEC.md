@@ -10,17 +10,16 @@
 
 ## Silhouette
 
-顔の情報を使わず、次の外形でカワウソと判別できるようにする。
+顔の情報を使わず、陸上と泳ぎの両方でカワウソと判別できるようにする。
 
-- 水平に泳ぐ横向き寄りの3/4姿勢。
-- 小さく丸みのある頭。鼻先だけを長く伸ばさない。
-- 頭は短い接続部で胴体へつなぎ、首を独立した長い部位に見せない。
-- 横長で丸みのある、柔らかい胴体。
-- 肩より腰が少し高く見える、緩やかに丸い背中。
-- 哺乳類と判別できる、短く先端が丸い4本の脚。
-- 根元が太く、先端へ滑らかに細くなる胴体より短い尾。
-- 頭から尾まで連続するS字の泳ぐline。
-- 耳は頭に重なる小さな丸を1–2個だけ使い、アンテナ状の突起、深い首の切れ込み、尖った脚を作らない。
+- 陸上poseは横向きの低い伏せ姿とし、頭、丸い胴、短い脚、太い尾を小さな表示でも残す。
+- 泳ぎposeは横向きの水平姿勢とし、脚を胴の下へ畳み、頭から尾まで緩いS字を作る。
+- 小さく丸みのある頭。鼻先だけを細長く伸ばさない。
+- 頭は太い接続部で胴体へつなぎ、首を独立した長い部位に見せない。
+- 横長で丸みのある、柔らかい胴体。陸上poseでは肩より腰が少し高く見える緩やかな丸い背中を使う。
+- 哺乳類と判別できる短い脚を、翼や鰭に見えないよう胴体の下へ配置する。
+- 尾は根元を太くし、先端へ滑らかに細くする。陸上poseでは地面に沿わせ、泳ぎposeでは体の流れに追従させる。
+- 耳は頭に重なる小さな丸い隆起だけを使い、アンテナ状の突起、深い首の切れ込み、尖った脚を作らない。
 - 通信markerはsilhouetteの外へ置き、目や体内器官に見える配置を避ける。
 
 目、鼻、口、ひげ、眉、服、neck accessory、既存mascotを想起させる記号は付けない。発話の表現に口パクを使わない。
@@ -38,7 +37,7 @@
 
 動画masterは30fpsでも成立させ、可能なら60fpsでmotionを調整する。GUIではdisplay refreshに追従し、固定frame rateを前提にしない。
 
-現在のreference SVGは外形確認用として全身のfloatと外部markerのpulseだけを実装する。尾や脚を独立させるproduction rigは、Claude Designで輪郭が確定してから作る。
+現在のreference SVGは、承認された陸上A／泳ぎDの外形を単純化した2 poseである。prototypeではpose cross-fade、全身のfloat／移動、外部markerのpulseまでを実装する。尾や脚を独立させるproduction rigは次段階とする。
 
 ## Speech without a face
 
@@ -74,4 +73,4 @@
 
 ## Source asset
 
-[`assets/otter-guide.svg`](assets/otter-guide.svg)は、本project用に生成した独自conceptから外周を簡略化し、project内で再構成したreferenceである。第三者illustrationの輪郭をtraceせず、元画像をrepositoryへ同梱しない。完成logoや商標を意味せず、Claude DesignまたはGUI実装時に調整可能とする。
+[`assets/otter-guide.svg`](assets/otter-guide.svg)と[`assets/otter-swim.svg`](assets/otter-swim.svg)は、Codex内蔵の画像生成で作成し利用者が承認した独自conceptから、外周をローカルで抽出・単純化したproject-native SVGである。第三者illustrationは一般的なカワウソの体型参考に限定し、輪郭をtraceせず、元画像をrepositoryへ同梱しない。完成logoや商標を意味せず、GUI実装時に調整可能とする。
