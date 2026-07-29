@@ -1,6 +1,8 @@
-use std::{fs, path::Path};
+use std::fs;
 
 const ICON_SIZE: u32 = 32;
+const ICON_DIRECTORY: &str = "icons";
+const ICON_PATH: &str = "icons/icon.ico";
 
 fn push_u16(bytes: &mut Vec<u8>, value: u16) {
     bytes.extend_from_slice(&value.to_le_bytes());
@@ -14,7 +16,7 @@ fn push_i32(bytes: &mut Vec<u8>, value: i32) {
     bytes.extend_from_slice(&value.to_le_bytes());
 }
 
-fn write_development_icon(path: &Path) -> std::io::Result<()> {
+fn write_development_icon() -> std::io::Result<()> {
     let width = ICON_SIZE;
     let height = ICON_SIZE;
     let xor_size = width * height * 4;
@@ -80,16 +82,11 @@ fn write_development_icon(path: &Path) -> std::io::Result<()> {
         bytes.extend_from_slice(&row);
     }
 
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    fs::write(path, bytes)
+    fs::create_dir_all(ICON_DIRECTORY)?;
+    fs::write(ICON_PATH, bytes)
 }
 
 fn main() {
-    let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR must be available to the build script");
-    let icon_path = Path::new(&manifest_dir).join("icons/icon.ico");
-    write_development_icon(&icon_path).expect("the development app icon could not be generated");
+    write_development_icon().expect("the development app icon could not be generated");
     tauri_build::build();
 }
