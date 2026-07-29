@@ -273,11 +273,12 @@ fn is_absolute_path_like(value: &str) -> bool {
 
 fn contains_absolute_path_token(value: &str) -> bool {
     value.split_whitespace().any(|token| {
-        let token = token.trim_matches(['"', '\'', '(', ')', '[', ']', '{', '}', ',', ';']);
+        let trim = ['"', '\'', '(', ')', '[', ']', '{', '}', ',', ';'];
+        let token = token.trim_matches(trim);
         is_absolute_path_like(token)
             || token
                 .split_once('=')
-                .is_some_and(|(_, candidate)| is_absolute_path_like(candidate))
+                .is_some_and(|(_, candidate)| is_absolute_path_like(candidate.trim_matches(trim)))
     })
 }
 
@@ -326,7 +327,9 @@ fn replace_ascii_case_insensitive(value: &str, needle: &str, replacement: &str) 
 
 #[cfg(test)]
 mod tests {
-    use super::replace_ascii_case_insensitive;
+    use super::{
+        REDACTED_PATH, contains_absolute_path_token, redact_value, replace_ascii_case_insensitive,
+    };
 
     #[test]
     fn replacement_is_ascii_case_insensitive() {
@@ -338,5 +341,18 @@ mod tests {
             ),
             r"[home]\\project"
         );
+    }
+
+    #[test]
+    fn quoted_assignment_paths_cannot_bypass_free_text_redaction() {
+        for value in [
+            r#"path="C:\Users\Demo\project""#,
+            "root='/home/demo/project'",
+            r#"share="\\server\private""#,
+        ] {
+            assert!(contains_absolute_path_token(value), "missed {value}");
+            assert_eq!(redact_value(value, &[]), REDACTED_PATH);
+        }
+        assert!(!contains_absolute_path_token("version=1.2.3"));
     }
 }

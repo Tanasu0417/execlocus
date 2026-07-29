@@ -128,6 +128,7 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - 通常実行時にネットワークへ接続しない
 - tokenや秘密の環境変数値を収集しない
 - Markdown共有レポートは常に自動匿名化し、`report --format json --redact`でもserialization前にusername、home、machine名、絶対pathを匿名化する
+- 無料の週次gateでRustSec advisory、license、依存source、wildcard指定、予期しない重複依存を検査する
 
 ## 関連資料
 
@@ -139,6 +140,8 @@ PowerShell／cmd／bash／zshは、起動shellにprocess ancestryの根拠があ
 - [v0.1提供ロードマップ](docs/V0_1_ROADMAP.md)
 - [初期ユースケース仕様](docs/USE_CASES.md)
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
+- [セキュリティ／脅威モデル](docs/SECURITY_MODEL.md)
+- [v0.1セキュリティ評価](docs/validation/SECURITY_ASSESSMENT_2026-07-29.md)
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [共有用匿名化の検証記録](docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [Windows Claude Code／WSL Codex実測](docs/validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md)

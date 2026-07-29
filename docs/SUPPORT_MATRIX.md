@@ -47,6 +47,9 @@ This is the source of truth for current capability claims. “Planned” means d
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |
 | Markdown report | Implemented | Shareable Markdown is always redacted before rendering |
 | Redaction-before-rendering | Verified | Synthetic golden tests plus sanitized Windows and WSL executions cover username, home, machine, and absolute-path removal |
+| Output-injection safety | Verified | Terminal controls and Markdown table/HTML/image-link syntax are neutralized with regression tests |
+| Dependency security policy | Verified | Pinned cargo-deny checks RustSec, yanked releases, licenses, registries/Git sources, wildcards, and duplicates on PRs and weekly |
+| Threat model | Implemented | Trust boundaries, controls, release requirements, and accepted v0.1 risks are documented |
 | `explain <RULE_ID>` | Implemented | Case-insensitive IDs show current trigger state, rationale, referenced evidence, and read-only suggestions; unknown IDs exit with code 2 |
 | Release binaries and checksums | Planned | Required for Windows x86_64 and Linux x86_64 |
 | Automatic fixes | Out of scope | ExecLocus does not rewrite PATH or configuration |
@@ -66,3 +69,4 @@ Agent adapter validation is recorded in [`validation/AGENT_RUNTIME_ADAPTERS_2026
 The isolated real Claude Code/WSL run is recorded in [`validation/CLAUDE_CODE_WSL_2026-07-29.md`](validation/CLAUDE_CODE_WSL_2026-07-29.md).
 Windows-native Claude Code and WSL-native Codex CLI are recorded in [`validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md`](validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md).
 Production shell-resolution provenance, paired Windows/WSL scenarios, candidate display, and terminal control escaping are recorded in [`validation/SHELL_RESOLUTION_2026-07-29.md`](validation/SHELL_RESOLUTION_2026-07-29.md).
+The free dependency gate, source review, injection/redaction/path tests, GitHub alert snapshot, and accepted risks are recorded in [`validation/SECURITY_ASSESSMENT_2026-07-29.md`](validation/SECURITY_ASSESSMENT_2026-07-29.md) and [`SECURITY_MODEL.md`](SECURITY_MODEL.md).

@@ -22,17 +22,17 @@ This roadmap translates the approved MVP scope into independently reviewable wor
 
 Security is a gate across every item rather than a final audit only.
 
-The dedicated security assessment is tracked in [#15](https://github.com/Tanasu0417/execlocus/issues/15).
+The dedicated security assessment is tracked in [#15](https://github.com/Tanasu0417/execlocus/issues/15) and is complete in this change except for controls that require final release artifacts.
 
 | Control | Current state | Required follow-up |
 |---|---|---|
-| Branch protection, CodeQL, Dependabot, secret scanning | Active | Keep required checks and zero unresolved high-severity alerts |
+| Branch protection, CodeQL, Dependabot, secret scanning | Verified | Keep required checks and zero unresolved high-severity alerts |
 | Rust formatting, Clippy, MSRV, tests, package verification | Active | Run on every pull request |
 | Shareable-report redaction | Verified | Add regression cases whenever a new field can contain identity or a path |
-| Terminal and Markdown output safety | Partial | Terminal controls are escaped; complete Markdown context escaping and regression coverage |
-| Dependency advisory and license policy | Partial | Add a free RustSec advisory check and a reproducible license/source policy without adding paid services |
+| Terminal and Markdown output safety | Verified | Keep injection regression cases with every new observed field or rendering context |
+| Dependency advisory and license policy | Verified | Pinned cargo-deny runs RustSec, yanked, license, source, wildcard, and duplicate checks on PRs and weekly |
 | Release integrity | Planned | Publish checksums, immutable source references, least-privilege workflow permissions, and provenance/SBOM where the free public-repository tooling supports it |
-| Threat model | Planned | Document trust boundaries for environment variables, process metadata, filesystem paths, executable headers, rendering, and release artifacts |
+| Threat model | Complete | Reassess accepted risks whenever collection, rendering, dependency, workflow, or release behavior changes |
 
 ## Experience and design gates
 

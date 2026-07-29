@@ -332,6 +332,34 @@ fn records_candidate_inspection_failures_without_claiming_success() {
 }
 
 #[test]
+fn preserves_a_partial_candidate_result_with_reduced_confidence() {
+    let mut context = FixtureProbeContext::wsl();
+    context.candidate_errors.insert(
+        ("/opt/demo-bin".to_owned(), "node".to_owned()),
+        io::ErrorKind::PermissionDenied,
+    );
+
+    let report = collect_report_with(&context, Profile::Balanced);
+    let node = report
+        .executables
+        .iter()
+        .find(|executable| executable.role == "node")
+        .expect("the standard node probe should be present");
+
+    assert_eq!(node.status, ObservationStatus::Observed);
+    assert_eq!(node.confidence, execlocus::model::Confidence::High);
+    assert_eq!(
+        node.selected
+            .as_ref()
+            .map(|candidate| candidate.path.as_str()),
+        Some("/usr/bin/node")
+    );
+    assert!(report.probe_failures.iter().any(|failure| {
+        failure.probe == "executable/v1" && failure.code == "CANDIDATE_INSPECTION_FAILED"
+    }));
+}
+
+#[test]
 fn accepts_an_injected_executable_resolver() {
     let context = FixtureProbeContext::wsl();
     let report = collect_report_with_resolver(&context, &FixtureResolver, Profile::Balanced);

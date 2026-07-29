@@ -167,6 +167,7 @@ ExecLocus v0.1 is designed to be:
 - **Local-only** — no network calls during normal execution
 - **Secret-avoiding** — no token or unrestricted environment-variable collection
 - **Shareable by design** — Markdown reports are always redacted; `report --format json --redact` applies the same transformation before JSON serialization
+- **Continuously checked** — a free weekly gate checks RustSec advisories, licenses, dependency sources, wildcard requirements, and unexpected duplicate lines
 
 ## How it differs from a doctor CLI
 
@@ -192,6 +193,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [v0.1 delivery roadmap](https://github.com/Tanasu0417/execlocus/blob/main/docs/V0_1_ROADMAP.md)
 - [Initial use-case contracts](https://github.com/Tanasu0417/execlocus/blob/main/docs/USE_CASES.md)
 - [Current support matrix](https://github.com/Tanasu0417/execlocus/blob/main/docs/SUPPORT_MATRIX.md)
+- [Security and threat model](https://github.com/Tanasu0417/execlocus/blob/main/docs/SECURITY_MODEL.md)
+- [v0.1 security assessment](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SECURITY_ASSESSMENT_2026-07-29.md)
 - [Sanitized runtime identity validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [Shareable redaction validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
 - [Agent adapter validation](https://github.com/Tanasu0417/execlocus/blob/main/docs/validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md)

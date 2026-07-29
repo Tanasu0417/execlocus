@@ -28,3 +28,7 @@ Reports are especially useful when they involve:
 - incorrect redaction in shareable reports;
 - untrusted input affecting command execution;
 - dependency or release artifact integrity.
+
+## Public security model
+
+The collection boundaries, output controls, dependency policy, release-integrity requirements, and accepted pre-alpha risks are documented in [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md). Do not use the public document to report an undisclosed vulnerability; use private vulnerability reporting above.
