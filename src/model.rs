@@ -9,6 +9,17 @@ pub enum Profile {
     LinuxFirst,
 }
 
+impl Profile {
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::ShareFirst => "share-first",
+            Self::Balanced => "balanced",
+            Self::LinuxFirst => "linux-first",
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RuntimeKind {

@@ -13,6 +13,7 @@ pub fn render(report: &Report) -> String {
         .expect("writing to String cannot fail");
 
     writeln!(output, "CURRENT EXECUTION").expect("writing to String cannot fail");
+    line(&mut output, "Profile", report.profile.label(), "selected");
     line(
         &mut output,
         "Runtime",
@@ -285,6 +286,7 @@ mod tests {
         let output = render(&report);
         assert!(output.contains("ExecLocus"));
         assert!(output.contains("CURRENT EXECUTION"));
+        assert!(output.contains("balanced"));
         assert!(output.contains("observed · kernel release"));
         assert!(output.contains("AGENT"));
         assert!(output.contains("Unknown"));
