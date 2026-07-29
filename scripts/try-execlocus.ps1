@@ -39,11 +39,17 @@ function New-ExecLocusPowerShellSnapshot {
         }
     }
 
-    [ordered]@{
+    $snapshotJson = [ordered]@{
         shell = "power_shell"
         complete = $true
         bindings = @($bindings)
-    } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $Path -Encoding utf8
+    } | ConvertTo-Json -Depth 4
+
+    # Windows PowerShell 5.1 writes a BOM for `Set-Content -Encoding utf8`,
+    # while PowerShell 7 does not. Keep the wrapper byte-for-byte compatible
+    # across both versions and with strict JSON parsers.
+    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($Path, $snapshotJson, $utf8WithoutBom)
 }
 
 $cargoCommand = Get-Command cargo -ErrorAction SilentlyContinue

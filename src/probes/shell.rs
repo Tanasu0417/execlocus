@@ -178,6 +178,10 @@ pub fn parse_snapshot_json(input: &str) -> Result<(ShellKind, ShellSessionSnapsh
     const MAX_NAME_BYTES: usize = 128;
     const MAX_SOURCE_BYTES: usize = 1024;
 
+    // A UTF-8 BOM is not part of JSON, but Windows PowerShell 5.1 commonly
+    // emits one for `-Encoding utf8`. Accept a single leading BOM so snapshots
+    // produced by older wrappers remain parseable at startup and in the GUI.
+    let input = input.strip_prefix('\u{feff}').unwrap_or(input);
     let document: ShellSnapshotDocument = serde_json::from_str(input)
         .map_err(|error| format!("invalid shell snapshot JSON: {error}"))?;
     if document.bindings.len() > MAX_BINDINGS {
@@ -449,6 +453,18 @@ mod tests {
             snapshot.bindings[0].source.as_deref(),
             Some("function:node")
         );
+    }
+
+    #[test]
+    fn accepts_a_windows_powershell_utf8_bom() {
+        let (shell, snapshot) = parse_snapshot_json(
+            "\u{feff}{\"shell\":\"power_shell\",\"complete\":true,\"bindings\":[]}",
+        )
+        .expect("a single leading UTF-8 BOM should be accepted");
+
+        assert_eq!(shell, ShellKind::PowerShell);
+        assert!(snapshot.complete);
+        assert!(snapshot.bindings.is_empty());
     }
 
     #[test]
