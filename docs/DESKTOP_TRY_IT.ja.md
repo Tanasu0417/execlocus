@@ -47,6 +47,8 @@ Get-AuthenticodeSignature -LiteralPath $desktop | Select-Object Status
 
 ## 操作確認
 
+画面の目的、3つの診断基準、自動匿名化、各ページの読み方は[GUI操作ガイド](GUI_MANUAL.ja.md)にまとめています。
+
 1. `診断を実行`を押し、`完了・外部送信 0件`になることを確認する。
 2. `比較`で5ツールの概要を先に確認する。
 3. 必要な行だけ展開し、候補、由来、PE／ELF／script、選択理由、確認コマンドを確認する。
@@ -68,4 +70,4 @@ Get-AuthenticodeSignature -LiteralPath $desktop | Select-Object Status
 & .\scripts\try-execlocus.ps1 -Gui -Language ja -Profile balanced
 ```
 
-今後の独立した候補は、署名付き配布、インストーラー、自動更新ではなく、まず「デスクトップからWindows診断とWSL診断を並べて実行する導線」です。外部送信や自動修正を追加せず、操作価値が確認できてから進めます。
+Windows／WSL自動比較を試す場合は、WSL側のExecLocusリポジトリで`bash scripts/install-wsl-companion.sh`を1回実行します。Windowsアプリは同じ起動ディレクトリを両側から読み取り専用で観測し、異なる項目を先に表示します。外部送信や自動修正は行いません。

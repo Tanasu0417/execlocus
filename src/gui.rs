@@ -6,6 +6,11 @@ use std::{
     time::Duration,
 };
 
+#[cfg(target_os = "windows")]
+use std::process::{Output, Stdio};
+
+use serde::Serialize;
+
 use crate::{
     collect_report, collect_report_with_shell_snapshot,
     i18n::{self, Language},
@@ -216,6 +221,31 @@ fn handle_connection(
                 body.as_bytes(),
             )
         }
+        ("POST", "/api/diagnose-pair") => {
+            if !authorized_api_request(&request, expected_origin, expected_host) {
+                return write_response(
+                    stream,
+                    403,
+                    "application/json; charset=utf-8",
+                    br#"{"error":"request origin or diagnostic header was rejected"}"#,
+                );
+            }
+            let profile = query_value(&request.path, "profile")
+                .and_then(parse_profile)
+                .unwrap_or(default_profile);
+            let language = query_value(&request.path, "lang")
+                .and_then(parse_language)
+                .unwrap_or(default_language);
+            let report = collect(profile, shell_snapshot);
+            let body = paired_diagnostic_payload(&report, language)
+                .map_err(|error| format!("could not serialize paired GUI report: {error}"))?;
+            write_response(
+                stream,
+                200,
+                "application/json; charset=utf-8",
+                body.as_bytes(),
+            )
+        }
         _ => write_response(
             stream,
             404,
@@ -246,6 +276,222 @@ fn diagnostic_payload(report: &Report, language: Language) -> serde_json::Result
         "shareable_report": shareable,
         "shareable_markdown": markdown,
     }))
+}
+
+#[derive(Serialize)]
+struct WslPeerPayload {
+    status: &'static str,
+    report: Option<serde_json::Value>,
+    shareable_report: Option<serde_json::Value>,
+    shareable_markdown: Option<String>,
+    message: String,
+    setup_command: Option<&'static str>,
+}
+
+fn paired_diagnostic_payload(report: &Report, language: Language) -> serde_json::Result<String> {
+    let local = i18n::localize_report(report, language);
+    let shareable = privacy::redact_for_sharing(report);
+    let shareable = i18n::localize_report(&shareable, language);
+    let markdown = renderers::markdown::render_with_language(report, language);
+    let peer = collect_wsl_peer(report.profile, language);
+    let paired_markdown = render_paired_markdown(&markdown, &peer, language);
+    serde_json::to_string(&serde_json::json!({
+        "mode": "paired",
+        "language": language.code(),
+        "network": "loopback-only",
+        "mutations": false,
+        "report": local,
+        "shareable_report": shareable,
+        "shareable_markdown": markdown,
+        "peer": peer,
+        "paired_shareable_markdown": paired_markdown,
+    }))
+}
+
+fn render_paired_markdown(
+    local_markdown: &str,
+    peer: &WslPeerPayload,
+    language: Language,
+) -> String {
+    let mut output = String::new();
+    output.push_str(language.text(
+        "# ExecLocus Windows / WSL comparison\n\n",
+        "# ExecLocus Windows／WSL比較レポート\n\n",
+    ));
+    output.push_str(language.text(
+        "> Both sections were redacted before this comparison was rendered.\n\n",
+        "> 2つの診断結果は、比較レポートの生成前に識別情報を置換しています。\n\n",
+    ));
+    output.push_str(language.text("## Windows observation\n\n", "## Windows側の観測\n\n"));
+    output.push_str(local_markdown);
+    output.push_str(language.text("\n\n## WSL observation\n\n", "\n\n## WSL側の観測\n\n"));
+    if let Some(markdown) = &peer.shareable_markdown {
+        output.push_str(markdown);
+    } else {
+        output.push_str(language.text(
+            "WSL observation was unavailable. Install the free local companion and rerun the comparison.\n",
+            "WSL側の観測を取得できませんでした。無料のローカル補助バイナリを導入してから再比較してください。\n",
+        ));
+    }
+    output
+}
+
+#[cfg(target_os = "windows")]
+fn collect_wsl_peer(profile: Profile, language: Language) -> WslPeerPayload {
+    let raw = run_wsl_companion(profile, language, WslReportFormat::Json, false);
+    let redacted = run_wsl_companion(profile, language, WslReportFormat::Json, true);
+    let markdown = run_wsl_companion(profile, language, WslReportFormat::Markdown, false);
+
+    match (raw, redacted, markdown) {
+        (Ok(raw), Ok(redacted), Ok(markdown)) => {
+            let report = serde_json::from_slice(&raw.stdout);
+            let shareable_report = serde_json::from_slice(&redacted.stdout);
+            let shareable_markdown = String::from_utf8(markdown.stdout);
+            match (report, shareable_report, shareable_markdown) {
+                (Ok(report), Ok(shareable_report), Ok(shareable_markdown)) => WslPeerPayload {
+                    status: "available",
+                    report: Some(report),
+                    shareable_report: Some(shareable_report),
+                    shareable_markdown: Some(shareable_markdown.trim().to_owned()),
+                    message: language
+                        .text(
+                            "Windows and WSL were observed locally for the same launch directory.",
+                            "同じ起動ディレクトリをWindows側とWSL側からローカル観測しました。",
+                        )
+                        .to_owned(),
+                    setup_command: None,
+                },
+                _ => peer_failure("probe_failed", language),
+            }
+        }
+        (Err(WslPeerError::CompanionUnavailable), _, _)
+        | (_, Err(WslPeerError::CompanionUnavailable), _)
+        | (_, _, Err(WslPeerError::CompanionUnavailable)) => {
+            peer_failure("companion_unavailable", language)
+        }
+        (Err(WslPeerError::WslUnavailable), _, _)
+        | (_, Err(WslPeerError::WslUnavailable), _)
+        | (_, _, Err(WslPeerError::WslUnavailable)) => peer_failure("wsl_unavailable", language),
+        _ => peer_failure("probe_failed", language),
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn collect_wsl_peer(_profile: Profile, language: Language) -> WslPeerPayload {
+    peer_failure("windows_app_required", language)
+}
+
+fn peer_failure(status: &'static str, language: Language) -> WslPeerPayload {
+    let (message, setup_command) = match status {
+        "companion_unavailable" => (
+            language.text(
+                "WSL is available, but the ExecLocus WSL companion was not found.",
+                "WSLは利用できますが、WSL側のExecLocus補助バイナリが見つかりません。",
+            ),
+            Some("bash scripts/install-wsl-companion.sh"),
+        ),
+        "wsl_unavailable" => (
+            language.text(
+                "WSL could not be started from this Windows session.",
+                "このWindowsセッションからWSLを起動できませんでした。",
+            ),
+            None,
+        ),
+        "windows_app_required" => (
+            language.text(
+                "Automatic paired diagnosis starts from the Windows desktop app.",
+                "自動ペア診断はWindowsデスクトップアプリから開始します。",
+            ),
+            None,
+        ),
+        _ => (
+            language.text(
+                "The WSL companion ran, but its report could not be read.",
+                "WSL側の補助診断は起動しましたが、結果を読み取れませんでした。",
+            ),
+            Some("bash scripts/install-wsl-companion.sh"),
+        ),
+    };
+    WslPeerPayload {
+        status,
+        report: None,
+        shareable_report: None,
+        shareable_markdown: None,
+        message: message.to_owned(),
+        setup_command,
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Clone, Copy)]
+enum WslPeerError {
+    WslUnavailable,
+    CompanionUnavailable,
+    ProbeFailed,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Clone, Copy)]
+enum WslReportFormat {
+    Json,
+    Markdown,
+}
+
+#[cfg(target_os = "windows")]
+impl WslReportFormat {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Json => "json",
+            Self::Markdown => "markdown",
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn run_wsl_companion(
+    profile: Profile,
+    language: Language,
+    format: WslReportFormat,
+    redact: bool,
+) -> Result<Output, WslPeerError> {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let current_dir = std::env::current_dir().map_err(|_| WslPeerError::ProbeFailed)?;
+    let mut command = Command::new("wsl.exe");
+    command.arg("--cd").arg(current_dir).args([
+        "--exec",
+        "bash",
+        "-lc",
+        "exec execlocus \"$@\"",
+        "execlocus",
+        "--profile",
+        profile.label(),
+        "--lang",
+        language.code(),
+        "report",
+        "--format",
+        format.label(),
+    ]);
+    if redact {
+        command.arg("--redact");
+    }
+    let output = command
+        .stdin(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .map_err(|error| {
+            if error.kind() == std::io::ErrorKind::NotFound {
+                WslPeerError::WslUnavailable
+            } else {
+                WslPeerError::ProbeFailed
+            }
+        })?;
+    match output.status.code() {
+        Some(0 | 1) => Ok(output),
+        Some(126 | 127) => Err(WslPeerError::CompanionUnavailable),
+        _ => Err(WslPeerError::ProbeFailed),
+    }
 }
 
 struct HttpRequest {
@@ -413,7 +659,7 @@ mod tests {
 
     use super::{
         HttpRequest, LocalGuiServer, authorized_api_request, parse_language, parse_profile,
-        query_value,
+        peer_failure, query_value, render_paired_markdown,
     };
 
     #[test]
@@ -462,5 +708,18 @@ mod tests {
             "http://127.0.0.1:43117",
             "127.0.0.1:43117"
         ));
+    }
+
+    #[test]
+    fn unavailable_peer_report_uses_a_generic_setup_command() {
+        let peer = peer_failure("companion_unavailable", Language::Japanese);
+        let markdown = render_paired_markdown("# local", &peer, Language::Japanese);
+        assert!(markdown.contains("WSL側の観測を取得できませんでした"));
+        assert_eq!(
+            peer.setup_command,
+            Some("bash scripts/install-wsl-companion.sh")
+        );
+        assert!(!markdown.contains("C:\\Users"));
+        assert!(!markdown.contains("/home/"));
     }
 }

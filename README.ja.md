@@ -96,7 +96,7 @@ cargo run -- --lang ja gui --open
 source ./scripts/try-execlocus.sh balanced gui ja
 ```
 
-ブラウザではなくWindowsアプリとして試す場合は、[署名なしデスクトップ開発版の手順](docs/DESKTOP_TRY_IT.ja.md)を使います。
+ブラウザではなくWindowsアプリとして試す場合は、まず[GUI操作ガイド](docs/GUI_MANUAL.ja.md)で役割と画面の読み方を確認し、[署名なしデスクトップ開発版の手順](docs/DESKTOP_TRY_IT.ja.md)を使います。Windowsアプリから同じ起動場所をWindows／WSL双方で自動観測する場合は、WSL側で`bash scripts/install-wsl-companion.sh`を1回実行します。
 
 ```powershell
 & .\scripts\build-desktop.ps1 -Configuration Debug

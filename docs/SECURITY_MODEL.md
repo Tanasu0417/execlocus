@@ -8,7 +8,7 @@ ExecLocus observes an execution context that may already contain attacker-contro
 
 ## Security objectives
 
-1. Normal execution remains local, read-only, and free of shell-string execution.
+1. Normal execution remains local and read-only. Single-environment probes do not execute candidates; the opt-in paired Windows/WSL flow runs only a fixed, allowlisted companion command.
 2. Missing, conflicting, or inaccessible evidence produces an explicit partial or unknown result, not a fabricated pass.
 3. A shareable renderer removes modeled identity and absolute paths before serialization.
 4. Terminal and Markdown renderers neutralize their own output-control syntax.
@@ -39,6 +39,7 @@ ExecLocus is a diagnostic aid, not a sandbox, endpoint-security product, secret 
 | Rendering | normalized report object | redaction occurs before shareable serialization; context-specific escaping | raw terminal/JSON is not advertised as shareable |
 | Local GUI | same-process HTTP on a random `127.0.0.1` port | Host, Origin, custom header, request-size, method, CSP, no-cache, and loopback binding checks | no LAN bind, CORS, telemetry, or hosted upload |
 | Windows desktop shell | Tauri WebView loading the assigned loopback URL | navigation allowlist requires the exact `http://127.0.0.1:<assigned-port>` origin; no Tauri command or plugin capability is exposed | no remote navigation, installer, automatic update, or code-signing key |
+| Windows/WSL paired diagnostic | `wsl.exe` starts `bash -lc` in the same launch directory and executes only `execlocus --profile <enum> --lang <enum> report --format <enum>` | shell text is a fixed literal; profile, language, format, and redaction are passed as separate arguments from closed enums; stdin is closed; stderr is never returned to the GUI | no arbitrary user command, project-content read, package install, automatic fix, or remote upload |
 | Network | RustSec and source metadata in dedicated development/CI checks | normal CLI has no network path | no telemetry or hosted report upload |
 
 ## Primary threats and controls
@@ -56,6 +57,7 @@ ExecLocus is a diagnostic aid, not a sandbox, endpoint-security product, secret 
 | Malicious or compromised dependency | committed lockfile; weekly RustSec, license, registry/source, wildcard, and duplicate checks; Dependabot and CodeQL |
 | Workflow supply-chain substitution | workflow token defaults to `contents: read`; checkout credentials are not persisted; external Actions are full-SHA pinned |
 | Desktop WebView navigates away from the local diagnostic | native navigation policy accepts only the assigned loopback host and port; the served page also uses a restrictive CSP and contains no remote asset |
+| Query input is injected into the WSL companion command | unknown query values fall back to typed enums; only enum labels are inserted into the fixed companion template; the working directory is passed as a separate `wsl.exe --cd` argument |
 | Tampered release binary | v0.1 gate requires SHA-256 checksums, immutable source tag/SHA, clean-machine verification, and GitHub artifact attestation |
 
 ## Dependency policy
@@ -94,6 +96,7 @@ Those write permissions belong only in the release job after owner approval. The
 - Process names and allowlisted environment hints can be spoofed by the same local user; they are provenance, not authentication.
 - The parent shell session is intentionally opaque, so some effective command selections remain unknown.
 - The unsigned desktop executable is a local development artifact only. SmartScreen reputation, publisher identity, installer integrity, and automatic-update safety are not claimed.
+- Automatic paired diagnosis depends on a separately installed WSL companion found by the WSL login-shell PATH. A modified same-name executable controlled by the local user can return deceptive observations; the result is diagnostic provenance, not authentication.
 - Reading metadata and a 512-byte prefix cannot establish publisher identity, code safety, or absence of malware.
 - Files can change between observations; ExecLocus does not lock project or executable files.
 - Redaction covers modeled identity/path classes and is not a general secret detector for arbitrary pasted content. Users must not paste raw terminal or raw JSON into public reports.

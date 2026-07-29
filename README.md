@@ -99,7 +99,7 @@ Use the validation wrappers when the GUI should receive bounded alias, function,
 source ./scripts/try-execlocus.sh balanced gui en
 ```
 
-To try the same screen as a Windows application rather than a browser tab, follow the [unsigned desktop development-build guide](docs/DESKTOP_TRY_IT.md).
+To try the screen as a Windows application rather than a browser tab, read the [GUI guide](docs/GUI_MANUAL.md) and follow the [unsigned desktop development-build guide](docs/DESKTOP_TRY_IT.md). For automatic same-directory Windows/WSL observation, run `bash scripts/install-wsl-companion.sh` once inside WSL.
 
 ```powershell
 & .\scripts\build-desktop.ps1 -Configuration Debug

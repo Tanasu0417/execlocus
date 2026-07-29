@@ -1,6 +1,6 @@
 # Try the ExecLocus Windows desktop development build
 
-This flow opens the same read-only diagnostic GUI in a native Windows window instead of a browser tab. It is a pre-alpha, **unsigned development build**, not an installer or a public release artifact.
+This flow opens the read-only diagnostic GUI in a native Windows window instead of a browser tab. Read the [GUI guide](GUI_MANUAL.md) for the product purpose, profiles, privacy boundary, and screen workflow. This is a pre-alpha, **unsigned development build**, not an installer or a public release artifact.
 
 ## Cost and network boundary
 
@@ -43,4 +43,4 @@ The desktop process cannot reconstruct aliases or functions from an already-open
 & .\scripts\try-execlocus.ps1 -Gui -Language en -Profile balanced
 ```
 
-The next desktop candidate is a side-by-side Windows/WSL launch flow, not automatic fixes or hosted AI. It should proceed only after this local interaction proves useful.
+For automatic Windows/WSL comparison, run `bash scripts/install-wsl-companion.sh` once in the WSL checkout. The Windows app then observes the same launch directory from both sides and shows differences first. It does not upload data or apply automatic fixes.
