@@ -41,12 +41,29 @@ python -m http.server 8765 --directory docs/demo
 - Windows: Microsoft C++ Build ToolsとWindows SDK
 - WSL: Ubuntu 24.04を主対象とし、`cc`などのCリンカー
 
-リポジトリを取得して、そのディレクトリへ移動します。
+リポジトリは`C:\WINDOWS\system32`ではなく、自分が書き込みできる通常の作業フォルダへ取得します。`git clone`は`execlocus`フォルダを新しく作るため、**cloneの後に**そのフォルダへ移動してください。
 
-```console
+Windows PowerShellの場合:
+
+```powershell
+Set-Location ([Environment]::GetFolderPath("MyDocuments"))
+git clone https://github.com/Tanasu0417/execlocus.git
+Set-Location .\execlocus
+git rev-parse --show-toplevel
+if (-not (Test-Path .\scripts\try-execlocus.ps1)) { throw "リポジトリ直下ではないか、取得内容が古い状態です" }
+```
+
+WSLの場合:
+
+```bash
+cd ~
 git clone https://github.com/Tanasu0417/execlocus.git
 cd execlocus
+git rev-parse --show-toplevel
+test -f scripts/try-execlocus.sh || { pwd; echo "リポジトリ直下ではないか、取得内容が古い状態です"; exit 1; }
 ```
+
+すでにclone済みの場合は、cloneを繰り返さず、そのリポジトリ直下へ移動して`git pull --ff-only`を実行します。`git rev-parse --show-toplevel`の出力と現在地が一致し、`scripts`フォルダが見えることを確認してください。
 
 このプレアルファ版を再現可能に確認する場合は、試したコミットIDも控えてください。
 
@@ -87,6 +104,13 @@ bash scripts/try-execlocus.sh linux-first
 ```bash
 SHOW_LOCAL_DETAILS=1 bash scripts/try-execlocus.sh balanced
 ```
+
+`not recognized as the name of a script file`または`No such file or directory`になった場合、診断処理はまだ始まっていません。次を確認してください。
+
+- `git rev-parse --show-toplevel`が現在のExecLocusリポジトリを示している
+- Windowsでは`Test-Path .\scripts\try-execlocus.ps1`が`True`になる
+- WSLでは`test -f scripts/try-execlocus.sh && echo OK`が`OK`を表示する
+- clone済みの古い作業コピーでは`git pull --ff-only`を実行済みである
 
 `/mnt/c`上の同じリポジトリをWindowsとWSLの両方から実行すると、同じソースに対する実行環境の差を比較できます。WSLネイティブ配置も確認する場合は、個人情報を含まない別のテスト用コピーをWSLのホーム側へ置いて比較してください。
 

@@ -39,10 +39,29 @@ Then open `http://127.0.0.1:8765/prototype/index.html`. If you cannot explain th
 - Windows: Microsoft C++ Build Tools and the Windows SDK
 - WSL: Ubuntu 24.04 is the primary target; a C linker such as `cc` is required
 
-```console
+Clone into a normal user-writable working directory, not `C:\WINDOWS\system32`. Because `git clone` creates the `execlocus` directory, enter it **after** cloning.
+
+Windows PowerShell:
+
+```powershell
+Set-Location ([Environment]::GetFolderPath("MyDocuments"))
+git clone https://github.com/Tanasu0417/execlocus.git
+Set-Location .\execlocus
+git rev-parse --show-toplevel
+if (-not (Test-Path .\scripts\try-execlocus.ps1)) { throw "Not at the repository root, or the checkout is outdated" }
+```
+
+WSL:
+
+```bash
+cd ~
 git clone https://github.com/Tanasu0417/execlocus.git
 cd execlocus
+git rev-parse --show-toplevel
+test -f scripts/try-execlocus.sh || { pwd; echo "Not at the repository root, or the checkout is outdated"; exit 1; }
 ```
+
+For an existing clone, enter its repository root and run `git pull --ff-only` instead of cloning again. Confirm that `git rev-parse --show-toplevel` identifies the current directory and that the `scripts` directory is present.
 
 Record the commit ID if you need a reproducible pre-alpha test.
 
@@ -67,6 +86,13 @@ The reports are written to `target/user-validation/wsl-<profile>.md` and `wsl-<p
 ```bash
 SHOW_LOCAL_DETAILS=1 bash scripts/try-execlocus.sh balanced
 ```
+
+If PowerShell reports `not recognized as the name of a script file`, or bash reports `No such file or directory`, the diagnostic has not started. Confirm that:
+
+- `git rev-parse --show-toplevel` identifies the intended ExecLocus checkout;
+- `Test-Path .\scripts\try-execlocus.ps1` returns `True` on Windows;
+- `test -f scripts/try-execlocus.sh && echo OK` prints `OK` in WSL; and
+- an existing checkout has been updated with `git pull --ff-only`.
 
 Run both scripts against the same repository under `/mnt/c` to compare Windows and WSL execution for one source tree. Use a separate non-sensitive test copy under the WSL filesystem if you also want to compare WSL-native placement.
 
