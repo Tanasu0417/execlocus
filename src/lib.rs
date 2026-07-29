@@ -5,7 +5,7 @@ pub mod probes;
 pub mod renderers;
 pub mod rules;
 
-use model::{Profile, Report};
+use model::{Evidence, Profile, Report};
 use probes::context::{ProbeContext, SystemProbeContext};
 use probes::executable::{ExecutableResolver, PathExecutableResolver};
 use probes::process::{
@@ -63,7 +63,15 @@ fn collect_report_with_components(
     );
     let project_result = probes::path::probe_project_with(context, &runtime.kind);
 
-    let mut evidence = runtime_result.evidence;
+    let mut evidence = vec![Evidence {
+        id: "profile.selected".to_owned(),
+        probe: "cli/v1".to_owned(),
+        kind: "configuration".to_owned(),
+        claim: "selected diagnostic profile".to_owned(),
+        value: Some(profile.label().to_owned()),
+        sensitive: false,
+    }];
+    evidence.extend(runtime_result.evidence);
     evidence.extend(agent_result.evidence);
     evidence.extend(project_result.evidence);
 

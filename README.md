@@ -19,6 +19,7 @@ ExecLocus
 See what your agent context resolves—and why.
 
 CURRENT EXECUTION
+  Profile       balanced                       selected
   Runtime       WSL2 / Ubuntu 24.04            observed
   User          dev                            OS account
   Shell         bash                           process ancestry
@@ -33,8 +34,9 @@ TOOLCHAIN
   Git           /usr/bin/git                   Linux
   Node          /mnt/c/Program Files/node.exe  Windows
 
-1 finding
+2 findings
   ENV002  WSL execution resolves Windows Node                   warning
+  FS001   WSL project uses a Windows-mounted path                info
 
 Run `execlocus explain ENV002` for evidence and suggested actions.
 ```
@@ -98,6 +100,13 @@ ExecLocus evaluates filesystem placement according to intent.
 
 The default profile is `balanced`.
 
+Select another intent explicitly when needed:
+
+```console
+execlocus --profile share-first check
+execlocus --profile linux-first check
+```
+
 ## Evidence, not guesses
 
 Every reported value has a state:
@@ -121,8 +130,8 @@ The agent adapters inspect that same bounded process snapshot. An exact ancestor
 | `ENV002` | WSL resolves a Windows executable for a core tool | Implemented |
 | `ENV003` | The same agent is installed in Windows and WSL | Planned for v0.1 |
 | `ENV004` | Agent state or configuration crosses OS layers | Planned for v0.1 |
-| `FS001` | A WSL workflow uses a Windows-mounted path | Planned for v0.1 |
-| `FS002` | A share-first workflow uses a WSL-native project | Planned for v0.1 |
+| `FS001` | A WSL workflow uses a Windows-mounted path | Implemented |
+| `FS002` | A share-first workflow uses a WSL-native project | Implemented |
 | `PATH001` | PATH chooses a cross-layer executable over a native candidate | Implemented |
 | `GIT001` | Git and the project use incompatible OS layers | Implemented |
 
@@ -199,7 +208,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Conservative Codex and Claude process adapters
 - [x] Redacted Markdown reports
 - [x] Windows and Linux CI workflow
-- [ ] Remaining profile-aware and agent-boundary rules
+- [x] `FS001`, `FS002`, and profile-aware filesystem guidance
+- [ ] Remaining agent-boundary rules
 - [ ] `explain <RULE_ID>` and production shell-specific candidate resolution
 - [ ] External prototype validation and real demo capture
 - [ ] v0.1.0 release artifacts

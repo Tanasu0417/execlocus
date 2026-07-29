@@ -28,6 +28,8 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Isolated real-environment validation of Claude Code launching ExecLocus inside Ubuntu-24.04 WSL
 - Medium-confidence Codex child-process marker fallback for PID-namespaced Linux/WSL sandboxes, without retaining the marker value
 - Isolated real-environment validation of Windows-native Claude Code and WSL-native Codex CLI
+- Profile-aware `FS001` and `FS002` filesystem guidance for Windows-mounted and WSL-native projects
+- Selected-profile provenance in reports and the terminal summary
 
 ### Fixed
 

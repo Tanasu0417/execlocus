@@ -60,7 +60,10 @@ impl FixtureProbeContext {
             current_dir: PathBuf::from("/mnt/c/demo/execlocus-sample"),
             candidates,
             candidate_errors: HashMap::new(),
-            text_files: HashMap::new(),
+            text_files: HashMap::from([(
+                "/proc/sys/kernel/osrelease".to_owned(),
+                "6.6.87.2-microsoft-standard-WSL2".to_owned(),
+            )]),
             now_unix_ms: 1_234_567,
         }
     }
@@ -189,9 +192,9 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
     assert_eq!(report.agent.product, None);
     assert_eq!(
         report.runtime.kind_source,
-        Some(RuntimeValueSource::Environment)
+        Some(RuntimeValueSource::KernelRelease)
     );
-    assert_eq!(report.runtime.status, ObservationStatus::Inferred);
+    assert_eq!(report.runtime.status, ObservationStatus::Observed);
     assert_eq!(report.runtime.distribution.as_deref(), Some("Ubuntu-24.04"));
     assert_eq!(report.runtime.user.as_deref(), Some("demo"));
     assert_eq!(
@@ -233,7 +236,18 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
             && edge.relation == "resolves-to"
             && edge.to == "executable.node"
     }));
-    assert!(report.findings.is_empty());
+    let fs001 = report
+        .findings
+        .iter()
+        .find(|finding| finding.id == "FS001")
+        .expect("balanced WSL report should explain the Windows-mounted project");
+    assert_eq!(fs001.severity, execlocus::model::Severity::Info);
+    assert!(
+        report
+            .evidence
+            .iter()
+            .any(|item| item.id == "profile.selected" && item.value.as_deref() == Some("balanced"))
+    );
 }
 
 #[test]

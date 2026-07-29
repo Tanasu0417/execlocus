@@ -19,6 +19,7 @@ ExecLocus
 See what your agent context resolves—and why.
 
 CURRENT EXECUTION
+  Profile       balanced                       selected
   Runtime       WSL2 / Ubuntu 24.04            observed
   User          dev                            OS account
   Shell         bash                           process ancestry
@@ -27,14 +28,15 @@ CURRENT EXECUTION
 
 AGENT
   Product       Claude Code                    inferred · high confidence
-  Executable    /usr/local/bin/claude          observed · Linux
+  Runtime       Wsl                            observed · certain confidence
 
 TOOLCHAIN
   Git           /usr/bin/git                   Linux
   Node          /mnt/c/Program Files/node.exe  Windows
 
-1 finding
+2 findings
   ENV002  WSL execution resolves Windows Node                   warning
+  FS001   WSL project uses a Windows-mounted path                info
 ```
 
 ## なぜ必要か
@@ -94,6 +96,13 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 
 既定値は`balanced`です。
 
+意図が異なる場合は明示できます。
+
+```console
+execlocus --profile share-first check
+execlocus --profile linux-first check
+```
+
 ## 事実と推測を分けます
 
 - `observed`: OSやファイルから直接観測した事実
@@ -145,7 +154,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
 - [x] Codex/Claude adapter
 - [x] 自動匿名化Markdownレポートと`--redact` JSON
-- [ ] `FS001`／`FS002`と3 profileの実動作
+- [x] `FS001`／`FS002`と3 profileの実動作
 - [ ] `ENV001`／`ENV003`／`ENV004`
 - [ ] `explain <RULE_ID>`とshell固有candidate表示
 - [ ] 外部prototype検証、実測demo、v0.1.0 release artifact

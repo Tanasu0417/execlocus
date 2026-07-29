@@ -37,6 +37,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | Git, Node, and npm resolution | Implemented | Selected executable and observed candidates are collected |
 | PE, ELF, and script classification | Implemented | Scripts remain a neutral origin when their shebang cannot establish an OS layer |
 | `ENV002`, `PATH001`, and `GIT001` | Implemented | Deterministic rules use the normalized report; neutral scripts do not trigger cross-layer PATH warnings |
+| `FS001`, `FS002`, and profiles | Implemented | Certain filesystem evidence produces profile-specific read-only guidance; `/mnt/c` remains a supported interoperability choice |
 | Terminal output | Implemented | Human-readable pre-alpha output |
 | JSON output | Implemented | Schema `0.3.0` is pre-alpha and not frozen for compatibility yet |
 | Codex evidence adapter | Verified on Windows and WSL | Exact ancestry is high confidence; a UUID-shaped Codex-injected child marker is a medium-confidence fallback when the WSL sandbox hides ancestors |

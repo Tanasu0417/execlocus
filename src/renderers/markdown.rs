@@ -25,7 +25,8 @@ fn render_redacted(report: &Report) -> String {
     .expect("writing to String cannot fail");
     writeln!(output, "- Schema: `{}`", cell(&report.schema_version))
         .expect("writing to String cannot fail");
-    writeln!(output, "- Profile: `{:?}`\n", report.profile).expect("writing to String cannot fail");
+    writeln!(output, "- Profile: `{}`\n", report.profile.label())
+        .expect("writing to String cannot fail");
 
     writeln!(output, "## Current execution\n").expect("writing to String cannot fail");
     writeln!(output, "| Field | Value | Source |").expect("writing to String cannot fail");
