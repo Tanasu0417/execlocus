@@ -3,6 +3,142 @@ use crate::model::{
     Profile, Report, RuntimeKind, Severity,
 };
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RuleDefinition {
+    pub id: &'static str,
+    pub title: &'static str,
+    pub category: &'static str,
+    pub default_severity: &'static str,
+    pub rationale: &'static str,
+    pub required_evidence: &'static [&'static str],
+    pub suggested_actions: &'static [&'static str],
+}
+
+pub const RULE_DEFINITIONS: &[RuleDefinition] = &[
+    RuleDefinition {
+        id: "ENV001",
+        title: "Visible terminal and agent runtime differ",
+        category: "environment",
+        default_severity: "info",
+        rationale: "Commands run in the visible terminal can resolve different paths, tools, configuration, and permissions from commands run by the agent.",
+        required_evidence: &["terminal layer", "agent runtime", "relationship evidence"],
+        suggested_actions: &[
+            "Compare resolved Git, Node, shell, and project paths before changing configuration.",
+            "Use a structured report to inspect the relationship evidence.",
+        ],
+    },
+    RuleDefinition {
+        id: "ENV002",
+        title: "WSL execution resolves a Windows executable",
+        category: "environment",
+        default_severity: "warning",
+        rationale: "Path syntax, permissions, subprocess behavior, configuration directories, and package installation targets can differ from Linux-native expectations.",
+        required_evidence: &[
+            "runtime layer",
+            "resolved executable path",
+            "executable format or origin",
+        ],
+        suggested_actions: &[
+            "Keep the setup when Windows interoperability is intentional and document the boundary.",
+            "If Linux behavior is intended, install and prioritize the Linux-native executable in the distribution.",
+            "Inspect PATH001 before changing PATH order.",
+        ],
+    },
+    RuleDefinition {
+        id: "ENV003",
+        title: "Agent is installed in both Windows and WSL",
+        category: "environment",
+        default_severity: "info",
+        rationale: "The selected installation can vary with the terminal, PATH, launcher, or desktop integration, while configuration and versions can diverge.",
+        required_evidence: &["certain agent installation paths in Windows and WSL"],
+        suggested_actions: &[
+            "Compare versions and resolved paths before changing either installation.",
+            "Keep both installations when both workflows are intentional.",
+            "Remove or deprioritize one only after confirming the active workflow.",
+        ],
+    },
+    RuleDefinition {
+        id: "ENV004",
+        title: "Agent state or configuration crosses OS layers",
+        category: "environment",
+        default_severity: "warning",
+        rationale: "File locking, permissions, line endings, performance, and concurrent access can become inconsistent when writable state crosses layers.",
+        required_evidence: &[
+            "agent runtime",
+            "normalized config or state path",
+            "path classification",
+        ],
+        suggested_actions: &[
+            "Keep writable databases, caches, and primary configuration native to the executor when practical.",
+            "Share only configuration files documented as portable by the agent vendor.",
+            "Back up state before manually relocating it.",
+        ],
+    },
+    RuleDefinition {
+        id: "FS001",
+        title: "Project or heavy artifacts are on a Windows mount",
+        category: "filesystem",
+        default_severity: "profile-dependent",
+        rationale: "Windows-mounted storage improves interoperability but can change metadata-heavy I/O, permissions, symlinks, watchers, or case-sensitivity behavior.",
+        required_evidence: &["WSL runtime", "path classification", "selected profile"],
+        suggested_actions: &[
+            "Keep the Windows mount when Windows application access is the priority.",
+            "Measure the affected workload before moving files for performance reasons.",
+            "Use the selected profile's finding for profile-specific guidance.",
+        ],
+    },
+    RuleDefinition {
+        id: "FS002",
+        title: "WSL-native project may be inconvenient for a Windows-first workflow",
+        category: "filesystem",
+        default_severity: "info",
+        rationale: "Windows tools can usually use WSL UNC paths, but some applications, dialogs, watchers, or integrations can be less convenient.",
+        required_evidence: &["WSL-native project path", "share-first profile"],
+        suggested_actions: &[
+            "Keep the WSL-native project when Linux compatibility and filesystem behavior matter more.",
+            "Access the project from Windows through its WSL UNC path.",
+            "Move it only if a required Windows application cannot use the UNC path reliably.",
+        ],
+    },
+    RuleDefinition {
+        id: "PATH001",
+        title: "PATH precedence selects an executable from another layer",
+        category: "path",
+        default_severity: "warning",
+        rationale: "The selected version can use different configuration, packages, path rules, or subprocess semantics from the native candidate.",
+        required_evidence: &[
+            "ordered candidates",
+            "selected executable path",
+            "runtime layer",
+            "candidate origins",
+        ],
+        suggested_actions: &[
+            "Review PATH order for the active shell before changing configuration.",
+            "Confirm version and behavior before modifying shell profiles.",
+            "Use an explicit executable path in reproducible automation.",
+        ],
+    },
+    RuleDefinition {
+        id: "GIT001",
+        title: "Git and project reside in different OS layers",
+        category: "toolchain",
+        default_severity: "warning",
+        rationale: "Credentials, file modes, case sensitivity, hooks, line endings, and path handling can differ across OS layers.",
+        required_evidence: &["resolved Git origin", "project path classification"],
+        suggested_actions: &[
+            "Prefer Git native to the runtime that owns the project workflow.",
+            "Review line endings, file modes, hooks, and credential helpers before switching.",
+        ],
+    },
+];
+
+#[must_use]
+pub fn definition(rule_id: &str) -> Option<&'static RuleDefinition> {
+    RULE_DEFINITIONS
+        .iter()
+        .find(|definition| definition.id.eq_ignore_ascii_case(rule_id))
+}
+
 #[must_use]
 pub fn evaluate(report: &Report) -> Vec<Finding> {
     let mut findings = Vec::new();
@@ -399,7 +535,25 @@ mod tests {
         Severity, Topology,
     };
 
-    use super::evaluate;
+    use super::{RULE_DEFINITIONS, definition, evaluate};
+
+    #[test]
+    fn rule_catalog_is_unique_complete_and_case_insensitive() {
+        let ids = RULE_DEFINITIONS
+            .iter()
+            .map(|definition| definition.id)
+            .collect::<std::collections::HashSet<_>>();
+
+        assert_eq!(ids.len(), RULE_DEFINITIONS.len());
+        assert_eq!(
+            ids,
+            std::collections::HashSet::from([
+                "ENV001", "ENV002", "ENV003", "ENV004", "FS001", "FS002", "PATH001", "GIT001",
+            ])
+        );
+        assert_eq!(definition("env002").map(|item| item.id), Some("ENV002"));
+        assert!(definition("UNKNOWN").is_none());
+    }
 
     fn report(
         runtime_kind: RuntimeKind,

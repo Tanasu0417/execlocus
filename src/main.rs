@@ -44,6 +44,11 @@ enum Command {
         #[arg(long)]
         redact: bool,
     },
+    /// Explain one implemented rule using the current report and its evidence.
+    Explain {
+        /// Rule identifier, for example ENV002. Matching is case-insensitive.
+        rule_id: String,
+    },
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -54,6 +59,24 @@ enum ReportFormat {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
+
+    if let Some(Command::Explain { rule_id }) = &cli.command {
+        let Some(definition) = execlocus::rules::definition(rule_id) else {
+            eprintln!(
+                "unknown rule ID: {rule_id}. Implemented IDs: {}",
+                execlocus::rules::RULE_DEFINITIONS
+                    .iter()
+                    .map(|definition| definition.id)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            return ExitCode::from(2);
+        };
+        let report = collect_report(cli.profile.into());
+        print!("{}", renderers::explain::render(&report, definition));
+        return ExitCode::SUCCESS;
+    }
+
     let report = collect_report(cli.profile.into());
 
     match cli.command {
@@ -77,6 +100,9 @@ fn main() -> ExitCode {
             ReportFormat::Markdown => print!("{}", renderers::markdown::render(&report)),
         },
         Some(Command::Check) | None => print!("{}", renderers::terminal::render(&report)),
+        Some(Command::Explain { .. }) => {
+            unreachable!("explain is handled before report collection")
+        }
     }
 
     if report.has_error_findings() {

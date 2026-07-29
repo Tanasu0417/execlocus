@@ -56,7 +56,7 @@ Common mixed-runtime setups include:
 
 ExecLocus models those boundaries instead of treating every mixed setup as broken.
 
-## Planned v0.1 interface
+## Current and planned v0.1 interface
 
 ```console
 execlocus
@@ -74,6 +74,7 @@ The zero-argument command is the primary workflow. No configuration should be re
 ```console
 cargo run --
 cargo run -- check
+cargo run -- explain ENV002
 cargo run -- report --format json
 cargo run -- report --format markdown
 cargo run -- report --format json --redact
@@ -137,6 +138,8 @@ The agent adapters inspect that same bounded process snapshot. An exact ancestor
 | `GIT001` | Git and the project use incompatible OS layers | Implemented |
 
 Rules are read-only. Suggestions explain options but never modify the machine.
+
+`execlocus explain <RULE_ID>` accepts implemented rule IDs case-insensitively. It reports whether the rule triggered in the current observation, why the rule exists, its evidence, and read-only actions. An unknown ID exits with code `2`. Local explanation output can contain observed paths; use redacted JSON or Markdown before sharing.
 
 `ENV001` deliberately remains silent when a cross-layer launcher hides one side of the process relationship. Terminal branding, including Windows Terminal hosting WSL, is not enough to trigger it.
 
@@ -213,7 +216,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Windows and Linux CI workflow
 - [x] `FS001`, `FS002`, and profile-aware filesystem guidance
 - [x] Evidence-bounded `ENV001`, `ENV003`, and `ENV004` agent-boundary rules
-- [ ] `explain <RULE_ID>` and production shell-specific candidate resolution
+- [x] `explain <RULE_ID>` with current evidence, rationale, and read-only actions
+- [ ] Production shell-specific candidate resolution
 - [ ] External prototype validation and real demo capture
 - [ ] v0.1.0 release artifacts
 
