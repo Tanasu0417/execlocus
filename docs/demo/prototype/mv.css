@@ -1,0 +1,27 @@
+:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #040b0f; color: #eefcf8; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 960px; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at 50% 0, #102a33, #040b0f 58%); }
+main { width: min(96vw, 1600px); }
+.master { position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; border: 1px solid #29444d; background: #071015; box-shadow: 0 28px 90px rgba(0,0,0,.5); }
+iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; transform: scale(1.01); filter: saturate(.92) brightness(.82); }
+.scrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(3,9,12,.55), transparent 17%, transparent 67%, rgba(3,9,12,.84)); }
+.mv-header { position: absolute; inset: 24px 30px auto; display: flex; justify-content: space-between; align-items: center; color: #88a4ac; font: 11px "Cascadia Code", Consolas, monospace; letter-spacing: .14em; }
+.gate { padding: 7px 10px; color: #f2c775; border: 1px solid rgba(242,199,117,.48); border-radius: 999px; background: rgba(8,18,23,.75); }
+.chapter { position: absolute; left: 34px; bottom: 138px; display: flex; align-items: center; gap: 12px; font: 10px "Cascadia Code", Consolas, monospace; letter-spacing: .14em; color: #77dccc; }
+.chapter span:first-child { width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid #77dccc; border-radius: 50%; }
+.caption-panel { position: absolute; left: 34px; right: 34px; bottom: 49px; min-height: 72px; padding: 14px 22px; border-left: 3px solid #69e3cc; background: rgba(6,18,23,.9); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 16px 42px rgba(0,0,0,.25); }
+.caption-panel p { margin: 0; font-size: clamp(21px, 2.15vw, 34px); line-height: 1.35; font-weight: 650; letter-spacing: -.025em; }
+.wave { height: 28px; min-width: 90px; display: flex; justify-content: flex-end; align-items: center; gap: 5px; }
+.wave i { display: block; width: 3px; height: 8px; border-radius: 3px; background: #55b8ff; animation: wave .9s ease-in-out infinite alternate; }
+.wave i:nth-child(2), .wave i:nth-child(6) { animation-delay: -.2s; height: 15px; }.wave i:nth-child(3), .wave i:nth-child(5) { animation-delay: -.45s; height: 23px; }.wave i:nth-child(4) { animation-delay: -.65s; height: 28px; }
+@keyframes wave { to { transform: scaleY(.45); opacity: .45; } }
+.timeline { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.1); }
+.timeline span { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #69e3cc, #55b8ff); }
+time { position: absolute; right: 34px; bottom: 18px; color: #69858e; font: 9px "Cascadia Code", Consolas, monospace; }
+.controls { min-height: 52px; display: flex; align-items: center; gap: 9px; padding-top: 12px; color: #78949d; font-size: 12px; }
+.controls button, .controls select { border: 1px solid #2b4650; background: #0b171d; color: #c2d8dc; border-radius: 7px; padding: 7px 11px; cursor: pointer; }
+.controls label { margin-left: 10px; }.controls span { margin-left: auto; }
+body.capture .controls { display: none; }
+body.capture main { width: 100vw; }
+body.capture .master { border: 0; }
+@media (prefers-reduced-motion: reduce) { .wave i { animation: none; } }

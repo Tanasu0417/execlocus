@@ -1,7 +1,7 @@
 # ExecLocus recording scenario contract
 
 - Scenario ID: `DEMO-UC02-PAIRED-01`
-- Status: approved design; not yet recordable
+- Status: implementation gate passed; paired real capture pending
 - Updated: 2026-07-29
 
 ## User story
@@ -67,6 +67,8 @@ execlocus report --format json
 4. paired golden testがproject identityの対応とNode originの違いを表す。
 5. control characterがterminalへ生で出力されない。
 6. synthetic path以外がgolden outputへ混入しない。
+
+2026-07-29時点で1–6はsource test、renderer test、privacy test、Windows categorical validationで通過した。concept demoはこのcontractのsynthetic値だけを使用している。残る作業は、個人情報を含まない専用環境でWindows版とWSL版を別processとして実録し、同じcommitとschemaで比較することである。
 
 ## Follow-up scenario — Windows-mounted shim
 

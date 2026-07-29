@@ -203,6 +203,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [One-page product overview](https://github.com/Tanasu0417/execlocus/blob/main/docs/ONE_PAGER.md)
 - [Demo production plan](https://github.com/Tanasu0417/execlocus/blob/main/docs/DEMO_PLAN.md)
 - [Demo storyboard and recording scenario](https://github.com/Tanasu0417/execlocus/blob/main/docs/demo/README.md)
+- [Local interactive concept source](https://github.com/Tanasu0417/execlocus/tree/main/docs/demo/prototype)
+- [Japanese introduction deck (PPTX)](https://github.com/Tanasu0417/execlocus/raw/main/docs/demo/ExecLocus_intro_ja.pptx)
 - [OSS pattern adoption blueprint](https://github.com/Tanasu0417/execlocus/blob/main/docs/ADOPTION_BLUEPRINT.md)
 - [Alternatives and current workarounds](https://github.com/Tanasu0417/execlocus/blob/main/docs/research/ALTERNATIVES.md)
 - [OSS benchmark and launch research](https://github.com/Tanasu0417/execlocus/blob/main/docs/research/README.md)

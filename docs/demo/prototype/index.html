@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ExecLocus interactive concept demo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="stage" aria-labelledby="product-name">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1 id="product-name">ExecLocus</h1>
+          <p>Windows × WSL evidence console</p>
+        </div>
+      </div>
+      <div class="top-status" aria-label="デモの状態">
+        <span class="badge badge-concept">INTERACTIVE CONCEPT</span>
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>synthetic data · local only</span>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="rail" aria-label="診断の流れ">
+        <p class="rail-label">TRACE</p>
+        <button class="rail-step active" data-view="inspect"><span>01</span>Inspect</button>
+        <button class="rail-step" data-view="compare"><span>02</span>Compare</button>
+        <button class="rail-step" data-view="explain"><span>03</span>Explain</button>
+        <button class="rail-step" data-view="share"><span>04</span>Share</button>
+        <div class="rail-footer">
+          <span>schema 0.5.0</span>
+          <span>v0.1.0-alpha.1</span>
+        </div>
+      </aside>
+
+      <section class="console" aria-live="polite">
+        <div class="commandbar">
+          <div class="prompt"><span class="prompt-mark">›</span><code id="command">execlocus --profile balanced check</code></div>
+          <button id="run-button" class="run-button">Run diagnostic <kbd>R</kbd></button>
+        </div>
+
+        <div class="profile-row" aria-label="診断プロファイル">
+          <span>Workflow profile</span>
+          <div class="segmented">
+            <button data-profile="share-first">share-first</button>
+            <button class="active" data-profile="balanced">balanced</button>
+            <button data-profile="linux-first">linux-first</button>
+          </div>
+          <span id="run-state" class="run-state">ready</span>
+        </div>
+
+        <section id="view-inspect" class="view active" data-panel="inspect">
+          <div class="hero-copy">
+            <p class="eyebrow">CURRENT EXECUTION</p>
+            <h2>見た目ではなく、<br>実行根拠をたどる。</h2>
+            <p>runtime、shell、project境界、agent evidenceを分離して観測します。</p>
+            <div class="trust-strip">
+              <span>READ ONLY</span><span>NO TELEMETRY</span><span>NO SHELL EXEC</span>
+            </div>
+          </div>
+          <div class="runtime-map" aria-label="WindowsとWSLの実行境界">
+            <div class="lane lane-windows">
+              <div class="lane-heading"><span>WIN</span><strong>Windows Native</strong></div>
+              <p>PowerShell 7</p>
+              <code>C:\demo\execlocus-sample</code>
+              <div class="candidate selected"><span>SELECTED</span><strong>node.exe</strong><small>PE · Windows</small></div>
+            </div>
+            <div class="lane lane-wsl">
+              <div class="lane-heading"><span>WSL</span><strong>Ubuntu 24.04</strong></div>
+              <p>bash</p>
+              <code>/mnt/c/demo/execlocus-sample</code>
+              <div class="candidate selected"><span>SELECTED</span><strong>/usr/bin/node</strong><small>ELF · Linux</small></div>
+            </div>
+            <div class="project-node"><span></span>same source tree</div>
+            <div class="flow-line" aria-hidden="true"></div>
+            <img class="otter" src="../assets/otter-guide.svg" alt="根拠の経路を案内する、顔のないカワウソのシルエット">
+          </div>
+        </section>
+
+        <section id="view-compare" class="view" data-panel="compare">
+          <div class="section-heading">
+            <div><p class="eyebrow">DEMO-UC02-PAIRED-01</p><h2>同じsource tree。違う実行context。</h2></div>
+            <span class="badge">SYNTHETIC REPRODUCTION</span>
+          </div>
+          <div class="comparison">
+            <article>
+              <p class="platform">WINDOWS CONTEXT</p>
+              <dl><div><dt>Runtime</dt><dd>Windows 11</dd></div><div><dt>Shell</dt><dd>PowerShell</dd></div><div><dt>Project</dt><dd>C:\demo\…</dd></div></dl>
+              <div class="resolution"><span>selected</span><strong>C:\Tools\node\node.exe</strong><small>PE · Windows · shell contract</small></div>
+              <div class="evidence"><span>candidate.path.0</span><span>executable.header.0</span><span>shell.ancestry</span></div>
+            </article>
+            <div class="boundary"><span>≠</span><small>runtime boundary</small></div>
+            <article>
+              <p class="platform">WSL CONTEXT</p>
+              <dl><div><dt>Runtime</dt><dd>WSL2 / Ubuntu</dd></div><div><dt>Shell</dt><dd>bash</dd></div><div><dt>Project</dt><dd>/mnt/c/demo/…</dd></div></dl>
+              <div class="resolution"><span>selected</span><strong>/usr/bin/node</strong><small>ELF · Linux · shell contract</small></div>
+              <div class="evidence"><span>candidate.path.0</span><span>executable.header.0</span><span>shell.ancestry</span></div>
+            </article>
+          </div>
+          <p class="comparison-note">2つのExecLocus processを同じschemaで比較。過去にagentが実行した対象とは断定しません。</p>
+        </section>
+
+        <section id="view-explain" class="view" data-panel="explain">
+          <div class="section-heading"><div><p class="eyebrow">RULE EXPLANATION</p><h2 id="rule-title">FS001 · mounted project boundary</h2></div><span id="severity" class="severity">INFO</span></div>
+          <div class="explain-grid">
+            <div class="explain-main">
+              <p class="state-line"><span class="state-icon">i</span><strong id="rule-state">Triggered as context</strong></p>
+              <p id="rule-summary">Project is on a Windows-mounted filesystem while ExecLocus runs inside WSL.</p>
+              <h3>Why it matters</h3>
+              <p id="rule-reason">Windows interoperability may be intentional. Performance and file-watching tradeoffs depend on the selected workflow profile.</p>
+              <h3>Read-only next action</h3>
+              <p id="rule-action">Keep the shared location, then measure your own workload before relocating the project.</p>
+            </div>
+            <div class="evidence-stack">
+              <p>EVIDENCE CHAIN</p>
+              <ol><li><span>runtime.kind</span><strong>WSL</strong></li><li><span>project.path</span><strong>WindowsMounted</strong></li><li><span>profile.selected</span><strong id="evidence-profile">balanced</strong></li></ol>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-share" class="view" data-panel="share">
+          <div class="section-heading"><div><p class="eyebrow">SHAREABLE REPORT</p><h2>共有前に、識別情報を落とす。</h2></div><span class="badge badge-safe">AUTO REDACTED</span></div>
+          <div class="share-layout">
+            <div class="redaction-list">
+              <p>Removed before render</p>
+              <ul><li>username <span>[redacted-user]</span></li><li>home directory <span>[redacted-home]</span></li><li>machine name <span>[redacted-machine]</span></li><li>absolute project path <span>[windows-project]</span></li></ul>
+              <button id="copy-button">Copy synthetic report</button>
+              <small id="copy-state">raw terminal / raw JSONは公開しない</small>
+            </div>
+            <pre class="report"><code># ExecLocus shareable report
+
+- Schema: `0.5.0`
+- Profile: `<span id="report-profile">balanced</span>`
+
+| Field   | Value              |
+| Runtime | WSL                |
+| User    | [redacted-user]    |
+| Project | [windows-project]  |
+
+Finding: <span id="report-finding">FS001 · Info</span>
+No values were uploaded.</code></pre>
+          </div>
+        </section>
+      </section>
+    </section>
+
+    <footer class="footer"><span>Concept UI — not the v0.1 CLI surface</span><span>github.com/Tanasu0417/execlocus</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
