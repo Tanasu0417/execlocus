@@ -86,6 +86,7 @@ where
     let user = detect_user(context, identity);
     let shell = detect_shell(context, identity);
     let terminal = detect_terminal(context);
+    let terminal_layer = detect_terminal_layer(runtime, shell.as_ref());
 
     let evidence = build_runtime_evidence(
         runtime,
@@ -93,6 +94,7 @@ where
         user.as_ref(),
         shell.as_ref(),
         terminal.as_deref(),
+        terminal_layer,
     );
 
     ProbeResult {
@@ -107,6 +109,10 @@ where
             shell: shell.as_ref().map(|observed| observed.value.clone()),
             shell_source: shell.as_ref().map(|observed| observed.source),
             terminal,
+            terminal_layer: terminal_layer.kind,
+            terminal_layer_status: terminal_layer.status,
+            terminal_layer_confidence: terminal_layer.confidence,
+            terminal_layer_source: terminal_layer.source,
             status: runtime.status,
             confidence: runtime.confidence,
         },
@@ -121,6 +127,7 @@ fn build_runtime_evidence(
     user: Option<&DetectedValue>,
     shell: Option<&DetectedValue>,
     terminal: Option<&str>,
+    terminal_layer: DetectedRuntime,
 ) -> Vec<Evidence> {
     let mut evidence = vec![Evidence {
         id: "runtime.kind".to_owned(),
@@ -184,7 +191,42 @@ fn build_runtime_evidence(
             sensitive: false,
         });
     }
+    if terminal_layer.kind != RuntimeKind::Unknown {
+        evidence.push(Evidence {
+            id: "terminal.layer".to_owned(),
+            probe: "runtime/v3".to_owned(),
+            kind: "process".to_owned(),
+            claim: "active terminal session layer derived from the observed launching shell and current process layer"
+                .to_owned(),
+            value: Some(format!("{:?}", terminal_layer.kind)),
+            sensitive: false,
+        });
+    }
     evidence
+}
+
+fn detect_terminal_layer(
+    runtime: DetectedRuntime,
+    shell: Option<&DetectedValue>,
+) -> DetectedRuntime {
+    if runtime.status == ObservationStatus::Observed
+        && runtime.confidence == Confidence::Certain
+        && shell.is_some_and(|value| value.source == RuntimeValueSource::ProcessAncestry)
+    {
+        return DetectedRuntime {
+            kind: runtime.kind,
+            source: Some(RuntimeValueSource::ProcessAncestry),
+            status: ObservationStatus::Inferred,
+            confidence: Confidence::Certain,
+        };
+    }
+
+    DetectedRuntime {
+        kind: RuntimeKind::Unknown,
+        source: None,
+        status: ObservationStatus::Unavailable,
+        confidence: Confidence::None,
+    }
 }
 
 fn detect_runtime<C>(context: &C) -> DetectedRuntime
@@ -584,5 +626,26 @@ mod tests {
         assert_eq!(runtime.source, Some(RuntimeValueSource::KernelRelease));
         assert_eq!(runtime.status, ObservationStatus::Observed);
         assert_eq!(runtime.confidence, Confidence::Certain);
+    }
+
+    #[test]
+    fn observed_shell_establishes_the_terminal_session_layer() {
+        let result = probe_with_inspector(&SpoofedWslEnvironmentContext, &StaticIdentityInspector);
+
+        assert_eq!(result.value.terminal_layer, RuntimeKind::LinuxNative);
+        assert_eq!(
+            result.value.terminal_layer_status,
+            ObservationStatus::Inferred
+        );
+        assert_eq!(
+            result.value.terminal_layer_source,
+            Some(RuntimeValueSource::ProcessAncestry)
+        );
+        assert!(
+            result
+                .evidence
+                .iter()
+                .any(|item| item.id == "terminal.layer")
+        );
     }
 }

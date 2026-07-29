@@ -84,6 +84,8 @@ pub fn probe_with_codex_thread_id(
         } else {
             Confidence::None
         },
+        installations: Vec::new(),
+        state_locations: Vec::new(),
     };
 
     let mut evidence = vec![Evidence {
@@ -200,6 +202,10 @@ mod tests {
             shell: None,
             shell_source: None,
             terminal: None,
+            terminal_layer: RuntimeKind::Unknown,
+            terminal_layer_status: ObservationStatus::Unavailable,
+            terminal_layer_confidence: Confidence::None,
+            terminal_layer_source: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
         }

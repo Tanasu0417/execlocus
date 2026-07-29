@@ -87,7 +87,7 @@ Global behavior:
 
 ## 5. Normalized data contract
 
-The current internal schema (`0.3.0`, still pre-alpha) represents:
+The current internal schema (`0.4.0`, still pre-alpha) represents:
 
 ```text
 Report
@@ -99,6 +99,8 @@ Report
   shell
   project
   agent
+    installations[]
+    state_locations[]
   executables[]
   topology.nodes[]
   topology.edges[]
@@ -115,12 +117,13 @@ The renderer does not re-probe the system. Terminal and JSON output consume the 
 2. WSL identity and distribution metadata
 3. User, shell, and working directory
 4. Project path and filesystem classification
-5. Executable resolution for Git and Node
-6. Executable format/origin classification
-7. Agent adapters
-8. Rule evaluation
-9. Redaction
-10. Rendering
+5. Agent primary-configuration path classification without content reads
+6. Executable resolution for supported agents, Git, Node, and npm
+7. Executable format/origin classification
+8. Agent adapters
+9. Rule evaluation
+10. Redaction
+11. Rendering
 
 Probe results are independent where possible so a later failure does not discard earlier facts.
 

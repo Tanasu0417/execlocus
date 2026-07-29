@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use execlocus::{
     model::{
-        AgentEvidenceSource, AgentInfo, AgentProduct, Confidence, Evidence, ExecutableCandidate,
-        ExecutableFormat, ExecutableInfo, ExecutableOrigin, Finding, ObservationStatus, PathClass,
-        ProbeFailure, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource,
-        Severity, Topology, TopologyNode,
+        AgentEvidenceSource, AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind,
+        AgentStateLocation, Confidence, Evidence, ExecutableCandidate, ExecutableFormat,
+        ExecutableInfo, ExecutableOrigin, Finding, ObservationStatus, PathClass, ProbeFailure,
+        Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource, Severity,
+        Topology, TopologyNode,
     },
     privacy::{RedactionContext, redact_with_context},
     renderers::{json, markdown},
@@ -26,7 +27,7 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
     let windows_git = r"C:\Users\Alice\AppData\Local\Programs\Git\cmd\git.exe";
     let linux_git = "/usr/bin/git";
     let report = Report {
-        schema_version: "0.3.0".to_owned(),
+        schema_version: "0.4.0".to_owned(),
         generated_at_unix_ms: 123,
         profile: Profile::Balanced,
         runtime: RuntimeInfo {
@@ -40,18 +41,14 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
             shell: Some(r"C:\Users\Alice\bin\bash.exe".to_owned()),
             shell_source: Some(RuntimeValueSource::Environment),
             terminal: Some("WORKSTATION-42 terminal".to_owned()),
+            terminal_layer: RuntimeKind::Unknown,
+            terminal_layer_status: ObservationStatus::Unavailable,
+            terminal_layer_confidence: Confidence::None,
+            terminal_layer_source: None,
             status: ObservationStatus::Observed,
             confidence: Confidence::Certain,
         },
-        agent: AgentInfo {
-            product: Some(AgentProduct::Codex),
-            product_status: ObservationStatus::Inferred,
-            product_confidence: Confidence::High,
-            product_source: Some(AgentEvidenceSource::ProcessAncestry),
-            runtime: RuntimeKind::Wsl,
-            runtime_status: ObservationStatus::Observed,
-            runtime_confidence: Confidence::Certain,
-        },
+        agent: private_agent(),
         project: ProjectInfo {
             path: Some(private_project.to_owned()),
             class: PathClass::WindowsMounted,
@@ -107,6 +104,43 @@ fn private_fixture() -> (Report, FixtureRedactionContext) {
     (report, private_context())
 }
 
+fn private_agent() -> AgentInfo {
+    AgentInfo {
+        product: Some(AgentProduct::Codex),
+        product_status: ObservationStatus::Inferred,
+        product_confidence: Confidence::High,
+        product_source: Some(AgentEvidenceSource::ProcessAncestry),
+        runtime: RuntimeKind::Wsl,
+        runtime_status: ObservationStatus::Observed,
+        runtime_confidence: Confidence::Certain,
+        installations: vec![AgentInstallationInfo {
+            product: AgentProduct::Codex,
+            candidates: vec![
+                ExecutableCandidate {
+                    path: r"C:\Users\Alice\bin\codex.exe".to_owned(),
+                    format: ExecutableFormat::Pe,
+                    origin: ExecutableOrigin::Windows,
+                },
+                ExecutableCandidate {
+                    path: "/home/alice/bin/codex".to_owned(),
+                    format: ExecutableFormat::Elf,
+                    origin: ExecutableOrigin::Linux,
+                },
+            ],
+            status: ObservationStatus::Observed,
+            confidence: Confidence::Certain,
+        }],
+        state_locations: vec![AgentStateLocation {
+            product: AgentProduct::Codex,
+            kind: AgentStateKind::PrimaryConfig,
+            path: r"C:\Users\Alice\.codex".to_owned(),
+            class: PathClass::WindowsNative,
+            status: ObservationStatus::Inferred,
+            confidence: Confidence::High,
+        }],
+    }
+}
+
 fn private_evidence(private_project: &str, windows_git: &str) -> Vec<Evidence> {
     vec![
         Evidence {
@@ -140,6 +174,30 @@ fn private_evidence(private_project: &str, windows_git: &str) -> Vec<Evidence> {
             claim: "terminal on WORKSTATION-42".to_owned(),
             value: Some("WORKSTATION-42 terminal".to_owned()),
             sensitive: false,
+        },
+        Evidence {
+            id: "agent.state.codex.primary-config".to_owned(),
+            probe: "agent-state/v1".to_owned(),
+            kind: "configuration-path".to_owned(),
+            claim: "primary configuration root".to_owned(),
+            value: Some(r"C:\Users\Alice\.codex".to_owned()),
+            sensitive: true,
+        },
+        Evidence {
+            id: "agent.installation.codex.candidate.1".to_owned(),
+            probe: "agent-installation/v1".to_owned(),
+            kind: "executable-candidate".to_owned(),
+            claim: "Windows Codex candidate".to_owned(),
+            value: Some(r"C:\Users\Alice\bin\codex.exe".to_owned()),
+            sensitive: true,
+        },
+        Evidence {
+            id: "agent.installation.codex.candidate.2".to_owned(),
+            probe: "agent-installation/v1".to_owned(),
+            kind: "executable-candidate".to_owned(),
+            claim: "Linux Codex candidate".to_owned(),
+            value: Some("/home/alice/bin/codex".to_owned()),
+            sensitive: true,
         },
         Evidence {
             id: "fixture.unmodeled-path".to_owned(),
@@ -198,6 +256,9 @@ fn redacted_json_contains_no_identity_or_absolute_path() {
     assert!(output.contains("[redacted-machine]"));
     assert!(output.contains("[windows-mounted-project]"));
     assert!(output.contains("[windows-executable:git:1]"));
+    assert!(output.contains("[redacted-agent-state]"));
+    assert!(output.contains("[windows-executable:codex:1]"));
+    assert!(output.contains("[linux-executable:codex:2]"));
     assert!(output.contains("\"product\": \"codex\""));
     assert!(output.contains("\"from\": \"agent.current\""));
 }

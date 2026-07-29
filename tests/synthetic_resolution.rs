@@ -33,8 +33,28 @@ impl FixtureProbeContext {
             ("SHELL".to_owned(), "/bin/bash".to_owned()),
             ("TERM".to_owned(), "xterm-256color".to_owned()),
         ]);
-        let path_entries = vec![PathBuf::from("/opt/demo-bin"), PathBuf::from("/usr/bin")];
+        let path_entries = vec![
+            PathBuf::from("/opt/demo-bin"),
+            PathBuf::from("/usr/bin"),
+            PathBuf::from("/mnt/c/Tools/bin"),
+        ];
         let candidates = HashMap::from([
+            (
+                ("/opt/demo-bin".to_owned(), "codex".to_owned()),
+                CandidateSnapshot::new(
+                    PathBuf::from("/opt/demo-bin/codex"),
+                    true,
+                    b"\x7fELFsynthetic-codex-linux".to_vec(),
+                ),
+            ),
+            (
+                ("/mnt/c/Tools/bin".to_owned(), "codex.exe".to_owned()),
+                CandidateSnapshot::new(
+                    PathBuf::from("/mnt/c/Tools/bin/codex.exe"),
+                    true,
+                    b"MZsynthetic-codex-windows".to_vec(),
+                ),
+            ),
             (
                 ("/opt/demo-bin".to_owned(), "node".to_owned()),
                 CandidateSnapshot::new(
@@ -187,7 +207,7 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
     let report = collect_report_with(&FixtureProbeContext::wsl(), Profile::Balanced);
 
     assert_eq!(report.generated_at_unix_ms, 1_234_567);
-    assert_eq!(report.schema_version, "0.3.0");
+    assert_eq!(report.schema_version, "0.4.0");
     assert_eq!(report.runtime.kind, RuntimeKind::Wsl);
     assert_eq!(report.agent.product, None);
     assert_eq!(
@@ -248,6 +268,14 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
             .iter()
             .any(|item| item.id == "profile.selected" && item.value.as_deref() == Some("balanced"))
     );
+    let codex_installations = report
+        .agent
+        .installations
+        .iter()
+        .find(|installation| installation.product == execlocus::model::AgentProduct::Codex)
+        .expect("the Codex installation scan should be present");
+    assert_eq!(codex_installations.candidates.len(), 2);
+    assert!(report.findings.iter().any(|finding| finding.id == "ENV003"));
 }
 
 #[test]

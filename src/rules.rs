@@ -1,11 +1,14 @@
 use crate::model::{
-    Confidence, ExecutableOrigin, Finding, ObservationStatus, PathClass, Profile, Report,
-    RuntimeKind, Severity,
+    AgentStateLocation, Confidence, ExecutableOrigin, Finding, ObservationStatus, PathClass,
+    Profile, Report, RuntimeKind, Severity,
 };
 
 #[must_use]
 pub fn evaluate(report: &Report) -> Vec<Finding> {
     let mut findings = Vec::new();
+    evaluate_env001(report, &mut findings);
+    evaluate_env003(report, &mut findings);
+    evaluate_env004(report, &mut findings);
     evaluate_fs001(report, &mut findings);
     evaluate_fs002(report, &mut findings);
     evaluate_env002(report, &mut findings);
@@ -18,6 +21,171 @@ pub fn evaluate(report: &Report) -> Vec<Finding> {
             .then_with(|| left.id.cmp(&right.id))
     });
     findings
+}
+
+fn evaluate_env001(report: &Report, findings: &mut Vec<Finding>) {
+    if report.runtime.terminal_layer == RuntimeKind::Unknown
+        || !is_available(report.runtime.terminal_layer_status)
+        || report.runtime.terminal_layer_confidence != Confidence::Certain
+        || report.agent.product.is_none()
+        || report.agent.runtime == RuntimeKind::Unknown
+        || !is_available(report.agent.runtime_status)
+        || !is_high_confidence(report.agent.runtime_confidence)
+        || !is_high_confidence(report.agent.product_confidence)
+        || report.runtime.terminal_layer == report.agent.runtime
+    {
+        return;
+    }
+
+    findings.push(Finding {
+        id: "ENV001".to_owned(),
+        title: "Terminal session and agent use different OS layers".to_owned(),
+        severity: Severity::Info,
+        summary: format!(
+            "The active terminal session is {:?}, while the observed agent execution is {:?}.",
+            report.runtime.terminal_layer, report.agent.runtime
+        ),
+        evidence_ids: vec![
+            "terminal.layer".to_owned(),
+            "agent.product".to_owned(),
+            "agent.runtime".to_owned(),
+        ],
+        suggested_actions: vec![
+            "Compare resolved Git, Node, shell, and project paths before changing configuration."
+                .to_owned(),
+            "Use a structured report to inspect the relationship evidence.".to_owned(),
+        ],
+    });
+}
+
+fn evaluate_env003(report: &Report, findings: &mut Vec<Finding>) {
+    if report.runtime.kind != RuntimeKind::Wsl
+        || report.runtime.status != ObservationStatus::Observed
+        || report.runtime.confidence != Confidence::Certain
+    {
+        return;
+    }
+
+    for installation in &report.agent.installations {
+        if installation.status != ObservationStatus::Observed
+            || installation.confidence != Confidence::Certain
+        {
+            continue;
+        }
+
+        let windows = installation
+            .candidates
+            .iter()
+            .position(|candidate| candidate.origin == ExecutableOrigin::Windows);
+        let linux = installation
+            .candidates
+            .iter()
+            .position(|candidate| candidate.origin == ExecutableOrigin::Linux);
+        let (Some(windows), Some(linux)) = (windows, linux) else {
+            continue;
+        };
+
+        findings.push(Finding {
+            id: "ENV003".to_owned(),
+            title: format!(
+                "{} is available in Windows and WSL layers",
+                installation.product.label()
+            ),
+            severity: Severity::Info,
+            summary: format!(
+                "Certain executable evidence found {} candidates in both Windows and WSL layers.",
+                installation.product.label()
+            ),
+            evidence_ids: vec![
+                "runtime.kind".to_owned(),
+                format!(
+                    "agent.installation.{}.candidate.{}",
+                    installation.product.evidence_value(),
+                    windows + 1
+                ),
+                format!(
+                    "agent.installation.{}.candidate.{}",
+                    installation.product.evidence_value(),
+                    linux + 1
+                ),
+            ],
+            suggested_actions: vec![
+                "Compare versions and resolved paths before changing either installation."
+                    .to_owned(),
+                "Keep both installations when both workflows are intentional.".to_owned(),
+                "Remove or deprioritize one only after confirming the active workflow.".to_owned(),
+            ],
+        });
+    }
+}
+
+fn evaluate_env004(report: &Report, findings: &mut Vec<Finding>) {
+    if report.agent.product.is_none()
+        || report.agent.runtime == RuntimeKind::Unknown
+        || !is_available(report.agent.runtime_status)
+        || !is_high_confidence(report.agent.runtime_confidence)
+        || !is_high_confidence(report.agent.product_confidence)
+    {
+        return;
+    }
+
+    for state in &report.agent.state_locations {
+        if Some(state.product) != report.agent.product
+            || !is_available(state.status)
+            || !is_high_confidence(state.confidence)
+            || !state_crosses_runtime(report.agent.runtime, state)
+        {
+            continue;
+        }
+
+        findings.push(Finding {
+            id: "ENV004".to_owned(),
+            title: format!("{} configuration crosses OS layers", state.product.label()),
+            severity: Severity::Warning,
+            summary: format!(
+                "The active agent runs in {:?}, while its {} root is classified as {:?}.",
+                report.agent.runtime,
+                state.kind.label(),
+                state.class
+            ),
+            evidence_ids: vec![
+                "agent.product".to_owned(),
+                "agent.runtime".to_owned(),
+                state.evidence_id(),
+            ],
+            suggested_actions: vec![
+                "Keep writable databases, caches, and primary configuration native to the executor when practical."
+                    .to_owned(),
+                "Share only configuration files documented as portable by the agent vendor."
+                    .to_owned(),
+                "Back up state before manually relocating it.".to_owned(),
+            ],
+        });
+    }
+}
+
+fn is_available(status: ObservationStatus) -> bool {
+    matches!(
+        status,
+        ObservationStatus::Observed | ObservationStatus::Inferred
+    )
+}
+
+fn is_high_confidence(confidence: Confidence) -> bool {
+    matches!(confidence, Confidence::High | Confidence::Certain)
+}
+
+fn state_crosses_runtime(runtime: RuntimeKind, state: &AgentStateLocation) -> bool {
+    matches!(
+        (runtime, state.class),
+        (
+            RuntimeKind::Wsl,
+            PathClass::WindowsNative | PathClass::WindowsMounted
+        ) | (
+            RuntimeKind::WindowsNative,
+            PathClass::WslNative | PathClass::WslUnc
+        )
+    )
 }
 
 fn evaluate_fs001(report: &Report, findings: &mut Vec<Finding>) {
@@ -225,9 +393,10 @@ fn evaluate_git001(report: &Report, findings: &mut Vec<Finding>) {
 #[cfg(test)]
 mod tests {
     use crate::model::{
-        AgentInfo, Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo,
-        RuntimeKind, Severity, Topology,
+        AgentInfo, AgentInstallationInfo, AgentProduct, AgentStateKind, AgentStateLocation,
+        Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo, ExecutableOrigin,
+        ObservationStatus, PathClass, Profile, ProjectInfo, Report, RuntimeInfo, RuntimeKind,
+        Severity, Topology,
     };
 
     use super::evaluate;
@@ -261,6 +430,10 @@ mod tests {
                 shell: None,
                 shell_source: None,
                 terminal: None,
+                terminal_layer: RuntimeKind::Unknown,
+                terminal_layer_status: ObservationStatus::Unavailable,
+                terminal_layer_confidence: Confidence::None,
+                terminal_layer_source: None,
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
             },
@@ -277,6 +450,96 @@ mod tests {
             findings: Vec::new(),
             probe_failures: Vec::new(),
         }
+    }
+
+    fn observed_agent(product: AgentProduct, runtime: RuntimeKind) -> AgentInfo {
+        AgentInfo {
+            product: Some(product),
+            product_status: ObservationStatus::Inferred,
+            product_confidence: Confidence::High,
+            product_source: None,
+            runtime,
+            runtime_status: ObservationStatus::Observed,
+            runtime_confidence: Confidence::Certain,
+            installations: Vec::new(),
+            state_locations: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn env001_requires_certain_terminal_layer_and_high_confidence_agent_runtime() {
+        let mut mismatch = report(RuntimeKind::Wsl, PathClass::WslNative, Vec::new());
+        mismatch.runtime.terminal_layer = RuntimeKind::WindowsNative;
+        mismatch.runtime.terminal_layer_status = ObservationStatus::Inferred;
+        mismatch.runtime.terminal_layer_confidence = Confidence::Certain;
+        mismatch.agent = observed_agent(AgentProduct::Codex, RuntimeKind::Wsl);
+        assert!(evaluate(&mismatch).iter().any(|item| item.id == "ENV001"));
+
+        mismatch.runtime.terminal_layer = RuntimeKind::Wsl;
+        assert!(!evaluate(&mismatch).iter().any(|item| item.id == "ENV001"));
+
+        mismatch.runtime.terminal_layer = RuntimeKind::WindowsNative;
+        mismatch.runtime.terminal_layer_confidence = Confidence::High;
+        assert!(!evaluate(&mismatch).iter().any(|item| item.id == "ENV001"));
+    }
+
+    #[test]
+    fn env003_requires_certain_candidates_in_both_layers() {
+        let mut report = report(RuntimeKind::Wsl, PathClass::WslNative, Vec::new());
+        report.agent.installations.push(AgentInstallationInfo {
+            product: AgentProduct::Codex,
+            candidates: executable(
+                "codex",
+                ExecutableOrigin::Linux,
+                &[ExecutableOrigin::Windows],
+            )
+            .candidates,
+            status: ObservationStatus::Observed,
+            confidence: Confidence::Certain,
+        });
+        let both = evaluate(&report);
+        let finding = both
+            .iter()
+            .find(|item| item.id == "ENV003")
+            .expect("two certain agent candidates should be explained");
+        assert_eq!(finding.severity, Severity::Info);
+        assert_eq!(finding.evidence_ids.len(), 3);
+
+        report.agent.installations[0].candidates =
+            executable("codex", ExecutableOrigin::Linux, &[]).candidates;
+        let one_layer = evaluate(&report);
+        assert!(!one_layer.iter().any(|item| item.id == "ENV003"));
+
+        report.agent.installations[0].candidates = executable(
+            "codex",
+            ExecutableOrigin::Linux,
+            &[ExecutableOrigin::Windows],
+        )
+        .candidates;
+        report.runtime.kind = RuntimeKind::LinuxNative;
+        assert!(!evaluate(&report).iter().any(|item| item.id == "ENV003"));
+    }
+
+    #[test]
+    fn env004_requires_high_confidence_cross_layer_primary_state() {
+        let mut crossing = report(RuntimeKind::Wsl, PathClass::WslNative, Vec::new());
+        crossing.agent = observed_agent(AgentProduct::ClaudeCode, RuntimeKind::Wsl);
+        crossing.agent.state_locations.push(AgentStateLocation {
+            product: AgentProduct::ClaudeCode,
+            kind: AgentStateKind::PrimaryConfig,
+            path: "/mnt/c/demo/.claude".to_owned(),
+            class: PathClass::WindowsMounted,
+            status: ObservationStatus::Inferred,
+            confidence: Confidence::High,
+        });
+        assert!(evaluate(&crossing).iter().any(|item| item.id == "ENV004"));
+
+        crossing.agent.state_locations[0].class = PathClass::WslNative;
+        assert!(!evaluate(&crossing).iter().any(|item| item.id == "ENV004"));
+
+        crossing.agent.state_locations[0].class = PathClass::WindowsMounted;
+        crossing.agent.state_locations[0].confidence = Confidence::Medium;
+        assert!(!evaluate(&crossing).iter().any(|item| item.id == "ENV004"));
     }
 
     #[test]

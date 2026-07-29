@@ -67,6 +67,8 @@ pub fn redact_with_context(report: &Report, context: &dyn RedactionContext) -> R
         .as_ref()
         .map(|_| project_placeholder(redacted.project.class).to_owned());
 
+    redact_agent_locations(&mut redacted);
+
     for executable in &mut redacted.executables {
         executable.role = redact_text(&executable.role, &secrets);
         executable.requested = redact_path_hint(&executable.requested, &secrets);
@@ -137,6 +139,21 @@ pub fn redact_with_context(report: &Report, context: &dyn RedactionContext) -> R
     redacted
 }
 
+fn redact_agent_locations(report: &mut Report) {
+    for state in &mut report.agent.state_locations {
+        "[redacted-agent-state]".clone_into(&mut state.path);
+    }
+    for installation in &mut report.agent.installations {
+        for (index, candidate) in installation.candidates.iter_mut().enumerate() {
+            candidate.path = executable_placeholder(
+                candidate.origin,
+                installation.product.evidence_value(),
+                index + 1,
+            );
+        }
+    }
+}
+
 fn collect_secrets(report: &Report, context: &dyn RedactionContext) -> Vec<Secret> {
     let mut secrets = Vec::new();
     if let Some(value) = &report.runtime.user {
@@ -159,6 +176,18 @@ fn collect_secrets(report: &Report, context: &dyn RedactionContext) -> Vec<Secre
     }
     if let Some(value) = &report.project.path {
         push_secret(&mut secrets, value, REDACTED_PATH);
+    }
+    for state in &report.agent.state_locations {
+        push_secret(&mut secrets, &state.path, REDACTED_PATH);
+    }
+    for path in report
+        .agent
+        .installations
+        .iter()
+        .flat_map(|installation| &installation.candidates)
+        .map(|candidate| &candidate.path)
+    {
+        push_secret(&mut secrets, path, REDACTED_PATH);
     }
     for path in report
         .executables

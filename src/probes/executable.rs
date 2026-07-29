@@ -87,6 +87,20 @@ pub fn probe_with_resolver(
             sensitive: true,
         });
     }
+    for (index, candidate) in candidates.iter().enumerate() {
+        evidence.push(Evidence {
+            id: format!("executable.{role}.candidate.{}", index + 1),
+            probe: "executable/v1".to_owned(),
+            kind: "executable-candidate".to_owned(),
+            claim: format!(
+                "{role} candidate {} has {:?} origin",
+                index + 1,
+                candidate.origin
+            ),
+            value: Some(candidate.path.clone()),
+            sensitive: true,
+        });
+    }
 
     ProbeResult {
         value: ExecutableInfo {

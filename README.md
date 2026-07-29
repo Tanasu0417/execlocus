@@ -24,6 +24,7 @@ CURRENT EXECUTION
   User          dev                            OS account
   Shell         bash                           process ancestry
   Terminal      Windows Terminal               environment hint
+  Session layer Wsl                            inferred · certain confidence
   Project       /mnt/c/Users/dev/project       observed · Windows-mounted
 
 AGENT
@@ -120,22 +121,24 @@ Missing evidence never becomes a passed check, and a visible terminal is never t
 
 Current user identity is read from the local OS process snapshot and resolved through the local OS account catalog. The launching shell is selected only when a supported shell appears in the bounded parent-process chain; otherwise the report labels the allowlisted `SHELL` or `ComSpec` value as an environment hint. The process snapshot requests only process names, parent IDs, and user IDs: command lines, process environments, working directories, roots, and executable paths are not requested. WSL detection prioritizes kernel-release evidence; a WSL environment variable without readable kernel evidence is labeled as an inference. Distribution detection uses the WSL registration name first and `/etc/os-release` as the Linux fallback. Normal execution does not invoke a command shell or access the network for these observations.
 
-The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. When a Codex Linux/WSL sandbox hides every agent ancestor behind its PID namespace, a UUID-shaped `CODEX_THREAD_ID` child-process marker provides a medium-confidence fallback. Codex injects that allowlisted marker into tool processes; ExecLocus checks its shape but never stores or renders its value. Process evidence always wins. Similar names, installation presence, arbitrary environment hints, and a wrapper visible only as `node` remain insufficient. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction.
+The agent adapters inspect that same bounded process snapshot. An exact ancestor name of `codex`/`codex.exe` produces a high-confidence `Codex` inference; `claude`/`claude.exe` does the same for `Claude Code`. When a Codex Linux/WSL sandbox hides every agent ancestor behind its PID namespace, a UUID-shaped `CODEX_THREAD_ID` child-process marker provides a medium-confidence fallback. Codex injects that allowlisted marker into tool processes; ExecLocus checks its shape but never stores or renders its value. Process evidence always wins. Similar names, installation presence, arbitrary environment hints, and a wrapper visible only as `node` remain insufficient. The runtime is reported separately from the product inference. This evidence does not distinguish Codex CLI from a Codex Desktop backend that exposes the same process name, and it does not inspect command lines to force that distinction. For an active high-confidence process match, ExecLocus derives only the documented primary configuration root from an allowlisted home/config location, classifies the path, and never opens its files or reads credentials.
 
 ## Diagnostic rule coverage
 
 | Rule | Detects | Current status |
 |---|---|---|
-| `ENV001` | Visible terminal and observed agent runtime differ | Planned for v0.1 |
+| `ENV001` | Observed terminal-session layer and agent runtime differ | Implemented; requires cross-layer relationship evidence |
 | `ENV002` | WSL resolves a Windows executable for a core tool | Implemented |
-| `ENV003` | The same agent is installed in Windows and WSL | Planned for v0.1 |
-| `ENV004` | Agent state or configuration crosses OS layers | Planned for v0.1 |
+| `ENV003` | Certain agent executable candidates exist in Windows and WSL layers | Implemented |
+| `ENV004` | Active agent primary configuration crosses OS layers | Implemented |
 | `FS001` | A WSL workflow uses a Windows-mounted path | Implemented |
 | `FS002` | A share-first workflow uses a WSL-native project | Implemented |
 | `PATH001` | PATH chooses a cross-layer executable over a native candidate | Implemented |
 | `GIT001` | Git and the project use incompatible OS layers | Implemented |
 
 Rules are read-only. Suggestions explain options but never modify the machine.
+
+`ENV001` deliberately remains silent when a cross-layer launcher hides one side of the process relationship. Terminal branding, including Windows Terminal hosting WSL, is not enough to trigger it.
 
 ## Planned v0.1 support
 
@@ -209,7 +212,7 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 - [x] Redacted Markdown reports
 - [x] Windows and Linux CI workflow
 - [x] `FS001`, `FS002`, and profile-aware filesystem guidance
-- [ ] Remaining agent-boundary rules
+- [x] Evidence-bounded `ENV001`, `ENV003`, and `ENV004` agent-boundary rules
 - [ ] `explain <RULE_ID>` and production shell-specific candidate resolution
 - [ ] External prototype validation and real demo capture
 - [ ] v0.1.0 release artifacts
