@@ -22,7 +22,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | WSL2, Ubuntu 24.04 | Verified | MSRV 1.85 test suite plus sanitized WSL runtime-identity validation | Validation covers one WSL distribution and no public binary |
 | Linux native, x86_64 | Partial | Ubuntu CI exercises the Linux code path | Product positioning and real-world testing focus on Windows/WSL |
 | PowerShell and cmd | Partial | PowerShell 7 ancestry and a Windows Codex-family adapter run are verified; cmd resolution has synthetic contract tests | Real cmd ancestry and cmd-launched agent invocation remain unverified |
-| bash | Verified | bash and Claude Code ancestry are observed in Ubuntu-24.04 WSL | Validation covers one WSL distribution and one Claude Code release |
+| bash | Verified | bash ancestry is observed under Claude Code on Windows and in Ubuntu-24.04 WSL | Validation covers Git Bash on Windows and one WSL distribution |
 | zsh | Partial | Identity recognition and resolution contract tests exist | No real zsh validation yet |
 | macOS | Planned beyond v0.1 | Generic code may compile | No support guarantee or CI |
 | ARM | Planned beyond v0.1 | None | No release or verification target |
@@ -35,12 +35,12 @@ This is the source of truth for current capability claims. “Planned” means d
 | Distribution, current user, and launching shell | Verified | WSL registration/OS release, OS account, and bounded process ancestry carry explicit provenance; environment values are labeled as hints |
 | Project filesystem classification | Implemented | Windows-native, Windows-mounted, WSL-native, WSL UNC, and Linux-native shapes are represented |
 | Git, Node, and npm resolution | Implemented | Selected executable and observed candidates are collected |
-| PE, ELF, and script classification | Implemented | Unknown remains a valid outcome |
-| `ENV002`, `PATH001`, and `GIT001` | Implemented | Deterministic rules use the normalized report |
+| PE, ELF, and script classification | Implemented | Scripts remain a neutral origin when their shebang cannot establish an OS layer |
+| `ENV002`, `PATH001`, and `GIT001` | Implemented | Deterministic rules use the normalized report; neutral scripts do not trigger cross-layer PATH warnings |
 | Terminal output | Implemented | Human-readable pre-alpha output |
 | JSON output | Implemented | Schema `0.3.0` is pre-alpha and not frozen for compatibility yet |
-| Codex process adapter | Verified on Windows | Exact `codex`/`codex.exe` ancestor names infer the Codex family; installation presence alone is ignored |
-| Claude Code process adapter | Verified on WSL | Claude Code 2.1.212 launched the packaged ExecLocus binary inside Ubuntu-24.04 WSL; product and runtime provenance matched the synthetic contract |
+| Codex evidence adapter | Verified on Windows and WSL | Exact ancestry is high confidence; a UUID-shaped Codex-injected child marker is a medium-confidence fallback when the WSL sandbox hides ancestors |
+| Claude Code process adapter | Verified on Windows and WSL | Claude Code 2.1.212 launched packaged ExecLocus binaries in both OS layers; exact ancestry produced high-confidence product evidence |
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |
 | Markdown report | Implemented | Shareable Markdown is always redacted before rendering |
 | Redaction-before-rendering | Verified | Synthetic golden tests plus sanitized Windows and WSL executions cover username, home, machine, and absolute-path removal |
@@ -61,3 +61,4 @@ The sanitized Windows/WSL evidence is recorded in [`validation/RUNTIME_IDENTITY_
 Shareable output validation is recorded in [`validation/SHAREABLE_REDACTION_2026-07-29.md`](validation/SHAREABLE_REDACTION_2026-07-29.md).
 Agent adapter validation is recorded in [`validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md`](validation/AGENT_RUNTIME_ADAPTERS_2026-07-29.md).
 The isolated real Claude Code/WSL run is recorded in [`validation/CLAUDE_CODE_WSL_2026-07-29.md`](validation/CLAUDE_CODE_WSL_2026-07-29.md).
+Windows-native Claude Code and WSL-native Codex CLI are recorded in [`validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md`](validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md).

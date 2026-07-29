@@ -8,7 +8,7 @@ ExecLocusは、現在のWindows／WSL実行コンテキスト、コマンド解�
 
 > このコンテキストではWindows版とWSL版のどちらが選ばれ、どんな境界をまたぐのか？
 
-> **現在の状態:** pre-alphaプロトタイプです。実行環境、パス、実行ファイル由来、terminal/JSON出力、初期ルールの基盤まで実装済みですが、公開リリースはまだありません。
+> **現在の状態:** pre-alphaプロトタイプです。実行環境、Codex／Claude Codeの根拠付き判定、パス、実行ファイル由来、terminal/JSON出力、初期ルールの基盤まで実装済みですが、公開リリースはまだありません。
 
 ## 最初の画面
 
@@ -103,7 +103,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 
 表示中のターミナルだけでエージェントの実行場所を断定しません。証拠がなければ`Unknown`と表示します。
 
-現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
+現在のuserはローカルOSのprocess snapshotから取得し、ローカルOSのaccount catalogで名前を解決します。起動shellは、上限付きの親process chainに対応shellが存在するときだけ`process ancestry`として表示し、取得できない場合はallowlist済みの`SHELL`または`ComSpec`を`environment hint`へ格下げします。process snapshotが要求するのはprocess名、親ID、user IDだけで、command line、process環境変数、作業directory、root、実行file pathは要求しません。CodexのLinux／WSL sandboxがPID namespaceで親processを隠す場合に限り、Codexがtool processへ注入する`CODEX_THREAD_ID`のUUID形状をmedium-confidence fallbackとして確認します。値自体は保存・表示せず、親processの証拠を常に優先します。WSL判定はkernel releaseの証拠を優先し、kernelを読めずWSL環境変数だけがある場合は推定として表示します。distributionはWSL登録名を優先し、Linuxでは`/etc/os-release`をfallbackにします。これらの通常観測ではcommand shellの起動やnetwork接続を行いません。
 
 ## 安全性とプライバシー
 
@@ -123,6 +123,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [現在の対応状況](docs/SUPPORT_MATRIX.md)
 - [匿名化済みruntime identity実機検証](docs/validation/RUNTIME_IDENTITY_2026-07-29.md)
 - [共有用匿名化の検証記録](docs/validation/SHAREABLE_REDACTION_2026-07-29.md)
+- [Windows Claude Code／WSL Codex実測](docs/validation/WINDOWS_CLAUDE_WSL_CODEX_2026-07-29.md)
 - [1ページ製品紹介](docs/ONE_PAGER.ja.md)
 - [デモ／紹介MV制作計画](docs/DEMO_PLAN.md)
 - [絵コンテ・撮影scenario](docs/demo/README.md)
@@ -141,7 +142,7 @@ Windowsの`x86_64-pc-windows-msvc`ツールチェーンでは、Rust本体に加
 - [x] 実行ファイルとファイルシステムの分類
 - [x] terminal/JSON renderer
 - [x] 初期診断ルール（`ENV002`、`PATH001`、`GIT001`）
-- [ ] Codex/Claude adapter
+- [x] Codex/Claude adapter
 - [x] 自動匿名化Markdownレポートと`--redact` JSON
 
 ## 実環境での仮説検証にご協力ください

@@ -55,7 +55,12 @@ fn collect_report_with_components(
     });
     let runtime_result = probes::runtime::probe_with_identity(context, identity.as_ref());
     let runtime = runtime_result.value;
-    let agent_result = adapters::probe(&runtime, identity.as_ref());
+    let codex_thread_id = context.env_var("CODEX_THREAD_ID");
+    let agent_result = adapters::probe_with_codex_thread_id(
+        &runtime,
+        identity.as_ref(),
+        codex_thread_id.as_deref(),
+    );
     let project_result = probes::path::probe_project_with(context, &runtime.kind);
 
     let mut evidence = runtime_result.evidence;

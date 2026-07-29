@@ -115,7 +115,7 @@ A conclusion derived from one or more facts. Inference must include a confidence
 - Claude Code
 - Codex Desktop only where evidence is available from the current invocation or process relationship
 
-Agent detection is best-effort. Absence of evidence must produce `Unknown`, not `Not installed` or a guessed runtime.
+Agent detection is best-effort. Exact bounded process ancestry is high-confidence evidence. When a Codex Linux/WSL sandbox hides its parent process chain, a UUID-shaped `CODEX_THREAD_ID` injected into the child tool process may be used as medium-confidence evidence; its value must not be retained or rendered. Process evidence always takes precedence. Absence of either source must produce `Unknown`, not `Not installed` or a guessed runtime.
 
 ### Supported executable probes
 

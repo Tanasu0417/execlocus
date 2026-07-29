@@ -241,7 +241,7 @@ fn inspect_candidate(snapshot: &CandidateSnapshot, runtime: RuntimeKind) -> Exec
     let origin = match format {
         ExecutableFormat::Pe => ExecutableOrigin::Windows,
         ExecutableFormat::Elf => ExecutableOrigin::Linux,
-        ExecutableFormat::Script => script_origin(&snapshot.prefix),
+        ExecutableFormat::Script => script_origin(&snapshot.prefix, runtime),
         ExecutableFormat::Unknown => {
             let class = classify_path(&path_text, runtime);
             if matches!(
@@ -293,16 +293,18 @@ fn detect_format_from_prefix(bytes: &[u8]) -> ExecutableFormat {
     }
 }
 
-fn script_origin(prefix: &[u8]) -> ExecutableOrigin {
+fn script_origin(prefix: &[u8], runtime: RuntimeKind) -> ExecutableOrigin {
     let line_end = prefix
         .iter()
         .position(|byte| *byte == b'\n')
         .unwrap_or(prefix.len());
     let first_line = String::from_utf8_lossy(&prefix[..line_end]).to_ascii_lowercase();
-    if first_line.contains("/bin/") || first_line.contains("/usr/bin/") {
-        ExecutableOrigin::Linux
-    } else if first_line.contains("powershell") || first_line.contains("cmd.exe") {
+    if first_line.contains("powershell") || first_line.contains("cmd.exe") {
         ExecutableOrigin::Windows
+    } else if matches!(runtime, RuntimeKind::Wsl | RuntimeKind::LinuxNative)
+        && (first_line.contains("/bin/") || first_line.contains("/usr/bin/"))
+    {
+        ExecutableOrigin::Linux
     } else {
         ExecutableOrigin::Script
     }
@@ -311,7 +313,7 @@ fn script_origin(prefix: &[u8]) -> ExecutableOrigin {
 #[cfg(test)]
 mod tests {
     use super::{detect_format_from_prefix, display_path, script_origin};
-    use crate::model::{ExecutableFormat, ExecutableOrigin};
+    use crate::model::{ExecutableFormat, ExecutableOrigin, RuntimeKind};
 
     #[test]
     fn identifies_executable_headers() {
@@ -344,6 +346,13 @@ mod tests {
         let mut prefix = b"#!/usr/bin/env node\n".to_vec();
         prefix.extend([0xff, 0xfe]);
 
-        assert_eq!(script_origin(&prefix), ExecutableOrigin::Linux);
+        assert_eq!(
+            script_origin(&prefix, RuntimeKind::Wsl),
+            ExecutableOrigin::Linux
+        );
+        assert_eq!(
+            script_origin(&prefix, RuntimeKind::WindowsNative),
+            ExecutableOrigin::Script
+        );
     }
 }

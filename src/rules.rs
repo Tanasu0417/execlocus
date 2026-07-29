@@ -61,7 +61,12 @@ fn evaluate_path001(report: &Report, findings: &mut Vec<Finding>) {
         let Some(selected) = &executable.selected else {
             continue;
         };
-        if selected.origin == native_origin || selected.origin == ExecutableOrigin::Unknown {
+        if selected.origin == native_origin
+            || !matches!(
+                selected.origin,
+                ExecutableOrigin::Windows | ExecutableOrigin::Linux
+            )
+        {
             continue;
         }
         if !executable
@@ -229,6 +234,20 @@ mod tests {
             )],
         ));
         assert!(findings.iter().any(|finding| finding.id == "PATH001"));
+    }
+
+    #[test]
+    fn path001_does_not_treat_a_portable_script_as_an_os_layer() {
+        let findings = evaluate(&report(
+            RuntimeKind::WindowsNative,
+            PathClass::WindowsNative,
+            vec![executable(
+                "npm",
+                ExecutableOrigin::Script,
+                &[ExecutableOrigin::Windows],
+            )],
+        ));
+        assert!(!findings.iter().any(|finding| finding.id == "PATH001"));
     }
 
     #[test]
