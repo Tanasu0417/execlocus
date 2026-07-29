@@ -91,6 +91,7 @@ impl AgentProduct {
 #[serde(rename_all = "snake_case")]
 pub enum AgentEvidenceSource {
     ProcessAncestry,
+    EnvironmentMarker,
 }
 
 #[derive(Clone, Debug, Default, Serialize)]

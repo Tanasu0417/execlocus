@@ -9,40 +9,49 @@ use crate::{
     probes::process::{MAX_PROCESS_ANCESTRY, RuntimeIdentitySnapshot},
 };
 
-/// Infers a supported agent product only from the bounded parent-process chain.
+struct ProductInference {
+    product: AgentProduct,
+    confidence: Confidence,
+    source: AgentEvidenceSource,
+    probe: &'static str,
+    kind: &'static str,
+    claim: &'static str,
+}
+
+/// Infers a supported agent product from the bounded parent-process chain.
 ///
-/// Installation presence, environment variables, and similar process names are
-/// deliberately insufficient. The first record is skipped because the process
-/// snapshot contract identifies it as `ExecLocus` itself.
+/// Installation presence, arbitrary environment variables, and similar process
+/// names are deliberately insufficient. The first record is skipped because
+/// the process snapshot contract identifies it as `ExecLocus` itself.
 #[must_use]
 pub fn probe(
     runtime: &RuntimeInfo,
     identity: Option<&RuntimeIdentitySnapshot>,
 ) -> ProbeResult<AgentInfo> {
-    let product = identity
-        .into_iter()
-        .flat_map(|snapshot| {
-            snapshot
-                .process_ancestry
-                .iter()
-                .skip(1)
-                .take(MAX_PROCESS_ANCESTRY.saturating_sub(1))
-        })
-        .find_map(|process| {
-            codex::matches(&process.name)
-                .then_some(AgentProduct::Codex)
-                .or_else(|| claude::matches(&process.name).then_some(AgentProduct::ClaudeCode))
-        });
+    probe_with_codex_thread_id(runtime, identity, None)
+}
 
-    let Some(product) = product else {
+/// Adds a conservative Codex child-process marker fallback for sandboxes that
+/// hide the launching agent behind a PID namespace.
+///
+/// The marker value is checked for UUID shape only and is never retained in the
+/// report or evidence. Process ancestry remains stronger and always wins.
+#[must_use]
+pub fn probe_with_codex_thread_id(
+    runtime: &RuntimeInfo,
+    identity: Option<&RuntimeIdentitySnapshot>,
+    codex_thread_id: Option<&str>,
+) -> ProbeResult<AgentInfo> {
+    let codex_thread_id = codex_thread_id
+        .filter(|_| matches!(runtime.kind, RuntimeKind::Wsl | RuntimeKind::LinuxNative));
+    let Some(inference) = infer_product(identity, codex_thread_id) else {
         return ProbeResult {
             value: AgentInfo::default(),
             evidence: vec![Evidence {
                 id: "agent.product".to_owned(),
                 probe: "agent-process/v1".to_owned(),
                 kind: "process".to_owned(),
-                claim: "no supported agent product was observed in bounded process ancestry"
-                    .to_owned(),
+                claim: "no supported agent product was observed in bounded process ancestry or an allowlisted child-process marker".to_owned(),
                 value: None,
                 sensitive: false,
             }],
@@ -50,12 +59,16 @@ pub fn probe(
         };
     };
 
+    let product = inference.product;
+    let product_source = inference.source;
+    let probe = inference.probe;
+
     let runtime_is_available = runtime.kind != RuntimeKind::Unknown;
     let agent = AgentInfo {
         product: Some(product),
         product_status: ObservationStatus::Inferred,
-        product_confidence: Confidence::High,
-        product_source: Some(AgentEvidenceSource::ProcessAncestry),
+        product_confidence: inference.confidence,
+        product_source: Some(product_source),
         runtime: if runtime_is_available {
             runtime.kind
         } else {
@@ -75,21 +88,26 @@ pub fn probe(
 
     let mut evidence = vec![Evidence {
         id: "agent.product".to_owned(),
-        probe: "agent-process/v1".to_owned(),
-        kind: "process".to_owned(),
-        claim: "supported agent product inferred from an exact process name in bounded ancestry"
-            .to_owned(),
+        probe: probe.to_owned(),
+        kind: inference.kind.to_owned(),
+        claim: inference.claim.to_owned(),
         value: Some(product.evidence_value().to_owned()),
         sensitive: false,
     }];
     if runtime_is_available {
         evidence.push(Evidence {
             id: "agent.runtime".to_owned(),
-            probe: "agent-process/v1".to_owned(),
+            probe: probe.to_owned(),
             kind: "process-runtime".to_owned(),
-            claim:
-                "agent ancestor and current ExecLocus process share the observed OS process layer"
-                    .to_owned(),
+            claim: match product_source {
+                AgentEvidenceSource::ProcessAncestry => {
+                    "agent ancestor and current ExecLocus process share the observed OS process layer"
+                }
+                AgentEvidenceSource::EnvironmentMarker => {
+                    "agent child-process marker and current ExecLocus process share the observed OS process layer"
+                }
+            }
+            .to_owned(),
             value: Some(format!("{:?}", runtime.kind)),
             sensitive: false,
         });
@@ -102,10 +120,67 @@ pub fn probe(
     }
 }
 
+fn infer_product(
+    identity: Option<&RuntimeIdentitySnapshot>,
+    codex_thread_id: Option<&str>,
+) -> Option<ProductInference> {
+    let process_product = identity
+        .into_iter()
+        .flat_map(|snapshot| {
+            snapshot
+                .process_ancestry
+                .iter()
+                .skip(1)
+                .take(MAX_PROCESS_ANCESTRY.saturating_sub(1))
+        })
+        .find_map(|process| {
+            codex::matches(&process.name)
+                .then_some(AgentProduct::Codex)
+                .or_else(|| claude::matches(&process.name).then_some(AgentProduct::ClaudeCode))
+        });
+
+    process_product
+        .map(|product| ProductInference {
+            product,
+            confidence: Confidence::High,
+            source: AgentEvidenceSource::ProcessAncestry,
+            probe: "agent-process/v1",
+            kind: "process",
+            claim: "supported agent product inferred from an exact process name in bounded ancestry",
+        })
+        .or_else(|| {
+            codex_thread_id
+                .filter(|value| is_hyphenated_uuid(value))
+                .map(|_| ProductInference {
+                    product: AgentProduct::Codex,
+                    confidence: Confidence::Medium,
+                    source: AgentEvidenceSource::EnvironmentMarker,
+                    probe: "agent-environment/v1",
+                    kind: "environment",
+                    claim: "Codex child-process marker observed with the expected UUID shape",
+                })
+        })
+}
+
+fn is_hyphenated_uuid(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    if bytes.len() != 36 {
+        return false;
+    }
+
+    bytes.iter().enumerate().all(|(index, byte)| {
+        if matches!(index, 8 | 13 | 18 | 23) {
+            *byte == b'-'
+        } else {
+            byte.is_ascii_hexdigit()
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
-        adapters::probe,
+        adapters::{probe, probe_with_codex_thread_id},
         model::{
             AgentEvidenceSource, AgentProduct, Confidence, ObservationStatus, RuntimeInfo,
             RuntimeKind, RuntimeValueSource,
@@ -225,5 +300,63 @@ mod tests {
         let result = probe(&runtime(RuntimeKind::WindowsNative), Some(&snapshot));
 
         assert_eq!(result.value.product, None);
+    }
+
+    #[test]
+    fn codex_thread_marker_survives_a_hidden_parent_process_namespace() {
+        let marker = "01234567-89ab-cdef-8123-456789abcdef";
+        let snapshot = identity(&["execlocus", "3"]);
+        let result =
+            probe_with_codex_thread_id(&runtime(RuntimeKind::Wsl), Some(&snapshot), Some(marker));
+
+        assert_eq!(result.value.product, Some(AgentProduct::Codex));
+        assert_eq!(result.value.product_confidence, Confidence::Medium);
+        assert_eq!(
+            result.value.product_source,
+            Some(AgentEvidenceSource::EnvironmentMarker)
+        );
+        assert!(result.evidence.iter().all(|evidence| {
+            evidence.value.as_deref() != Some(marker) && !evidence.claim.contains(marker)
+        }));
+    }
+
+    #[test]
+    fn malformed_codex_thread_marker_is_not_product_evidence() {
+        let snapshot = identity(&["execlocus", "3"]);
+        let result = probe_with_codex_thread_id(
+            &runtime(RuntimeKind::Wsl),
+            Some(&snapshot),
+            Some("not-a-thread-id"),
+        );
+
+        assert_eq!(result.value.product, None);
+    }
+
+    #[test]
+    fn codex_thread_marker_is_ignored_outside_linux_and_wsl() {
+        let marker = "01234567-89ab-cdef-8123-456789abcdef";
+        let snapshot = identity(&["execlocus", "3"]);
+        let result = probe_with_codex_thread_id(
+            &runtime(RuntimeKind::WindowsNative),
+            Some(&snapshot),
+            Some(marker),
+        );
+
+        assert_eq!(result.value.product, None);
+    }
+
+    #[test]
+    fn process_ancestry_wins_over_the_codex_thread_marker() {
+        let marker = "01234567-89ab-cdef-8123-456789abcdef";
+        let snapshot = identity(&["execlocus", "claude"]);
+        let result =
+            probe_with_codex_thread_id(&runtime(RuntimeKind::Wsl), Some(&snapshot), Some(marker));
+
+        assert_eq!(result.value.product, Some(AgentProduct::ClaudeCode));
+        assert_eq!(result.value.product_confidence, Confidence::High);
+        assert_eq!(
+            result.value.product_source,
+            Some(AgentEvidenceSource::ProcessAncestry)
+        );
     }
 }

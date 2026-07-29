@@ -26,6 +26,12 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Conservative Codex and Claude Code adapters based on exact names in bounded process ancestry
 - JSON schema version `0.3.0` with separate agent-product and agent-runtime provenance
 - Isolated real-environment validation of Claude Code launching ExecLocus inside Ubuntu-24.04 WSL
+- Medium-confidence Codex child-process marker fallback for PID-namespaced Linux/WSL sandboxes, without retaining the marker value
+- Isolated real-environment validation of Windows-native Claude Code and WSL-native Codex CLI
+
+### Fixed
+
+- Treat portable scripts as a neutral executable origin so Git Bash shims do not create false cross-layer `PATH001` findings on Windows
 
 ### Security
 

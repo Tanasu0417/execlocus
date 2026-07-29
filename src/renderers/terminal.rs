@@ -190,6 +190,7 @@ const fn confidence_label(confidence: Confidence) -> &'static str {
 const fn agent_source_label(source: AgentEvidenceSource) -> &'static str {
     match source {
         AgentEvidenceSource::ProcessAncestry => "process ancestry",
+        AgentEvidenceSource::EnvironmentMarker => "environment marker",
     }
 }
 
