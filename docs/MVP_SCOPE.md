@@ -1,7 +1,7 @@
 # ExecLocus v0.1 MVP Scope
 
 - Status: Approved implementation target after naming
-- Last updated: 2026-07-28
+- Last updated: 2026-07-30
 
 ## 1. MVP outcome
 
@@ -41,11 +41,13 @@ Agent-specific detection enriches the topology but must not block the base repor
 - `share-first`, `balanced`, and `linux-first` profiles
 - Release binaries and checksums for Windows x86_64 and Linux x86_64
 - English and Japanese README verified against the real CLI
+- Local loopback GUI for the user-value validation gate
+- English and Japanese human-readable terminal, Markdown, explanation, and GUI output
 
 ## 3. Explicitly outside v0.1
 
 - Automatic fixes
-- GUI or TUI
+- Installed native GUI, TUI, or hosted dashboard
 - Daemon or continuous monitoring
 - Telemetry or hosted service
 - Docker, GPU, network, package-manager, or general WSL health checks
@@ -73,6 +75,7 @@ execlocus [--profile balanced]
 execlocus check [--profile balanced]
 execlocus explain <RULE_ID>
 execlocus report --format <json|markdown> [--redact]
+execlocus [--lang <en|ja>] gui [--port 0] [--open]
 ```
 
 Markdown is always redacted. `--redact` applies the same share-safe transformation to JSON; it is not needed for Markdown and there is no opt-out for Markdown.
@@ -82,6 +85,7 @@ Global behavior:
 - `--help` and `--version` use conventional exit code 0
 - Invalid arguments use exit code 2
 - Default execution performs no network request
+- The local GUI binds only to loopback, performs no upload, and separates local detail from redacted Share output
 - A failed optional probe produces partial output
 - Human output goes to stdout; actionable process errors go to stderr
 

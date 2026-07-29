@@ -11,6 +11,22 @@ _execlocus_try_main() (
       return 2
       ;;
   esac
+  mode="${2:-report}"
+  language="${3:-ja}"
+  case "$mode" in
+    report|gui) ;;
+    *)
+      printf 'Mode must be report or gui.\n' >&2
+      return 2
+      ;;
+  esac
+  case "$language" in
+    en|ja) ;;
+    *)
+      printf 'Language must be en or ja.\n' >&2
+      return 2
+      ;;
+  esac
 
   script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   repository_root="$(cd "$script_directory/.." && pwd)"
@@ -54,8 +70,14 @@ _execlocus_try_main() (
   fi
   printf '{"shell":"bash","complete":true,"bindings":[%s]}\n' "$binding_json" >"$snapshot_path"
 
+  if [[ "$mode" == "gui" ]]; then
+    printf '[2/2] Starting the loopback-only, read-only GUI...\n'
+    "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" --lang "$language" gui --open
+    return $?
+  fi
+
   printf '[2/2] Creating an automatically redacted Markdown report...\n'
-  "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" report --format markdown >"$report_path"
+  "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" --lang "$language" report --format markdown >"$report_path"
   report_exit_code=$?
   if (( report_exit_code >= 2 )); then
     printf 'ExecLocus could not create the report (exit code %s).\n' "$report_exit_code" >&2
@@ -73,8 +95,8 @@ _execlocus_try_main() (
 
   if [[ "${SHOW_LOCAL_DETAILS:-0}" == "1" ]]; then
     printf '\nWARNING: The following terminal output may contain local absolute paths. Keep it on this machine.\n' >&2
-    "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" check || true
-    "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" explain FS001
+    "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" --lang "$language" check || true
+    "$cargo_command" run --quiet --locked -- --shell-snapshot "$snapshot_path" --profile "$profile" --lang "$language" explain FS001
   fi
 )
 

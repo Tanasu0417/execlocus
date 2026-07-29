@@ -12,6 +12,20 @@ fn known_rule_is_explained_successfully() {
 }
 
 #[test]
+fn japanese_language_localizes_human_readable_explanation() {
+    let output = Command::new(env!("CARGO_BIN_EXE_execlocus"))
+        .args(["--lang", "ja", "explain", "env002"])
+        .output()
+        .expect("execlocus should start");
+
+    assert_eq!(output.status.code(), Some(0));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("WSL実行でWindows実行ファイルが選択される"));
+    assert!(stdout.contains("このルールが必要な理由"));
+    assert!(!stdout.contains("WHY THIS RULE EXISTS"));
+}
+
+#[test]
 fn unknown_rule_exits_with_usage_error() {
     let output = Command::new(env!("CARGO_BIN_EXE_execlocus"))
         .args(["explain", "NOT_A_RULE"])

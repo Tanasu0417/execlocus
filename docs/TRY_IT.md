@@ -1,17 +1,18 @@
 # Try ExecLocus on Windows and WSL
 
-This guide lets you run the implemented Rust CLI in your own environment and evaluate correctness and usefulness. The helper scripts always save an automatically redacted Markdown report under `target/user-validation/`, which Git ignores.
+This guide lets you run the implemented Rust CLI and local GUI in your own environment and evaluate correctness and usefulness. The helper scripts always save an automatically redacted Markdown report under `target/user-validation/`, which Git ignores.
 
-> ExecLocus is pre-alpha and has no binary release yet, so this flow builds from source. Rust, the dependencies, and Microsoft Build Tools are available at no charge. The first build may access the network to download free open-source crates; normal ExecLocus diagnostics do not use the network.
+> ExecLocus is pre-alpha and has no binary release yet, so this flow builds from source. Rust, the dependencies, and Microsoft Build Tools are available at no charge. The first build may access the network to download free open-source crates; normal ExecLocus diagnostics do not use an external network. The GUI uses loopback communication inside the same machine only.
 
-## Concept UI versus the real CLI
+## Choose the right surface
 
 | Surface | Purpose | Data |
 |---|---|---|
-| [Interactive concept demo](demo/prototype/index.html) | Review the layout, Japanese/English switch, and Inspect → Compare → Explain → Share flow | Synthetic only |
+| [Static concept demo](demo/prototype/index.html) | Review the layout and interaction before installing | Synthetic when opened with `file://` or an ordinary static server |
+| Local GUI | Run the same read-only CLI probes from one button and show candidates, impact, actions, and verification commands | Your local environment |
 | Rust CLI | Observe Windows/WSL, distribution, user, shell, executable candidates, and filesystem boundaries | Your local environment |
 
-The concept demo does not run probes. Use the CLI flow below when evaluating real usefulness.
+The static concept demo does not run probes. Use the local GUI or CLI flow below when evaluating real usefulness.
 
 ## Review the interaction first
 
@@ -65,7 +66,34 @@ For an existing clone, enter its repository root and run `git pull --ff-only` in
 
 Record the commit ID if you need a reproducible pre-alpha test.
 
-## Run from Windows PowerShell
+## Diagnose the real environment in the GUI
+
+The GUI is not a hosted service. ExecLocus temporarily serves it only on the loopback address `127.0.0.1`. It does not upload diagnostics, emit telemetry, or call a paid API. Close the terminal or press `Ctrl+C` to stop it.
+
+Windows PowerShell:
+
+```powershell
+& .\scripts\try-execlocus.ps1 -Gui -Language en -Profile balanced
+```
+
+WSL bash:
+
+```bash
+source ./scripts/try-execlocus.sh balanced gui en
+```
+
+When the browser opens:
+
+1. Select `Run diagnostic`.
+2. Review the runtime, distribution, shell, and project location under Inspect.
+3. Under Compare, review all four states plus candidate count, origin, format, selection reason, and verification command for Git, Node, npm, Codex, and Claude Code.
+4. Under Explain, review impact, read-only actions, reverification, and evidence.
+5. Toggle `EN` / `日本語` and confirm the real result and explanations switch language.
+6. Copy only the automatically redacted Markdown under Share.
+
+Inspect, Compare, and Explain are local decision views and can contain the local username or absolute paths. Do not publish their text or screenshots. Only Share is intended as a publication candidate, and it must still be reviewed before posting.
+
+## Run the CLI from Windows PowerShell
 
 ```powershell
 & .\scripts\try-execlocus.ps1

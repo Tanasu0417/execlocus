@@ -3,6 +3,7 @@ use std::{fs, path::PathBuf, process::ExitCode};
 use clap::{Parser, Subcommand, ValueEnum};
 use execlocus::{
     collect_report, collect_report_with_shell_snapshot,
+    i18n::Language,
     model::{Profile, Report},
     probes::shell::{ShellKind, ShellSessionSnapshot, parse_snapshot_json},
     renderers,
@@ -14,6 +15,10 @@ use execlocus::{
 struct Cli {
     #[arg(long, value_enum, default_value_t = ProfileArg::Balanced, global = true)]
     profile: ProfileArg,
+
+    /// Select the language for human-readable CLI and GUI output.
+    #[arg(long, value_enum, default_value_t = LanguageArg::En, global = true)]
+    lang: LanguageArg,
 
     /// Read a bounded shell-session snapshot created by an `ExecLocus` wrapper.
     #[arg(long, value_name = "PATH", global = true)]
@@ -28,6 +33,21 @@ enum ProfileArg {
     ShareFirst,
     Balanced,
     LinuxFirst,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum LanguageArg {
+    En,
+    Ja,
+}
+
+impl From<LanguageArg> for Language {
+    fn from(value: LanguageArg) -> Self {
+        match value {
+            LanguageArg::En => Self::English,
+            LanguageArg::Ja => Self::Japanese,
+        }
+    }
 }
 
 impl From<ProfileArg> for Profile {
@@ -58,6 +78,15 @@ enum Command {
         /// Rule identifier, for example ENV002. Matching is case-insensitive.
         rule_id: String,
     },
+    /// Start the read-only loopback GUI for local diagnostics.
+    Gui {
+        /// Loopback TCP port. Use 0 to select an available port automatically.
+        #[arg(long, default_value_t = 0)]
+        port: u16,
+        /// Open the local GUI URL in the default browser.
+        #[arg(long)]
+        open: bool,
+    },
 }
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
@@ -68,6 +97,7 @@ enum ReportFormat {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    let language = Language::from(cli.lang);
 
     if let Some(Command::Explain { rule_id }) = &cli.command {
         let Some(definition) = execlocus::rules::definition(rule_id) else {
@@ -89,7 +119,10 @@ fn main() -> ExitCode {
             }
         };
         let report = collect_for_cli(cli.profile, shell_snapshot.as_ref());
-        print!("{}", renderers::explain::render(&report, definition));
+        print!(
+            "{}",
+            renderers::explain::render_with_language(&report, definition, language)
+        );
         return ExitCode::SUCCESS;
     }
 
@@ -100,6 +133,22 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     };
+
+    if let Some(Command::Gui { port, open }) = &cli.command {
+        return match execlocus::gui::serve(
+            cli.profile.into(),
+            language,
+            shell_snapshot.as_ref(),
+            *port,
+            *open,
+        ) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("failed to start local GUI: {error}");
+                ExitCode::from(2)
+            }
+        };
+    }
     let report = collect_for_cli(cli.profile, shell_snapshot.as_ref());
 
     match cli.command {
@@ -120,12 +169,19 @@ fn main() -> ExitCode {
                     }
                 }
             }
-            ReportFormat::Markdown => print!("{}", renderers::markdown::render(&report)),
+            ReportFormat::Markdown => print!(
+                "{}",
+                renderers::markdown::render_with_language(&report, language)
+            ),
         },
-        Some(Command::Check) | None => print!("{}", renderers::terminal::render(&report)),
+        Some(Command::Check) | None => print!(
+            "{}",
+            renderers::terminal::render_with_language(&report, language)
+        ),
         Some(Command::Explain { .. }) => {
             unreachable!("explain is handled before report collection")
         }
+        Some(Command::Gui { .. }) => unreachable!("GUI is handled before report collection"),
     }
 
     if report.has_error_findings() {

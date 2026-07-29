@@ -1,53 +1,125 @@
 use std::fmt::Write;
 
-use crate::{model::Report, renderers::safe::terminal_text, rules::RuleDefinition};
+use crate::{
+    i18n::{self, Language},
+    model::Report,
+    renderers::safe::terminal_text,
+    rules::RuleDefinition,
+};
 
 #[must_use]
 pub fn render(report: &Report, definition: &RuleDefinition) -> String {
+    render_with_language(report, definition, Language::English)
+}
+
+#[must_use]
+#[allow(
+    clippy::too_many_lines,
+    reason = "the linear explanation layout mirrors the user-visible section order"
+)]
+pub fn render_with_language(
+    report: &Report,
+    definition: &RuleDefinition,
+    language: Language,
+) -> String {
+    let report = i18n::localize_report(report, language);
     let mut output = String::new();
     let finding = report
         .findings
         .iter()
         .find(|finding| finding.id == definition.id);
 
-    writeln!(output, "{} — {}", definition.id, definition.title)
-        .expect("writing to String cannot fail");
     writeln!(
         output,
-        "Status: {}",
+        "{} — {}",
+        definition.id,
+        i18n::rule_title(definition, language)
+    )
+    .expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "{}: {}",
+        language.text("Status", "状態"),
         if finding.is_some() {
-            "TRIGGERED in the current report"
+            language.text("TRIGGERED in the current report", "現在のレポートで検出")
         } else {
-            "not triggered in the current report"
+            language.text(
+                "not triggered in the current report",
+                "現在のレポートでは未検出",
+            )
         }
     )
     .expect("writing to String cannot fail");
-    writeln!(output, "Category: {}", definition.category).expect("writing to String cannot fail");
-    writeln!(output, "Default severity: {}", definition.default_severity)
+    writeln!(
+        output,
+        "{}: {}",
+        language.text("Category", "分類"),
+        definition.category
+    )
+    .expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "{}: {}",
+        language.text("Default severity", "標準重要度"),
+        definition.default_severity
+    )
+    .expect("writing to String cannot fail");
+
+    writeln!(
+        output,
+        "\n{}",
+        language.text("WHY THIS RULE EXISTS", "このルールが必要な理由")
+    )
+    .expect("writing to String cannot fail");
+    writeln!(output, "  {}", i18n::rule_rationale(definition, language))
         .expect("writing to String cannot fail");
 
-    writeln!(output, "\nWHY THIS RULE EXISTS").expect("writing to String cannot fail");
-    writeln!(output, "  {}", definition.rationale).expect("writing to String cannot fail");
-
-    writeln!(output, "\nREQUIRED EVIDENCE").expect("writing to String cannot fail");
-    for required in definition.required_evidence {
+    writeln!(
+        output,
+        "\n{}",
+        language.text("REQUIRED EVIDENCE", "必要な根拠")
+    )
+    .expect("writing to String cannot fail");
+    for required in i18n::rule_required_evidence(definition, language) {
         writeln!(output, "  - {required}").expect("writing to String cannot fail");
     }
 
     if let Some(finding) = finding {
-        writeln!(output, "\nCURRENT FINDING").expect("writing to String cannot fail");
-        writeln!(output, "  Severity: {:?}", finding.severity)
-            .expect("writing to String cannot fail");
-        writeln!(output, "  Summary: {}", terminal_text(&finding.summary))
-            .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "\n{}",
+            language.text("CURRENT FINDING", "現在の検出結果")
+        )
+        .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "  {}: {}",
+            language.text("Severity", "重要度"),
+            i18n::severity_label(finding.severity, language)
+        )
+        .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "  {}: {}",
+            language.text("Summary", "概要"),
+            terminal_text(&finding.summary)
+        )
+        .expect("writing to String cannot fail");
 
-        writeln!(output, "\nOBSERVED EVIDENCE").expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "\n{}",
+            language.text("OBSERVED EVIDENCE", "観測された根拠")
+        )
+        .expect("writing to String cannot fail");
         for evidence_id in &finding.evidence_ids {
             if let Some(evidence) = report.evidence.iter().find(|item| item.id == *evidence_id) {
-                let value = evidence
-                    .value
-                    .as_deref()
-                    .map_or("<value unavailable>".to_owned(), terminal_text);
+                let value = evidence.value.as_deref().map_or(
+                    language
+                        .text("<value unavailable>", "<値を利用できません>")
+                        .to_owned(),
+                    terminal_text,
+                );
                 writeln!(
                     output,
                     "  - {}: {} = {} [{}]",
@@ -58,41 +130,64 @@ pub fn render(report: &Report, definition: &RuleDefinition) -> String {
                 )
                 .expect("writing to String cannot fail");
             } else {
-                writeln!(output, "  - {evidence_id}: <evidence unavailable>")
-                    .expect("writing to String cannot fail");
+                writeln!(
+                    output,
+                    "  - {evidence_id}: {}",
+                    language.text("<evidence unavailable>", "<根拠を利用できません>")
+                )
+                .expect("writing to String cannot fail");
             }
         }
     } else {
-        writeln!(output, "\nCURRENT REPORT NOTE").expect("writing to String cannot fail");
         writeln!(
             output,
-            "  No finding was emitted. This can mean the condition is absent or that required evidence is unavailable; it is not a pass/fail certification."
+            "\n{}",
+            language.text("CURRENT REPORT NOTE", "現在のレポートに関する注意")
+        )
+        .expect("writing to String cannot fail");
+        writeln!(
+            output,
+            "  {}",
+            language.text(
+                "No finding was emitted. This can mean the condition is absent or that required evidence is unavailable; it is not a pass/fail certification.",
+                "検出結果はありません。条件に該当しない場合と、必要な根拠が不足する場合の両方があるため、合否認証ではありません。"
+            )
         )
         .expect("writing to String cannot fail");
     }
 
     if let Some(finding) = finding {
-        writeln!(output, "\nREVERIFICATION").expect("writing to String cannot fail");
+        writeln!(output, "\n{}", language.text("REVERIFICATION", "再検証"))
+            .expect("writing to String cannot fail");
         for step in &finding.verification_steps {
             writeln!(output, "  - {}", terminal_text(step)).expect("writing to String cannot fail");
         }
     }
 
-    writeln!(output, "\nREAD-ONLY SUGGESTED ACTIONS").expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "\n{}",
+        language.text("READ-ONLY SUGGESTED ACTIONS", "読み取り専用の推奨対応")
+    )
+    .expect("writing to String cannot fail");
     if let Some(finding) = finding {
         for action in &finding.suggested_actions {
             writeln!(output, "  - {}", terminal_text(action))
                 .expect("writing to String cannot fail");
         }
     } else {
-        for action in definition.suggested_actions {
+        for action in i18n::rule_suggested_actions(definition, language) {
             writeln!(output, "  - {}", terminal_text(action))
                 .expect("writing to String cannot fail");
         }
     }
     writeln!(
         output,
-        "\nExecLocus does not modify PATH, configuration, files, or installations."
+        "\n{}",
+        language.text(
+            "ExecLocus does not modify PATH, configuration, files, or installations.",
+            "ExecLocusはPATH、設定、ファイル、インストール内容を変更しません。"
+        )
     )
     .expect("writing to String cannot fail");
 
