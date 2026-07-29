@@ -54,7 +54,7 @@ TOOLCHAIN
 
 ExecLocusは、混在状態をすべてエラーにせず、目的と証拠に基づいて説明します。
 
-## v0.1で予定しているコマンド
+## v0.1の実装済み／予定コマンド
 
 ```console
 execlocus
@@ -67,11 +67,14 @@ execlocus report --format json --redact
 
 ゼロ引数の`execlocus`が主な利用方法です。最初の価値を得るための設定は不要にします。
 
+`execlocus explain <RULE_ID>`は大文字／小文字を区別せず、現在の観測での発火状態、ルールの理由、参照した根拠、読み取り専用の提案を表示します。未知のIDは終了コード`2`です。ローカル説明には観測したパスが含まれる場合があるため、共有時は匿名化JSONまたはMarkdownを使用してください。
+
 ## ソースからプロトタイプを実行
 
 ```console
 cargo run --
 cargo run -- check
+cargo run -- explain ENV002
 cargo run -- report --format json
 cargo run -- report --format markdown
 cargo run -- report --format json --redact
@@ -159,7 +162,8 @@ execlocus --profile linux-first check
 - [x] 自動匿名化Markdownレポートと`--redact` JSON
 - [x] `FS001`／`FS002`と3 profileの実動作
 - [x] `ENV001`／`ENV003`／`ENV004`
-- [ ] `explain <RULE_ID>`とshell固有candidate表示
+- [x] 現在の根拠・理由・読み取り専用提案を示す`explain <RULE_ID>`
+- [ ] shell固有candidate表示
 - [ ] 外部prototype検証、実測demo、v0.1.0 release artifact
 
 ## 実環境での仮説検証にご協力ください

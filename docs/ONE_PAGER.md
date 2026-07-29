@@ -42,6 +42,6 @@ Today, users often combine `which`, `where.exe`, `Get-Command`, PATH inspection,
 | Runtime, filesystem, and conservative Codex/Claude process adapters | Broader invocation/wrapper evidence without collecting command lines |
 | Executable-origin and PATH candidate foundation | Shell-accurate resolution contracts and scenario fixtures |
 | Terminal, pre-alpha JSON, and automatically redacted Markdown | Signed/checksummed Windows and Linux release artifacts |
-| Initial deterministic rules and privacy golden tests | Remaining v0.1 rules and `explain` command |
+| All eight v0.1 rules, `explain`, and privacy golden tests | Production shell-specific resolution and candidate display |
 
 See the [support matrix](SUPPORT_MATRIX.md) for the current source of truth and the [alternatives analysis](research/ALTERNATIVES.md) for how this differs from manual commands.

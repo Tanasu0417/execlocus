@@ -346,6 +346,12 @@ Suggested actions:
 - Prefer Git native to the runtime that owns the project workflow
 - Review `core.autocrlf`, file-mode behavior, credential helper, and hooks before switching
 
+### Explanation command contract
+
+`execlocus explain <RULE_ID>` looks up all eight implemented rule definitions case-insensitively. A known rule reports its current trigger state, rationale, required evidence, referenced observed evidence when triggered, and read-only suggested actions. A non-triggered explanation explicitly distinguishes an absent condition from unavailable evidence. An unknown ID exits with code `2` before runtime probes begin.
+
+Explanation output is local terminal output and can include observed paths needed to support a finding. It escapes terminal control characters but is not a shareable report; use automatically redacted Markdown or `report --format json --redact` before sharing.
+
 ## 7. Rule ordering
 
 Default output order:

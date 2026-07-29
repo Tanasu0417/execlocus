@@ -33,6 +33,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Evidence-bounded `ENV001`, `ENV003`, and `ENV004` agent-boundary rules
 - Agent executable candidates, terminal-session layer evidence, and content-free primary-configuration path classification
 - JSON schema version `0.4.0` for terminal-layer and agent-state provenance
+- Case-insensitive `explain <RULE_ID>` output with current trigger state, rationale, referenced evidence, and read-only actions
 
 ### Fixed
 

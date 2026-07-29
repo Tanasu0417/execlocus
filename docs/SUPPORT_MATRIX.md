@@ -47,7 +47,7 @@ This is the source of truth for current capability claims. “Planned” means d
 | Codex Desktop surface detection | Partial, evidence-limited | A `codex` ancestor proves the process family but does not distinguish CLI from a Desktop backend; insufficient evidence remains `Unknown` |
 | Markdown report | Implemented | Shareable Markdown is always redacted before rendering |
 | Redaction-before-rendering | Verified | Synthetic golden tests plus sanitized Windows and WSL executions cover username, home, machine, and absolute-path removal |
-| `explain <RULE_ID>` | Planned | Suggestions will remain read-only |
+| `explain <RULE_ID>` | Implemented | Case-insensitive IDs show current trigger state, rationale, referenced evidence, and read-only suggestions; unknown IDs exit with code 2 |
 | Release binaries and checksums | Planned | Required for Windows x86_64 and Linux x86_64 |
 | Automatic fixes | Out of scope | ExecLocus does not rewrite PATH or configuration |
 | Telemetry or hosted upload | Out of scope | Normal execution remains local-only |
