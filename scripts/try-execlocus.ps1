@@ -1,0 +1,65 @@
+[CmdletBinding()]
+param(
+    [ValidateSet("share-first", "balanced", "linux-first")]
+    [string]$Profile = "balanced",
+
+    [switch]$ShowLocalDetails
+)
+
+$ErrorActionPreference = "Stop"
+$scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repositoryRoot = (Resolve-Path (Join-Path $scriptDirectory "..")).Path
+
+$cargoCommand = Get-Command cargo -ErrorAction SilentlyContinue
+if (-not $cargoCommand -and $env:USERPROFILE) {
+    $rustupCargo = Join-Path $env:USERPROFILE ".cargo\bin\cargo.exe"
+    if (Test-Path -LiteralPath $rustupCargo -PathType Leaf) {
+        $cargoCommand = $rustupCargo
+    }
+}
+if (-not $cargoCommand) {
+    throw "Rust/Cargo was not found. Install the free Rust toolchain from https://rustup.rs/ and reopen PowerShell."
+}
+
+Push-Location $repositoryRoot
+try {
+    Write-Host "[1/2] Building ExecLocus from the checked-out source..."
+    & $cargoCommand build --locked
+    if ($LASTEXITCODE -ne 0) {
+        throw "cargo build failed with exit code $LASTEXITCODE."
+    }
+
+    $outputDirectory = Join-Path $repositoryRoot "target\user-validation"
+    New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
+    $reportPath = Join-Path $outputDirectory "windows-$Profile.md"
+    $jsonPath = Join-Path $outputDirectory "windows-$Profile.redacted.json"
+
+    Write-Host "[2/2] Creating an automatically redacted Markdown report..."
+    & $cargoCommand run --quiet --locked -- --profile $Profile report --format markdown |
+        Set-Content -Encoding utf8 $reportPath
+    $reportExitCode = $LASTEXITCODE
+    if ($reportExitCode -ge 2) {
+        throw "ExecLocus could not create the report (exit code $reportExitCode)."
+    }
+    & $cargoCommand run --quiet --locked -- --profile $Profile report --format json --redact |
+        Set-Content -Encoding utf8 $jsonPath
+    $jsonExitCode = $LASTEXITCODE
+    if ($jsonExitCode -ge 2) {
+        throw "ExecLocus could not create the redacted JSON report (exit code $jsonExitCode)."
+    }
+
+    Write-Host ""
+    Write-Host "Done. Review the redacted report locally:"
+    Write-Host "  $reportPath"
+    Write-Host "  $jsonPath"
+    Write-Host "The target directory is ignored by Git. Do not publish raw terminal or raw JSON output."
+
+    if ($ShowLocalDetails) {
+        Write-Warning "The following terminal output may contain local absolute paths. Keep it on this machine."
+        & $cargoCommand run --quiet --locked -- --profile $Profile check
+        & $cargoCommand run --quiet --locked -- --profile $Profile explain FS001
+    }
+}
+finally {
+    Pop-Location
+}

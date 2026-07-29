@@ -39,6 +39,7 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - JSON schema version `0.5.0` for resolution method, shell, and session-completeness provenance
 - Zero-cost cargo-deny gate for RustSec advisories, licenses, sources, wildcard requirements, and duplicate dependencies
 - v0.1 threat model and privacy-safe security assessment
+- Local interactive concept demo, 60-second caption animatic, original faceless otter silhouette, and Japanese introduction deck
 
 ### Fixed
 

@@ -49,13 +49,13 @@ Frame 1を2秒、Frame 4を2秒、Frame 5を4秒、Frame 8を2秒に再編集す
 
 | Asset | 仕様 | Status |
 |---|---|---|
-| Master | 1920×1080、60秒以内、30fps | 撮影待ち |
-| README demo | 10秒以内、字幕のみ、loopしても意味が切れない | UC-02待ち |
-| X landscape | 16:9、字幕付き、30秒 | UC-02／03待ち |
-| X square | 1:1、中央crop、30秒 | UC-02／03待ち |
-| Still | selected／alternative／reasonが読める1枚 | UC-02待ち |
+| Master | 1920×1080、60秒以内、30fps | HTML caption animatic完成、実写置換待ち |
+| README demo | 10秒以内、字幕のみ、loopしても意味が切れない | HTMLから切り出し可能、公開capture待ち |
+| X landscape | 16:9、字幕付き、30秒 | HTMLから切り出し可能、需要投稿前review待ち |
+| X square | 1:1、中央crop、30秒 | crop QA待ち |
+| Still | selected／alternative／reasonが読める1枚 | synthetic capture完成 |
 | Alt text | 結論、候補、境界、privacy状態を文章化 | capture時作成 |
-| Otter SVG | 顔なしsilhouette、基本motion、reduced-motion | Concept source作成済み |
-| HTML animatic | 8 frame、timeline、REAL FOOTAGE SLOT | Claude Designへhandoff可能 |
+| Otter SVG | 顔なしsilhouette、基本motion、reduced-motion | original source差し替え済み |
+| HTML animatic | 8 frame、timeline、caption、play／pause | local実装・動作確認済み |
 
 実際のfixtureとexpected outputは[撮影scenario contract](RECORDING_SCENARIO.md)に固定する。読み上げは[ナレーション原稿](NARRATION.ja.md)、characterは[カワウソ仕様](OTTER_GUIDE_SPEC.md)、Claude Designへの受け渡しは[handoff資料](CLAUDE_DESIGN_HANDOFF.ja.md)を正本とする。

@@ -10,8 +10,15 @@
 - [顔なしカワウソ案内役の仕様](OTTER_GUIDE_SPEC.md)
 - [Claude Design handoffと完成prompt](CLAUDE_DESIGN_HANDOFF.ja.md)
 - [Claude Designへ貼るpromptだけを開く](CLAUDE_DESIGN_PROMPTS.ja.md)
-- [オリジナルカワウソSVG](assets/otter-guide.svg)
+- [オリジナルカワウソSVG（陸上）](assets/otter-guide.svg)
+- [オリジナルカワウソSVG（泳ぎ）](assets/otter-swim.svg)
+- [操作できるlocal concept demo](prototype/index.html)
+- [60秒caption animatic](prototype/mv.html)
+- [Windows／WSL実機確認手順](../TRY_IT.ja.md)
+- [Windows/WSL try-it guide](../TRY_IT.md)
+- [日本語紹介deck](ExecLocus_intro_ja.pptx)
+- [Codex側のdesign制作workflow](CODEX_DESIGN_WORKFLOW.ja.md)
 - [段階別の制作・公開gate](../DEMO_PLAN.md)
 - [日本語1ページ紹介](../ONE_PAGER.ja.md)
 
-現在は絵コンテ、ナレーション、character motion reference、Claude Design handoff、scenario contractまで完成している。Concept animaticは制作可能だが、実測captureはUC-02のshell-specific resolution、candidate表示、scenario testが完成してから行う。
+現在は絵コンテ、ナレーション、動きの仕様、日英切替付きの操作デモ、60秒字幕映像、日本語紹介資料まで完成している。シェル固有の候補解決、候補表示、利用目的、エージェント根拠、自動匿名化の実装条件は通過した。公開用の実写収録は、専用の合成環境でWindowsとWSLを別々に収録し、外部検証を通した後に置き換える。

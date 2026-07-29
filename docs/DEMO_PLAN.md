@@ -13,6 +13,18 @@
 | UC-01・自動秘匿化完了後 | 60秒hero MV、共有reportのbefore／after | agent-observedとcurrent-contextを画面上で区別 |
 | alpha artifact検証後 | installから結果までの90秒walkthrough | download URL、version、checksumを固定 |
 
+## 2026-07-29 progress
+
+| Deliverable | Status |
+|---|---|
+| 1ページ紹介、絵コンテ、ナレーション | 完成 |
+| 顔なしカワウソSVG | 不自然な旧案をoriginal低重心silhouetteへ差し替え |
+| 4段階の操作prototype | `Inspect → Compare → Explain → Share`をlocal HTMLで実装・確認済み |
+| 60秒MV | 8 frameのcaption animaticを実装・timeline確認済み。最終MP4と実写置換は未実施 |
+| 日本語紹介資料 | 7 slide PPTXを生成し、全slide renderとoverflow検査を通過 |
+| 実測capture | Windowsの匿名化reportを確認済み。公開用のpaired Windows／WSL収録は未実施 |
+| 外部prototype検証 | 未実施。第三者の実測協力が必要 |
+
 ## Hero scenario
 
 同じWindows filesystem上のsynthetic projectを、Windows PowerShellとWSL2 bashの両方から開く。Windows contextではWindows版Node、WSL contextではLinux版Nodeが選ばれるpaired scenarioを使う。

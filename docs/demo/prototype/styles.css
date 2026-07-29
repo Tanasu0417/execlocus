@@ -1,0 +1,144 @@
+:root {
+  --bg: #071015;
+  --surface: #0b171d;
+  --surface-2: #102129;
+  --line: #26404a;
+  --muted: #85a0a9;
+  --text: #e7fbf6;
+  --mint: #69e3cc;
+  --blue: #55b8ff;
+  --amber: #f2bd66;
+  --danger: #ff8a7a;
+  --radius: 18px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 1120px; min-height: 100vh; background: radial-gradient(circle at 70% 0%, #12303b 0, var(--bg) 38%); }
+button { color: inherit; font: inherit; }
+code, kbd, .eyebrow, .badge, .rail, .platform, .footer { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+.stage { width: min(1600px, calc(100vw - 40px)); min-height: min(900px, calc(100vh - 40px)); margin: 20px auto; border: 1px solid #203942; border-radius: 24px; overflow: hidden; background: linear-gradient(145deg, rgba(13,29,36,.98), rgba(6,15,20,.99)); box-shadow: 0 32px 90px rgba(0,0,0,.38); }
+.topbar { height: 82px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark { width: 34px; height: 34px; border: 2px solid var(--mint); border-radius: 50% 48% 44% 50%; box-shadow: inset 10px 0 0 rgba(85,184,255,.22), 0 0 26px rgba(105,227,204,.16); position: relative; transform: rotate(-18deg); }
+.brand-mark::after { content: ""; position: absolute; width: 22px; height: 8px; border-top: 2px solid var(--blue); right: -16px; bottom: -5px; transform: rotate(28deg); }
+.brand h1 { font-size: 21px; letter-spacing: .04em; margin: 0; }
+.brand p { color: var(--muted); font: 12px/1.2 "Cascadia Code", Consolas, monospace; margin: 4px 0 0; }
+.top-status { display: flex; align-items: center; gap: 10px; color: var(--muted); font: 12px "Cascadia Code", Consolas, monospace; }
+.language-toggle { border: 1px solid rgba(85,184,255,.45); background: rgba(85,184,255,.08); color: var(--blue); border-radius: 7px; padding: 6px 9px; cursor: pointer; font: 10px "Cascadia Code", Consolas, monospace; }
+.language-toggle:hover, .language-toggle:focus-visible { background: rgba(85,184,255,.16); outline: none; }
+.badge { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: #b9d0d7; font-size: 10px; letter-spacing: .08em; }
+.badge-concept { color: var(--amber); border-color: rgba(242,189,102,.45); background: rgba(242,189,102,.08); }
+.badge-safe { color: var(--mint); border-color: rgba(105,227,204,.38); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px var(--mint); }
+.workspace { min-height: 742px; display: grid; grid-template-columns: 164px 1fr; }
+.rail { padding: 24px 16px 18px; border-right: 1px solid var(--line); background: rgba(5,13,17,.5); display: flex; flex-direction: column; }
+.rail-label { color: #58727b; font-size: 10px; letter-spacing: .2em; margin: 0 10px 15px; }
+.rail-step { appearance: none; border: 0; background: transparent; text-align: left; padding: 13px 12px; margin: 3px 0; border-radius: 10px; color: #78939c; cursor: pointer; font-size: 13px; }
+.rail-step .rail-index { color: #506870; margin-right: 12px; font-size: 10px; }
+.rail-step:hover, .rail-step:focus-visible { background: rgba(85,184,255,.08); color: var(--text); outline: none; }
+.rail-step.active { color: var(--text); background: linear-gradient(90deg, rgba(105,227,204,.15), rgba(85,184,255,.05)); box-shadow: inset 2px 0 var(--mint); }
+.rail-step.active .rail-index { color: var(--mint); }
+.rail-footer { margin-top: auto; display: grid; gap: 7px; color: #516a73; font-size: 9px; padding: 0 10px; }
+.console { min-width: 0; padding: 20px 24px 28px; }
+.commandbar { height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 0 9px 0 18px; border: 1px solid #29464f; border-radius: 14px; background: #071116; }
+.prompt { min-width: 0; color: #b9d0d7; font-size: 14px; }
+.prompt-mark { color: var(--mint); margin-right: 11px; font-size: 22px; vertical-align: -2px; }
+.run-button { border: 1px solid rgba(105,227,204,.55); background: rgba(105,227,204,.11); border-radius: 9px; padding: 10px 12px; cursor: pointer; font-size: 12px; }
+.run-button:hover, .run-button:focus-visible { background: rgba(105,227,204,.2); outline: none; }
+kbd { margin-left: 10px; padding: 2px 6px; border: 1px solid #3a555e; border-radius: 5px; color: #83a0a9; font-size: 9px; }
+.profile-row { height: 52px; display: flex; align-items: center; gap: 18px; color: var(--muted); font: 11px "Cascadia Code", Consolas, monospace; }
+.segmented { display: flex; gap: 3px; padding: 3px; border: 1px solid #243d46; border-radius: 9px; }
+.segmented button { border: 0; background: none; border-radius: 6px; color: #66818a; padding: 5px 10px; cursor: pointer; font: 10px "Cascadia Code", Consolas, monospace; }
+.segmented button.active { background: #17343c; color: var(--mint); }
+.run-state { margin-left: auto; color: #6b8790; }
+.run-state.running { color: var(--blue); }
+.run-state.complete { color: var(--mint); }
+.view { display: none; min-height: 600px; animation: enter .35s ease both; }
+.view.active { display: block; }
+@keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.hero-copy { position: absolute; width: 42%; padding: 58px 0 0 18px; z-index: 2; }
+.eyebrow { color: var(--mint); font-size: 10px; letter-spacing: .17em; margin: 0 0 17px; }
+h2 { margin: 0; font-size: clamp(32px, 3vw, 51px); line-height: 1.17; letter-spacing: -.035em; }
+.hero-copy > p:not(.eyebrow) { width: 88%; color: #91abb3; line-height: 1.8; font-size: 14px; }
+.trust-strip { display: flex; gap: 8px; margin-top: 32px; }
+.trust-strip span { color: #85a0a9; border-top: 1px solid #2c4852; padding-top: 9px; font: 9px "Cascadia Code", Consolas, monospace; letter-spacing: .09em; }
+.runtime-map { position: relative; min-height: 590px; overflow: hidden; }
+.lane { position: absolute; width: 28%; min-height: 378px; top: 64px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(160deg, rgba(18,39,47,.92), rgba(8,19,24,.9)); }
+.lane-windows { left: 45%; }
+.lane-wsl { right: 0; top: 126px; }
+.lane-heading { display: flex; align-items: center; gap: 10px; }
+.lane-heading span { width: 34px; height: 24px; display: grid; place-items: center; border: 1px solid rgba(85,184,255,.45); border-radius: 6px; color: var(--blue); font: 9px "Cascadia Code", Consolas, monospace; }
+.lane-heading strong { font-size: 15px; }
+.lane p { color: #8da8b0; font-size: 12px; margin: 28px 0 7px; }
+.lane > code { color: #66828b; font-size: 10px; word-break: break-all; }
+.candidate { margin-top: 60px; padding: 16px; border-left: 2px solid var(--mint); background: rgba(105,227,204,.06); display: grid; gap: 6px; }
+.candidate span { color: var(--mint); font: 9px "Cascadia Code", Consolas, monospace; letter-spacing: .12em; }
+.candidate strong { font: 14px "Cascadia Code", Consolas, monospace; }
+.candidate small { color: #718b94; font: 10px "Cascadia Code", Consolas, monospace; }
+.project-node { position: absolute; z-index: 4; left: 57%; bottom: 145px; transform: translateX(-50%); color: #90abb3; font: 10px "Cascadia Code", Consolas, monospace; }
+.project-node span { display: inline-block; width: 9px; height: 9px; border: 1px solid var(--blue); transform: rotate(45deg); margin-right: 9px; }
+.project-node b { font-weight: 400; }
+.flow-line { position: absolute; left: 40%; right: 4%; bottom: 210px; height: 95px; border-bottom: 1px dashed rgba(85,184,255,.5); border-radius: 50%; transform: rotate(2deg); }
+.otter-guide { position: absolute; z-index: 3; width: 245px; height: 145px; right: 18%; bottom: 150px; transform-origin: 50% 60%; filter: drop-shadow(0 15px 22px rgba(0,0,0,.36)); }
+.otter-pose { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .28s ease, transform .42s cubic-bezier(.22,.8,.28,1); }
+.otter-land { opacity: 1; transform: scale(1); }
+.otter-swim { opacity: 0; transform: scale(.94); }
+.otter-guide.is-swimming .otter-land { opacity: 0; transform: scale(.96); }
+.otter-guide.is-swimming .otter-swim { opacity: 1; transform: scale(1.05); }
+.otter-guide.is-idle { animation: otter-breathe 3.8s cubic-bezier(.45,0,.55,1) infinite; }
+.otter-guide.is-swimming { animation: otter-swim-route 4.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+.otter-signal { position: absolute; left: 51%; top: 88%; width: 15px; height: 15px; border: 3px solid var(--blue); border-radius: 50%; background: rgba(7,16,21,.82); box-shadow: 0 0 0 0 rgba(85,184,255,.4); animation: otter-signal 2.4s ease-out infinite; }
+@keyframes otter-breathe { 0%,100% { transform: translateY(2px) rotate(-.3deg); } 50% { transform: translateY(-4px) rotate(.4deg); } }
+@keyframes otter-swim-route { 0%,100% { transform: translate(-20px,5px) rotate(-1deg); } 35% { transform: translate(8px,-6px) rotate(1.2deg); } 70% { transform: translate(28px,2px) rotate(-.5deg); } }
+@keyframes otter-signal { 0% { box-shadow: 0 0 0 0 rgba(85,184,255,.42); } 75%,100% { box-shadow: 0 0 0 12px rgba(85,184,255,0); } }
+.section-heading { display: flex; justify-content: space-between; align-items: flex-start; padding: 40px 10px 24px; }
+.section-heading h2 { font-size: 30px; letter-spacing: -.025em; }
+.comparison { display: grid; grid-template-columns: 1fr 70px 1fr; align-items: stretch; padding: 6px 10px; }
+.comparison article { min-height: 380px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(155deg, rgba(16,38,46,.92), rgba(8,18,23,.92)); }
+.platform { color: var(--blue); font-size: 10px; letter-spacing: .14em; }
+dl { margin: 28px 0; }
+dl div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(38,64,74,.72); }
+dt { color: #66828b; font-size: 11px; } dd { margin: 0; font: 12px "Cascadia Code", Consolas, monospace; }
+.resolution { padding: 17px; background: rgba(105,227,204,.07); border-left: 2px solid var(--mint); display: grid; gap: 8px; }
+.resolution span { color: var(--mint); font: 9px "Cascadia Code", Consolas, monospace; text-transform: uppercase; }
+.resolution strong { font: 13px "Cascadia Code", Consolas, monospace; word-break: break-all; }
+.resolution small { color: #72909a; font: 10px "Cascadia Code", Consolas, monospace; }
+.evidence { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 14px; }
+.evidence span { padding: 5px 7px; border: 1px solid #294650; border-radius: 5px; color: #6e8991; font: 8px "Cascadia Code", Consolas, monospace; }
+.boundary { display: grid; place-content: center; text-align: center; color: var(--amber); }
+.boundary span { font-size: 31px; }.boundary small { color: #617b84; font: 8px "Cascadia Code", Consolas, monospace; writing-mode: vertical-rl; margin: 8px auto 0; }
+.comparison-note { margin: 18px 10px; color: #718d95; font-size: 11px; }
+.severity { color: var(--blue); border: 1px solid rgba(85,184,255,.4); border-radius: 999px; padding: 7px 11px; font: 10px "Cascadia Code", Consolas, monospace; }
+.severity.warn { color: var(--amber); border-color: rgba(242,189,102,.45); }
+.severity.ok { color: var(--mint); border-color: rgba(105,227,204,.45); }
+.explain-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 22px; padding: 12px 10px; }
+.explain-main, .evidence-stack { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; background: rgba(10,24,30,.76); }
+.state-line { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; }
+.state-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--blue); color: var(--blue); font-family: serif; }
+.explain-main > p:not(.state-line) { color: #9bb2b9; line-height: 1.65; max-width: 740px; }
+.explain-main h3 { margin: 25px 0 6px; color: #6c8991; font: 10px "Cascadia Code", Consolas, monospace; text-transform: uppercase; letter-spacing: .1em; }
+.evidence-stack > p { color: var(--mint); font: 10px "Cascadia Code", Consolas, monospace; letter-spacing: .12em; }
+.evidence-stack ol { list-style: none; padding: 0; margin: 24px 0; }
+.evidence-stack li { position: relative; padding: 12px 0 24px 25px; display: grid; gap: 5px; }
+.evidence-stack li::before { content: ""; position: absolute; left: 2px; top: 14px; width: 7px; height: 7px; border: 1px solid var(--mint); transform: rotate(45deg); }
+.evidence-stack li:not(:last-child)::after { content: ""; position: absolute; left: 5px; top: 27px; bottom: 2px; border-left: 1px dashed #31505a; }
+.evidence-stack li span { color: #6f8a93; font: 9px "Cascadia Code", Consolas, monospace; }
+.evidence-stack li strong { font: 13px "Cascadia Code", Consolas, monospace; }
+.share-layout { display: grid; grid-template-columns: .75fr 1.25fr; gap: 22px; padding: 12px 10px; }
+.redaction-list, .report { min-height: 400px; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; background: rgba(10,24,30,.78); }
+.redaction-list > p { color: var(--mint); font: 10px "Cascadia Code", Consolas, monospace; text-transform: uppercase; letter-spacing: .1em; }
+.redaction-list ul { list-style: none; padding: 0; margin: 24px 0 31px; }
+.redaction-list li { padding: 11px 0; border-bottom: 1px solid rgba(38,64,74,.68); color: #8ba5ad; font-size: 12px; display: flex; justify-content: space-between; gap: 20px; }
+.redaction-list li b { font-weight: 400; }
+.redaction-list li span { color: var(--mint); font: 10px "Cascadia Code", Consolas, monospace; }
+.redaction-list button { width: 100%; padding: 11px; border: 1px solid rgba(105,227,204,.46); background: rgba(105,227,204,.08); border-radius: 8px; cursor: pointer; }
+.redaction-list small { display: block; color: #657f87; margin-top: 11px; font-size: 9px; }
+.report { margin: 0; color: #9bb3ba; font: 12px/1.75 "Cascadia Code", Consolas, monospace; white-space: pre-wrap; }
+.report span { color: var(--mint); }
+.footer { height: 38px; padding: 0 28px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; color: #526b74; font-size: 9px; }
+.stage.is-running .candidate, .stage.is-running .resolution { animation: scan .75s ease both; }
+@keyframes scan { 0% { opacity: .25; filter: blur(2px); } 100% { opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
+@media (max-width: 1200px) { .stage { width: 1120px; }.hero-copy { width: 40%; }.otter-guide { width: 225px; height: 134px; }.lane { width: 29%; } }
