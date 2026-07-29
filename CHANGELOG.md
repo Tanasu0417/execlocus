@@ -33,6 +33,10 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 
 - Treat portable scripts as a neutral executable origin so Git Bash shims do not create false cross-layer `PATH001` findings on Windows
 
+### Changed
+
+- Separate implemented diagnostic rules from planned v0.1 rules in the public README and publish an ordered v0.1 delivery roadmap
+
 ### Security
 
 - Normal execution is designed to remain local-only and read-only
