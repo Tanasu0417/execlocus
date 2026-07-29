@@ -164,6 +164,8 @@ The output is a runtime topology with evidence, not a list of generic setup chec
 
 ## Project documents
 
+- [Zero-incremental-cost development policy](https://github.com/Tanasu0417/execlocus/blob/main/COST_POLICY.md)
+- [追加支出0円の開発ポリシー（日本語）](https://github.com/Tanasu0417/execlocus/blob/main/COST_POLICY.ja.md)
 - [Product specification](https://github.com/Tanasu0417/execlocus/blob/main/PRODUCT_SPEC.md)
 - [Diagnostic rule specification](https://github.com/Tanasu0417/execlocus/blob/main/RULES.md)
 - [MVP scope](https://github.com/Tanasu0417/execlocus/blob/main/docs/MVP_SCOPE.md)
