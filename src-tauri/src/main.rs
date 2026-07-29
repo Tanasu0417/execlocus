@@ -44,7 +44,10 @@ fn main() {
     tauri::Builder::default()
         .on_window_event(|window, event| {
             if window.label() == "main"
-                && matches!(event, tauri::WindowEvent::CloseRequested { .. })
+                && matches!(
+                    event,
+                    tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed
+                )
             {
                 window.app_handle().exit(0);
             }
