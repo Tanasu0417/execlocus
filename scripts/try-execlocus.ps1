@@ -3,7 +3,12 @@ param(
     [ValidateSet("share-first", "balanced", "linux-first")]
     [string]$Profile = "balanced",
 
-    [switch]$ShowLocalDetails
+    [ValidateSet("en", "ja")]
+    [string]$Language = "ja",
+
+    [switch]$ShowLocalDetails,
+
+    [switch]$Gui
 )
 
 $ErrorActionPreference = "Stop"
@@ -67,8 +72,17 @@ try {
     $snapshotPath = Join-Path $outputDirectory ".powershell-session-$PID.json"
     New-ExecLocusPowerShellSnapshot -Path $snapshotPath
 
+    if ($Gui) {
+        Write-Host "[2/2] Starting the loopback-only, read-only GUI..."
+        & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile --lang $Language gui --open
+        if ($LASTEXITCODE -ne 0) {
+            throw "ExecLocus GUI stopped with exit code $LASTEXITCODE."
+        }
+        return
+    }
+
     Write-Host "[2/2] Creating an automatically redacted Markdown report..."
-    & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile report --format markdown |
+    & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile --lang $Language report --format markdown |
         Set-Content -Encoding utf8 $reportPath
     $reportExitCode = $LASTEXITCODE
     if ($reportExitCode -ge 2) {
@@ -89,8 +103,8 @@ try {
 
     if ($ShowLocalDetails) {
         Write-Warning "The following terminal output may contain local absolute paths. Keep it on this machine."
-        & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile check
-        & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile explain FS001
+        & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile --lang $Language check
+        & $cargoCommand run --quiet --locked -- --shell-snapshot $snapshotPath --profile $Profile --lang $Language explain FS001
     }
 }
 finally {

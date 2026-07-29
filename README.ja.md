@@ -63,11 +63,14 @@ execlocus explain ENV002
 execlocus report --format json
 execlocus report --format markdown
 execlocus report --format json --redact
+execlocus --lang ja gui --open
 ```
 
 ゼロ引数の`execlocus`が主な利用方法です。最初の価値を得るための設定は不要にします。
 
 `execlocus explain <RULE_ID>`は大文字／小文字を区別せず、現在の観測での発火状態、ルールの理由、参照した根拠、読み取り専用の提案を表示します。未知のIDは終了コード`2`です。ローカル説明には観測したパスが含まれる場合があるため、共有時は匿名化JSONまたはMarkdownを使用してください。
+
+`--lang en|ja`はterminal、Markdown、`explain`、local GUIの人向け説明を切り替えます。JSONのschema fieldとrule ID、command、pathなどの技術識別子は翻訳しません。`gui`は`127.0.0.1`だけにbindし、診断buttonから同じ読み取り専用probeを実行します。診断・比較・説明画面にはlocal pathが表示される場合がありますが、共有画面とcopy内容は描画前に自動匿名化します。
 
 ## ソースからプロトタイプを実行
 
@@ -80,6 +83,17 @@ cargo run -- explain ENV002
 cargo run -- report --format json
 cargo run -- report --format markdown
 cargo run -- report --format json --redact
+cargo run -- --lang ja gui --open
+```
+
+親PowerShell／bashのalias、function、builtinを含む上限付きsession根拠をGUIへ渡す場合は、直接`cargo run`する代わりに実機確認wrapperを使います。
+
+```powershell
+& .\scripts\try-execlocus.ps1 -Gui -Language ja -Profile balanced
+```
+
+```bash
+source ./scripts/try-execlocus.sh balanced gui ja
 ```
 
 開発時の確認コマンド:

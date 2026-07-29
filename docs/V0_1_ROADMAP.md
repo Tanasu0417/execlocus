@@ -1,6 +1,6 @@
 # ExecLocus v0.1 delivery roadmap
 
-- Snapshot: 2026-07-29
+- Snapshot: 2026-07-30
 - Current phase: technical prototype complete; v0.1 delivery in progress
 - Milestone target: `v0.1.0`
 
@@ -40,9 +40,11 @@ The user experience is reviewed before the final MV is produced:
 
 1. Implement the final terminal information hierarchy and candidate comparison.
 2. Run the CLI on Windows native, WSL on `/mnt/c`, and WSL-native projects.
-3. Review comprehension, density, keyboard readability, colors, and copy using privacy-safe captures.
-4. Produce the 10-second real demo and 60-second MV only from verified output.
-5. Keep the faceless otter as an optional guide layer; the diagnostic result must remain understandable without animation.
+3. Run the loopback GUI against the same read-only report and show four tool states, candidates, findings, actions, reverification, and redacted Share output.
+4. Have the repository owner judge whether the result revealed a new issue, shortened a decision, and is worth reusing.
+5. Review comprehension, density, keyboard readability, colors, and copy using privacy-safe captures.
+6. Produce the 10-second real demo and 60-second MV only from verified output.
+7. Keep the faceless otter as an optional guide layer; the diagnostic result must remain understandable without animation.
 
 Local HTML, CSS, SVG, and static design work does not require a hosted service. Image generation, hosted Sites, subscription-quota model calls, X posting, and public deployment require a separate cost/privacy/publication decision under the [cost policy](../COST_POLICY.md).
 

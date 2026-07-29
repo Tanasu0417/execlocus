@@ -45,6 +45,8 @@ The project is pre-alpha and has not published a versioned release. Entries rema
 - Zero-cost cargo-deny gate for RustSec advisories, licenses, sources, wildcard requirements, and duplicate dependencies
 - v0.1 threat model and privacy-safe security assessment
 - Local interactive concept demo, 60-second caption animatic, original faceless otter silhouette, and Japanese introduction deck
+- Loopback-only local diagnostic GUI that runs the real read-only probes and displays tool states, candidates, impact, actions, reverification, and redacted Share output
+- English/Japanese human-readable terminal, Markdown, explanation, and real-diagnostic GUI output while keeping the JSON contract stable
 
 ### Fixed
 

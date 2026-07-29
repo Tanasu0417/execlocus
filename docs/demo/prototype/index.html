@@ -19,9 +19,9 @@
       </div>
       <div class="top-status" aria-label="デモの状態" id="top-status">
         <button id="language-toggle" class="language-toggle" type="button" aria-label="Switch to English">EN</button>
-        <span class="badge badge-concept" data-i18n="status.concept">操作デモ</span>
+        <span id="mode-badge" class="badge badge-concept" data-i18n="status.concept">操作デモ</span>
         <span class="status-dot" aria-hidden="true"></span>
-        <span data-i18n="status.synthetic">合成データ · ローカルのみ</span>
+        <span id="data-mode" data-i18n="status.synthetic">合成データ · ローカルのみ</span>
       </div>
     </header>
 
@@ -84,6 +84,13 @@
               <span class="otter-signal" aria-hidden="true"></span>
             </div>
           </div>
+          <div id="live-overview" class="live-overview" hidden>
+            <div id="live-summary" class="live-summary" aria-live="polite"></div>
+            <div class="live-toolchain-summary">
+              <div class="section-heading compact"><div><p class="eyebrow" data-i18n="live.toolchainEyebrow">実データ</p><h2 data-i18n="live.toolchainTitle">現在のツール選択</h2></div></div>
+              <div id="live-toolchain-table" class="live-table"></div>
+            </div>
+          </div>
         </section>
 
         <section id="view-compare" class="view" data-panel="compare">
@@ -91,7 +98,7 @@
             <div><p class="eyebrow">DEMO-UC02-PAIRED-01</p><h2 data-i18n="compare.title">同じソース一式。異なる実行環境。</h2></div>
             <span class="badge" data-i18n="compare.badge">合成データによる再現</span>
           </div>
-          <div class="comparison">
+          <div id="synthetic-comparison" class="comparison">
             <article>
               <p class="platform" data-i18n="compare.windows">WINDOWS 実行環境</p>
               <dl><div><dt data-i18n="field.runtime">実行環境</dt><dd>Windows 11</dd></div><div><dt data-i18n="field.shell">シェル</dt><dd>PowerShell</dd></div><div><dt data-i18n="field.project">プロジェクト</dt><dd>C:\demo\…</dd></div></dl>
@@ -106,7 +113,8 @@
               <div class="evidence"><span>candidate.path.0</span><span>executable.header.0</span><span>shell.ancestry</span></div>
             </article>
           </div>
-          <p class="comparison-note" data-i18n="compare.note">2つのExecLocusプロセスを同じ形式で比較します。過去にエージェントが実行した対象とは断定しません。</p>
+          <p id="synthetic-comparison-note" class="comparison-note" data-i18n="compare.note">2つのExecLocusプロセスを同じ形式で比較します。過去にエージェントが実行した対象とは断定しません。</p>
+          <div id="live-candidates" class="live-candidates" hidden></div>
         </section>
 
         <section id="view-explain" class="view" data-panel="explain">
@@ -118,11 +126,13 @@
               <h3 data-i18n="explain.why">なぜ重要か</h3>
               <p id="rule-reason">Windowsとの相互運用は意図的な場合があります。性能とファイル監視の特性差は利用目的によって変わります。</p>
               <h3 data-i18n="explain.action">次に確認すること</h3>
-              <p id="rule-action">共有場所を維持し、移動を決める前に実際の作業負荷を測定してください。</p>
+              <ul id="rule-actions" class="rule-actions"><li id="rule-action">共有場所を維持し、移動を決める前に実際の作業負荷を測定してください。</li></ul>
+              <h3 data-i18n="explain.verify">再検証</h3>
+              <ul id="rule-verification" class="rule-actions"><li data-i18n="explain.syntheticVerify">変更後に同じ条件で再診断します。</li></ul>
             </div>
             <div class="evidence-stack">
               <p data-i18n="explain.evidence">根拠の連鎖</p>
-              <ol><li><span>runtime.kind</span><strong>WSL</strong></li><li><span>project.path</span><strong>WindowsMounted</strong></li><li><span>profile.selected</span><strong id="evidence-profile">balanced</strong></li></ol>
+              <ol id="rule-evidence"><li><span>runtime.kind</span><strong>WSL</strong></li><li><span>project.path</span><strong>WindowsMounted</strong></li><li><span>profile.selected</span><strong id="evidence-profile">balanced</strong></li></ol>
             </div>
           </div>
         </section>
@@ -136,7 +146,7 @@
               <button id="copy-button" data-i18n="share.copy">合成レポートをコピー</button>
               <small id="copy-state" data-i18n="share.warning">未加工のターミナル出力やJSONは公開しない</small>
             </div>
-            <pre class="report"><code># <span data-i18n="report.title">ExecLocus 共有用レポート</span>
+            <pre class="report"><code id="share-report"># <span data-i18n="report.title">ExecLocus 共有用レポート</span>
 
 - <span data-i18n="report.schema">形式</span>: `0.6.0`
 - <span data-i18n="report.profile">利用目的</span>: `<span id="report-profile">balanced</span>`
@@ -153,7 +163,7 @@
       </section>
     </section>
 
-    <footer class="footer"><span data-i18n="footer.concept">コンセプト画面 — v0.1のCLI本体ではありません</span><span>github.com/Tanasu0417/execlocus</span></footer>
+    <footer class="footer"><span id="footer-mode" data-i18n="footer.concept">コンセプト画面 — v0.1のCLI本体ではありません</span><span>github.com/Tanasu0417/execlocus</span></footer>
   </main>
   <script src="app.js"></script>
 </body>

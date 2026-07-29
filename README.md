@@ -68,9 +68,12 @@ execlocus explain ENV002
 execlocus report --format json
 execlocus report --format markdown
 execlocus report --format json --redact
+execlocus --lang en gui --open
 ```
 
 The zero-argument command is the primary workflow. No configuration should be required for the first useful result.
+
+`--lang en|ja` switches human-readable terminal, Markdown, `explain`, and local-GUI copy. JSON schema fields, rule IDs, commands, and paths remain stable technical identifiers. `gui` binds only to `127.0.0.1` and runs the same read-only probes when the diagnostic button is selected. Local diagnostic views may contain observed paths; the Share view and copied report are always redacted before rendering.
 
 ## Run the prototype from source
 
@@ -83,6 +86,17 @@ cargo run -- explain ENV002
 cargo run -- report --format json
 cargo run -- report --format markdown
 cargo run -- report --format json --redact
+cargo run -- --lang en gui --open
+```
+
+Use the validation wrappers when the GUI should receive bounded alias, function, builtin, and current-session evidence from the parent PowerShell or bash session:
+
+```powershell
+& .\scripts\try-execlocus.ps1 -Gui -Language en -Profile balanced
+```
+
+```bash
+source ./scripts/try-execlocus.sh balanced gui en
 ```
 
 Development checks:
