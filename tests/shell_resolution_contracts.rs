@@ -5,9 +5,10 @@ use std::{
 };
 
 use execlocus::{
-    model::{Confidence, ObservationStatus, RuntimeKind},
+    model::{Confidence, ExecutableResolutionMethod, ObservationStatus, RuntimeKind},
     probes::{
         context::{CandidateSnapshot, HostPlatform, ProbeContext},
+        executable::probe_with_shell_snapshot,
         shell::{
             ShellCommandCandidate, ShellCommandKind, ShellKind, ShellSessionSnapshot,
             resolve_with_snapshot,
@@ -288,4 +289,81 @@ fn zsh_builtin_wins_before_path_search_result() {
             .iter()
             .any(|item| item.value.as_deref() == Some("alias > function > builtin > PATH"))
     );
+}
+
+#[test]
+fn incomplete_bash_snapshot_keeps_selection_unknown_but_lists_external_candidates() {
+    let result = resolve_with_snapshot(
+        &ShellFixture::linux(),
+        ShellKind::Bash,
+        "node",
+        RuntimeKind::Wsl,
+        &ShellSessionSnapshot::unavailable(),
+    );
+
+    assert!(result.value.selected.is_none());
+    assert!(!result.value.session_complete);
+    assert_eq!(result.value.status, ObservationStatus::Unavailable);
+    assert_eq!(result.value.confidence, Confidence::None);
+    assert_eq!(result.value.candidates.len(), 1);
+    assert_eq!(
+        result.value.candidates[0].source.as_deref(),
+        Some("/usr/bin/node")
+    );
+}
+
+#[test]
+fn windows_cmd_contract_maps_selected_and_losing_candidates_into_the_report_model() {
+    let result = probe_with_shell_snapshot(
+        &ShellFixture::windows(),
+        "node",
+        "node",
+        &RuntimeKind::WindowsNative,
+        ShellKind::Cmd,
+        &ShellSessionSnapshot::complete(Vec::new()),
+    );
+
+    assert_eq!(
+        result.value.resolution_method,
+        ExecutableResolutionMethod::ShellContract
+    );
+    assert_eq!(result.value.resolution_shell.as_deref(), Some("cmd"));
+    assert_eq!(result.value.shell_session_complete, Some(true));
+    assert_eq!(
+        result
+            .value
+            .selected
+            .as_ref()
+            .map(|item| item.path.as_str()),
+        Some(r"C:\demo\project\node.cmd")
+    );
+    assert_eq!(result.value.candidates.len(), 2);
+    assert!(
+        result
+            .evidence
+            .iter()
+            .any(|item| item.id == "executable.node.candidate.2")
+    );
+}
+
+#[test]
+fn wsl_bash_contract_keeps_effective_selection_unknown_in_the_report_model() {
+    let result = probe_with_shell_snapshot(
+        &ShellFixture::linux(),
+        "node",
+        "node",
+        &RuntimeKind::Wsl,
+        ShellKind::Bash,
+        &ShellSessionSnapshot::unavailable(),
+    );
+
+    assert_eq!(
+        result.value.resolution_method,
+        ExecutableResolutionMethod::ShellContract
+    );
+    assert_eq!(result.value.resolution_shell.as_deref(), Some("bash"));
+    assert_eq!(result.value.shell_session_complete, Some(false));
+    assert!(result.value.selected.is_none());
+    assert_eq!(result.value.candidates.len(), 1);
+    assert_eq!(result.value.status, ObservationStatus::Unavailable);
 }

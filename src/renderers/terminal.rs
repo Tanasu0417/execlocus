@@ -1,9 +1,10 @@
 use std::fmt::Write;
 
 use crate::model::{
-    AgentEvidenceSource, Confidence, ExecutableOrigin, ObservationStatus, PathClass, Report,
-    RuntimeValueSource, Severity,
+    AgentEvidenceSource, Confidence, ExecutableInfo, ExecutableOrigin, ExecutableResolutionMethod,
+    ObservationStatus, PathClass, Report, RuntimeValueSource, Severity,
 };
+use crate::renderers::safe::terminal_text;
 
 #[must_use]
 pub fn render(report: &Report) -> String {
@@ -21,15 +22,16 @@ pub fn render(report: &Report) -> String {
         let (path, origin) = executable
             .selected
             .as_ref()
-            .map_or(("Not found", ExecutableOrigin::Unknown), |selected| {
+            .map_or(("Unknown", ExecutableOrigin::Unknown), |selected| {
                 (selected.path.as_str(), selected.origin)
             });
-        line(
-            &mut output,
-            role_label(&executable.role),
-            path,
-            origin_label(origin),
-        );
+        let note = if executable.selected.is_some() {
+            format!("{} · {}", origin_label(origin), resolution_note(executable))
+        } else {
+            resolution_note(executable)
+        };
+        line(&mut output, role_label(&executable.role), path, &note);
+        render_candidates(&mut output, executable);
     }
 
     let finding_count = report.findings.len();
@@ -43,8 +45,8 @@ pub fn render(report: &Report) -> String {
         writeln!(
             output,
             "  {:<8} {:<56} {}",
-            finding.id,
-            finding.title,
+            terminal_text(&finding.id),
+            terminal_text(&finding.title),
             severity_label(finding.severity)
         )
         .expect("writing to String cannot fail");
@@ -151,7 +153,57 @@ fn render_agent(output: &mut String, report: &Report) {
 }
 
 fn line(output: &mut String, key: &str, value: &str, note: &str) {
-    writeln!(output, "  {key:<13} {value:<42} {note}").expect("writing to String cannot fail");
+    writeln!(
+        output,
+        "  {:<13} {:<42} {}",
+        terminal_text(key),
+        terminal_text(value),
+        terminal_text(note)
+    )
+    .expect("writing to String cannot fail");
+}
+
+fn render_candidates(output: &mut String, executable: &ExecutableInfo) {
+    let selected_path = executable
+        .selected
+        .as_ref()
+        .map(|candidate| candidate.path.as_str());
+    for (index, candidate) in executable.candidates.iter().enumerate() {
+        let disposition = if selected_path == Some(candidate.path.as_str()) {
+            "selected"
+        } else if selected_path.is_some() {
+            "losing"
+        } else {
+            "candidate"
+        };
+        writeln!(
+            output,
+            "    {disposition:<9} #{} {}  {} · evidence executable.{}.candidate.{}",
+            index + 1,
+            terminal_text(&candidate.path),
+            origin_label(candidate.origin),
+            terminal_text(&executable.role),
+            index + 1,
+        )
+        .expect("writing to String cannot fail");
+    }
+}
+
+fn resolution_note(executable: &ExecutableInfo) -> String {
+    match executable.resolution_method {
+        ExecutableResolutionMethod::PathFallback => "generic PATH fallback".to_owned(),
+        ExecutableResolutionMethod::ShellContract => {
+            let shell = executable
+                .resolution_shell
+                .as_deref()
+                .unwrap_or("unknown shell");
+            if executable.shell_session_complete == Some(true) {
+                format!("{shell} contract")
+            } else {
+                format!("{shell} contract · parent session state unavailable")
+            }
+        }
+    }
 }
 
 fn runtime_label(report: &Report) -> String {
@@ -268,8 +320,9 @@ fn role_label(role: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use crate::model::{
-        AgentInfo, Confidence, ObservationStatus, PathClass, Profile, ProjectInfo, Report,
-        RuntimeInfo, RuntimeKind, RuntimeValueSource, Topology,
+        AgentInfo, Confidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
+        ExecutableOrigin, ExecutableResolutionMethod, ObservationStatus, PathClass, Profile,
+        ProjectInfo, Report, RuntimeInfo, RuntimeKind, RuntimeValueSource, Topology,
     };
 
     use super::render;
@@ -305,7 +358,32 @@ mod tests {
                 status: ObservationStatus::Observed,
                 confidence: Confidence::Certain,
             },
-            executables: Vec::new(),
+            executables: vec![ExecutableInfo {
+                role: "node".to_owned(),
+                requested: "node".to_owned(),
+                selected: Some(ExecutableCandidate {
+                    path: "C:\\synthetic\\node\u{1b}[31m.exe\n".to_owned(),
+                    format: ExecutableFormat::Pe,
+                    origin: ExecutableOrigin::Windows,
+                }),
+                candidates: vec![
+                    ExecutableCandidate {
+                        path: "C:\\synthetic\\node\u{1b}[31m.exe\n".to_owned(),
+                        format: ExecutableFormat::Pe,
+                        origin: ExecutableOrigin::Windows,
+                    },
+                    ExecutableCandidate {
+                        path: "/usr/bin/node\t".to_owned(),
+                        format: ExecutableFormat::Elf,
+                        origin: ExecutableOrigin::Linux,
+                    },
+                ],
+                resolution_method: ExecutableResolutionMethod::PathFallback,
+                resolution_shell: None,
+                shell_session_complete: None,
+                status: ObservationStatus::Observed,
+                confidence: Confidence::Certain,
+            }],
             topology: Topology::default(),
             evidence: Vec::new(),
             findings: Vec::new(),
@@ -319,5 +397,12 @@ mod tests {
         assert!(output.contains("AGENT"));
         assert!(output.contains("Unknown"));
         assert!(output.contains("TOOLCHAIN"));
+        assert!(output.contains("generic PATH fallback"));
+        assert!(output.contains("selected"));
+        assert!(output.contains("losing"));
+        assert!(output.contains("evidence executable.node.candidate.2"));
+        assert!(output.contains(r"\u{1b}[31m.exe\n"));
+        assert!(output.contains(r"/usr/bin/node\t"));
+        assert!(!output.contains('\u{1b}'));
     }
 }

@@ -235,8 +235,18 @@ pub struct ExecutableInfo {
     pub requested: String,
     pub selected: Option<ExecutableCandidate>,
     pub candidates: Vec<ExecutableCandidate>,
+    pub resolution_method: ExecutableResolutionMethod,
+    pub resolution_shell: Option<String>,
+    pub shell_session_complete: Option<bool>,
     pub status: ObservationStatus,
     pub confidence: Confidence,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecutableResolutionMethod {
+    ShellContract,
+    PathFallback,
 }
 
 #[derive(Clone, Debug, Serialize)]

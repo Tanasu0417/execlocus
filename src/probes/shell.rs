@@ -1,10 +1,10 @@
 //! Explicit, injectable command-resolution contracts for supported shells.
 //!
-//! The production report does not use this module yet because a child process
-//! cannot reliably reconstruct aliases, functions, cmdlets, builtins, or shell
-//! hash state from environment variables alone. Callers must provide a bounded
-//! [`ShellSessionSnapshot`]. An incomplete snapshot never produces a selected
-//! command, even when external executable candidates are available.
+//! A child process cannot reliably reconstruct aliases, functions, cmdlets,
+//! builtins, or shell hash state from environment variables alone. Callers must
+//! provide a bounded [`ShellSessionSnapshot`]. An incomplete snapshot never
+//! produces a selected command, even when external executable candidates are
+//! available.
 //!
 //! Contract sources:
 //! - `PowerShell` command precedence and `Get-Command -All`:
@@ -39,12 +39,24 @@ pub enum ShellKind {
 }
 
 impl ShellKind {
-    const fn contract_name(self) -> &'static str {
+    #[must_use]
+    pub const fn contract_name(self) -> &'static str {
         match self {
             Self::PowerShell => "powershell",
             Self::Cmd => "cmd",
             Self::Bash => "bash",
             Self::Zsh => "zsh",
+        }
+    }
+
+    #[must_use]
+    pub fn from_runtime_label(label: &str) -> Option<Self> {
+        match label.trim().to_ascii_lowercase().as_str() {
+            "powershell" | "powershell 7" => Some(Self::PowerShell),
+            "cmd" => Some(Self::Cmd),
+            "bash" => Some(Self::Bash),
+            "zsh" => Some(Self::Zsh),
+            _ => None,
         }
     }
 }
@@ -305,5 +317,22 @@ const fn precedence(shell: ShellKind, kind: ShellCommandKind) -> usize {
             ShellCommandKind::ExternalScript | ShellCommandKind::Application => 3,
             ShellCommandKind::Cmdlet => 4,
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ShellKind;
+
+    #[test]
+    fn maps_only_supported_runtime_shell_labels() {
+        assert_eq!(
+            ShellKind::from_runtime_label("PowerShell 7"),
+            Some(ShellKind::PowerShell)
+        );
+        assert_eq!(ShellKind::from_runtime_label("cmd"), Some(ShellKind::Cmd));
+        assert_eq!(ShellKind::from_runtime_label("bash"), Some(ShellKind::Bash));
+        assert_eq!(ShellKind::from_runtime_label("zsh"), Some(ShellKind::Zsh));
+        assert_eq!(ShellKind::from_runtime_label("fish"), None);
     }
 }

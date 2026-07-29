@@ -6,10 +6,12 @@ use std::{
 use crate::{
     model::{
         Confidence, Evidence, ExecutableCandidate, ExecutableFormat, ExecutableInfo,
-        ExecutableOrigin, ObservationStatus, ProbeFailure, ProbeResult, RuntimeKind,
+        ExecutableOrigin, ExecutableResolutionMethod, ObservationStatus, ProbeFailure, ProbeResult,
+        RuntimeKind,
     },
     probes::context::{CandidateSnapshot, ProbeContext, SystemProbeContext},
     probes::path::classify_path,
+    probes::shell::{ShellKind, ShellSessionSnapshot, resolve_with_snapshot},
 };
 
 const EXECUTABLE_PREFIX_LIMIT: usize = 512;
@@ -62,7 +64,7 @@ pub fn probe_with_resolver(
 ) -> ProbeResult<ExecutableInfo> {
     let ProbeResult {
         value: candidates,
-        mut evidence,
+        evidence,
         failures,
     } = resolver.resolve(context, command, *runtime);
     let selected = candidates.first().cloned();
@@ -77,10 +79,100 @@ pub fn probe_with_resolver(
         (false, _) => Confidence::None,
     };
 
+    build_probe_result(
+        role,
+        command,
+        selected,
+        candidates,
+        ExecutableResolutionMethod::PathFallback,
+        None,
+        None,
+        status,
+        confidence,
+        evidence,
+        failures,
+    )
+}
+
+#[must_use]
+pub fn probe_with_shell_snapshot(
+    context: &dyn ProbeContext,
+    role: &str,
+    command: &str,
+    runtime: &RuntimeKind,
+    shell: ShellKind,
+    snapshot: &ShellSessionSnapshot,
+) -> ProbeResult<ExecutableInfo> {
+    let ProbeResult {
+        value: resolution,
+        evidence,
+        failures,
+    } = resolve_with_snapshot(context, shell, command, *runtime, snapshot);
+    let selected = resolution
+        .selected
+        .as_ref()
+        .and_then(|candidate| candidate.executable.clone());
+    let candidates = resolution
+        .candidates
+        .iter()
+        .filter_map(|candidate| candidate.executable.clone())
+        .collect::<Vec<_>>();
+
+    build_probe_result(
+        role,
+        command,
+        selected,
+        candidates,
+        ExecutableResolutionMethod::ShellContract,
+        Some(shell.contract_name().to_owned()),
+        Some(resolution.session_complete),
+        resolution.status,
+        resolution.confidence,
+        evidence,
+        failures,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_probe_result(
+    role: &str,
+    command: &str,
+    selected: Option<ExecutableCandidate>,
+    candidates: Vec<ExecutableCandidate>,
+    resolution_method: ExecutableResolutionMethod,
+    resolution_shell: Option<String>,
+    shell_session_complete: Option<bool>,
+    status: ObservationStatus,
+    confidence: Confidence,
+    mut evidence: Vec<Evidence>,
+    failures: Vec<ProbeFailure>,
+) -> ProbeResult<ExecutableInfo> {
+    evidence.push(Evidence {
+        id: format!("executable.{role}.resolution"),
+        probe: "executable/v2".to_owned(),
+        kind: "resolution-method".to_owned(),
+        claim: match resolution_method {
+            ExecutableResolutionMethod::ShellContract => format!(
+                "{} shell contract with {} session evidence",
+                resolution_shell.as_deref().unwrap_or("unknown"),
+                if shell_session_complete == Some(true) {
+                    "complete"
+                } else {
+                    "incomplete"
+                }
+            ),
+            ExecutableResolutionMethod::PathFallback => {
+                "generic PATH resolution fallback".to_owned()
+            }
+        },
+        value: None,
+        sensitive: false,
+    });
+
     if let Some(candidate) = &selected {
         evidence.push(Evidence {
             id: format!("executable.{role}"),
-            probe: "executable/v1".to_owned(),
+            probe: "executable/v2".to_owned(),
             kind: "executable".to_owned(),
             claim: format!("{role} resolves to {:?} executable", candidate.origin),
             value: Some(candidate.path.clone()),
@@ -90,7 +182,7 @@ pub fn probe_with_resolver(
     for (index, candidate) in candidates.iter().enumerate() {
         evidence.push(Evidence {
             id: format!("executable.{role}.candidate.{}", index + 1),
-            probe: "executable/v1".to_owned(),
+            probe: "executable/v2".to_owned(),
             kind: "executable-candidate".to_owned(),
             claim: format!(
                 "{role} candidate {} has {:?} origin",
@@ -108,6 +200,9 @@ pub fn probe_with_resolver(
             requested: command.to_owned(),
             selected,
             candidates,
+            resolution_method,
+            resolution_shell,
+            shell_session_complete,
             status,
             confidence,
         },

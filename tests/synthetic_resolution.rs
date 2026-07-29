@@ -7,8 +7,9 @@ use std::{
 use execlocus::{
     collect_report_with, collect_report_with_resolver,
     model::{
-        Evidence, ExecutableCandidate, ExecutableFormat, ExecutableOrigin, ObservationStatus,
-        PathClass, ProbeResult, Profile, RuntimeKind, RuntimeValueSource,
+        Evidence, ExecutableCandidate, ExecutableFormat, ExecutableOrigin,
+        ExecutableResolutionMethod, ObservationStatus, PathClass, ProbeResult, Profile,
+        RuntimeKind, RuntimeValueSource,
     },
     probes::context::{CandidateSnapshot, HostPlatform, ProbeContext},
     probes::executable::ExecutableResolver,
@@ -207,7 +208,7 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
     let report = collect_report_with(&FixtureProbeContext::wsl(), Profile::Balanced);
 
     assert_eq!(report.generated_at_unix_ms, 1_234_567);
-    assert_eq!(report.schema_version, "0.4.0");
+    assert_eq!(report.schema_version, "0.5.0");
     assert_eq!(report.runtime.kind, RuntimeKind::Wsl);
     assert_eq!(report.agent.product, None);
     assert_eq!(
@@ -244,6 +245,12 @@ fn collects_a_deterministic_wsl_report_without_process_globals() {
     assert_eq!(selected.format, ExecutableFormat::Elf);
     assert_eq!(selected.origin, ExecutableOrigin::Linux);
     assert_eq!(node.candidates[1].path, "/usr/bin/node");
+    assert_eq!(
+        node.resolution_method,
+        ExecutableResolutionMethod::PathFallback
+    );
+    assert!(node.resolution_shell.is_none());
+    assert_eq!(node.shell_session_complete, None);
 
     assert!(
         report
